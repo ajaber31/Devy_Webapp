@@ -1,0 +1,119 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@layer base {
+  :root {
+    /* shadcn/radix CSS variable bridge — mapped to Devy palette */
+    --background: 40 20% 98%;
+    --foreground: 30 8% 16%;
+    --card: 36 18% 95%;
+    --card-foreground: 30 8% 16%;
+    --popover: 36 18% 97%;
+    --popover-foreground: 30 8% 16%;
+    --primary: 110 22% 43%;
+    --primary-foreground: 0 0% 100%;
+    --secondary: 214 22% 47%;
+    --secondary-foreground: 0 0% 100%;
+    --muted: 36 14% 90%;
+    --muted-foreground: 30 6% 47%;
+    --accent: 36 18% 90%;
+    --accent-foreground: 30 8% 20%;
+    --destructive: 0 35% 50%;
+    --destructive-foreground: 0 0% 100%;
+    --border: 36 12% 83%;
+    --input: 36 12% 83%;
+    --ring: 110 22% 43%;
+    --radius: 0.875rem;
+  }
+
+  * {
+    @apply border-border;
+    box-sizing: border-box;
+  }
+
+  html {
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
+  }
+
+  body {
+    @apply bg-canvas text-ink font-body;
+    line-height: 1.75;
+  }
+
+  h1, h2, h3, h4, h5 {
+    @apply font-display;
+  }
+
+  /* Scrollbar */
+  ::-webkit-scrollbar {
+    width: 5px;
+    height: 5px;
+  }
+  ::-webkit-scrollbar-track {
+    background: transparent;
+  }
+  ::-webkit-scrollbar-thumb {
+    @apply bg-muted rounded-pill;
+  }
+  ::-webkit-scrollbar-thumb:hover {
+    @apply bg-border;
+  }
+}
+
+@layer utilities {
+  .text-balance {
+    text-wrap: balance;
+  }
+
+  /* Noise texture overlay — apply to parent, add relative + overflow-hidden */
+  .noise-bg::after {
+    content: '';
+    position: absolute;
+    inset: 0;
+    background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='300' height='300'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.85' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='300' height='300' filter='url(%23n)' opacity='0.03'/%3E%3C/svg%3E");
+    pointer-events: none;
+    border-radius: inherit;
+    z-index: 0;
+  }
+
+  .noise-bg > * {
+    position: relative;
+    z-index: 1;
+  }
+
+  /* Surface layering system */
+  .surface-base     { @apply bg-canvas; }
+  .surface-elevated { @apply bg-surface shadow-card; }
+  .surface-floating { @apply bg-white shadow-floating; }
+
+  /* Typography helpers */
+  .heading-display {
+    @apply font-display font-bold tracking-tight;
+  }
+
+  /* Focus ring that matches brand */
+  .focus-ring {
+    @apply focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-sage-400 focus-visible:ring-offset-1;
+  }
+
+  /* Smooth color transitions (never transition-all) */
+  .transition-colors-smooth {
+    transition-property: color, background-color, border-color, fill, stroke;
+    transition-timing-function: cubic-bezier(0.4, 0, 0.2, 1);
+    transition-duration: 150ms;
+  }
+
+  .transition-shadow-smooth {
+    transition-property: box-shadow, opacity;
+    transition-timing-function: cubic-bezier(0.4, 0, 0.2, 1);
+    transition-duration: 200ms;
+  }
+
+  .transition-transform-spring {
+    transition-property: transform, opacity;
+    transition-timing-function: cubic-bezier(0.34, 1.56, 0.64, 1);
+    transition-duration: 250ms;
+  }
+}

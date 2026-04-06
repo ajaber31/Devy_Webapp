@@ -1,0 +1,58 @@
+import type { Conversation } from '@/lib/types'
+
+export const mockConversations: Conversation[] = [
+  {
+    id: 'c1',
+    title: 'Sensory processing strategies',
+    preview: 'What are the best ways to introduce weighted blankets for a 7-year-old with SPD?',
+    updatedAt: '2026-04-06T10:22:00Z',
+    messageCount: 12,
+    isPinned: true,
+    tags: ['sensory', 'SPD'],
+  },
+  {
+    id: 'c2',
+    title: 'IEP goal writing tips',
+    preview: 'How do I write measurable IEP goals for reading comprehension?',
+    updatedAt: '2026-04-05T16:45:00Z',
+    messageCount: 8,
+    isPinned: true,
+    tags: ['IEP', 'literacy'],
+  },
+  {
+    id: 'c3',
+    title: 'Meltdown de-escalation',
+    preview: 'My son is having more frequent meltdowns after school. What regulation strategies...',
+    updatedAt: '2026-04-04T09:10:00Z',
+    messageCount: 6,
+    isPinned: false,
+    tags: ['behavior', 'autism'],
+  },
+  {
+    id: 'c4',
+    title: 'AAC device introduction',
+    preview: 'We just got a Tobii device. How do we model language without overwhelming him?',
+    updatedAt: '2026-04-02T14:30:00Z',
+    messageCount: 15,
+    isPinned: false,
+    tags: ['AAC', 'communication'],
+  },
+  {
+    id: 'c5',
+    title: 'Fine motor activities',
+    preview: 'Looking for OT-backed fine motor activities for a 5-year-old with low tone.',
+    updatedAt: '2026-03-30T11:00:00Z',
+    messageCount: 4,
+    isPinned: false,
+    tags: ['OT', 'fine motor'],
+  },
+  {
+    id: 'c6',
+    title: 'Sleep routine support',
+    preview: 'Our daughter has difficulty transitioning to sleep. Are there evidence-based...',
+    updatedAt: '2026-03-27T20:15:00Z',
+    messageCount: 9,
+    isPinned: false,
+    tags: ['sleep', 'routine'],
+  },
+]
