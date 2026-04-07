@@ -22,6 +22,19 @@ function toChild(row: Record<string, unknown>): Child {
   }
 }
 
+export async function getChildrenCount(): Promise<number> {
+  const supabase = createClient()
+  const { data: { user } } = await supabase.auth.getUser()
+  if (!user) return 0
+
+  const { count } = await supabase
+    .from('children')
+    .select('*', { count: 'exact', head: true })
+    .eq('user_id', user.id)
+
+  return count ?? 0
+}
+
 export async function getChildren(): Promise<Child[]> {
   const supabase = createClient()
   const { data: { user } } = await supabase.auth.getUser()

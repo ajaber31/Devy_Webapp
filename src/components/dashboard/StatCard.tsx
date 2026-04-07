@@ -1,4 +1,4 @@
-import { MessageCircle, BookOpen, FileCheck, Library, TrendingUp, TrendingDown, Minus } from 'lucide-react'
+import { MessageCircle, BookOpen, FileCheck, Users, HelpCircle, TrendingUp, TrendingDown, Minus } from 'lucide-react'
 import { cn } from '@/lib/utils'
 import type { StatCardData } from '@/lib/types'
 
@@ -6,7 +6,8 @@ const iconMap: Record<string, React.ReactNode> = {
   MessageCircle: <MessageCircle size={18} strokeWidth={1.75} />,
   BookOpen:      <BookOpen size={18} strokeWidth={1.75} />,
   FileCheck:     <FileCheck size={18} strokeWidth={1.75} />,
-  Library:       <Library size={18} strokeWidth={1.75} />,
+  Users:         <Users size={18} strokeWidth={1.75} />,
+  HelpCircle:    <HelpCircle size={18} strokeWidth={1.75} />,
 }
 
 const colorMap = {

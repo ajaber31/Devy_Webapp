@@ -57,6 +57,20 @@ export async function getConversationsForChild(childId: string): Promise<Convers
   }))
 }
 
+export async function getUserMessageCount(): Promise<number> {
+  const supabase = createClient()
+  const { data: { user } } = await supabase.auth.getUser()
+  if (!user) return 0
+
+  // RLS ensures only messages in user-owned conversations are returned
+  const { count } = await supabase
+    .from('messages')
+    .select('*', { count: 'exact', head: true })
+    .eq('role', 'user')
+
+  return count ?? 0
+}
+
 export async function getConversationCount(): Promise<number> {
   const supabase = createClient()
   const { data: { user } } = await supabase.auth.getUser()
