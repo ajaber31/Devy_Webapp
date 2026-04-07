@@ -21,23 +21,9 @@ export default function AdminUsersPage() {
   return (
     <div className="p-6 max-w-6xl mx-auto">
       <PageHeader
-        title="Team members"
-        description={`${mockUsers.length} users in your organization.`}
+        title="Platform Users"
+        description={`${mockUsers.length} users registered on Devy.`}
       />
-
-      {/* Stats row */}
-      <div className="grid grid-cols-3 sm:grid-cols-3 gap-4 mb-6">
-        {[
-          { label: 'Active users',    value: mockUsers.filter(u => u.status === 'active').length,    color: 'text-success' },
-          { label: 'Pending invites', value: mockUsers.filter(u => u.status === 'invited').length,   color: 'text-warning' },
-          { label: 'Suspended',       value: mockUsers.filter(u => u.status === 'suspended').length, color: 'text-danger' },
-        ].map(stat => (
-          <div key={stat.label} className="bg-white rounded-card shadow-card border border-border/50 p-4 text-center">
-            <p className={`font-display text-display-md font-bold ${stat.color}`}>{stat.value}</p>
-            <p className="text-body-xs text-ink-secondary mt-0.5">{stat.label}</p>
-          </div>
-        ))}
-      </div>
 
       <UserSearchFilter
         query={query}

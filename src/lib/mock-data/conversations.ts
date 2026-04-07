@@ -9,6 +9,8 @@ export const mockConversations: Conversation[] = [
     messageCount: 12,
     isPinned: true,
     tags: ['sensory', 'SPD'],
+    childId: 'ch1',
+    childName: 'Emma Okafor',
   },
   {
     id: 'c2',
@@ -18,6 +20,8 @@ export const mockConversations: Conversation[] = [
     messageCount: 8,
     isPinned: true,
     tags: ['IEP', 'literacy'],
+    childId: 'ch3',
+    childName: 'Sophia Martinez',
   },
   {
     id: 'c3',
@@ -27,6 +31,8 @@ export const mockConversations: Conversation[] = [
     messageCount: 6,
     isPinned: false,
     tags: ['behavior', 'autism'],
+    childId: 'ch1',
+    childName: 'Emma Okafor',
   },
   {
     id: 'c4',
@@ -36,6 +42,8 @@ export const mockConversations: Conversation[] = [
     messageCount: 15,
     isPinned: false,
     tags: ['AAC', 'communication'],
+    childId: 'ch2',
+    childName: 'Liam Chen',
   },
   {
     id: 'c5',
@@ -45,6 +53,8 @@ export const mockConversations: Conversation[] = [
     messageCount: 4,
     isPinned: false,
     tags: ['OT', 'fine motor'],
+    childId: 'ch4',
+    childName: 'Noah Patel',
   },
   {
     id: 'c6',

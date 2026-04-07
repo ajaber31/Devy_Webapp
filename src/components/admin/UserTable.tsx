@@ -11,6 +11,14 @@ const roleColorMap: Record<string, string> = {
   admin:     'bg-raised text-ink-secondary',
 }
 
+const roleLabelMap: Record<string, string> = {
+  clinician: 'Clinician',
+  teacher:   'Teacher',
+  parent:    'Parent',
+  caregiver: 'Caregiver',
+  admin:     'Admin',
+}
+
 interface UserTableProps {
   users: User[]
 }
@@ -22,7 +30,7 @@ export function UserTable({ users }: UserTableProps) {
         <table className="w-full">
           <thead>
             <tr className="border-b border-border bg-surface">
-              {['User', 'Role', 'Status', 'Organization', 'Last active', ''].map((h, i) => (
+              {['User', 'Account Type', 'Status', 'Last active', ''].map((h, i) => (
                 <th key={i} className="px-4 py-3 text-left text-body-xs font-semibold text-ink-secondary uppercase tracking-wider whitespace-nowrap">
                   {h}
                 </th>
@@ -49,21 +57,16 @@ export function UserTable({ users }: UserTableProps) {
                   </div>
                 </td>
 
-                {/* Role */}
+                {/* Account Type */}
                 <td className="px-4 py-3.5">
                   <span className={`inline-block px-2.5 py-1 rounded-pill text-body-xs font-medium capitalize ${roleColorMap[user.role] ?? 'bg-raised text-ink-secondary'}`}>
-                    {user.role}
+                    {roleLabelMap[user.role] ?? user.role}
                   </span>
                 </td>
 
                 {/* Status */}
                 <td className="px-4 py-3.5">
                   <StatusBadge type="user" status={user.status} />
-                </td>
-
-                {/* Organization */}
-                <td className="px-4 py-3.5 text-body-sm text-ink-secondary whitespace-nowrap">
-                  {user.organization ?? '—'}
                 </td>
 
                 {/* Last active */}
@@ -86,7 +89,7 @@ export function UserTable({ users }: UserTableProps) {
 
             {users.length === 0 && (
               <tr>
-                <td colSpan={6} className="px-4 py-12 text-center text-body-sm text-ink-tertiary">
+                <td colSpan={5} className="px-4 py-12 text-center text-body-sm text-ink-tertiary">
                   No users match your filters.
                 </td>
               </tr>

@@ -1,5 +1,5 @@
 import Link from 'next/link'
-import { ArrowRight, MessageCircle } from 'lucide-react'
+import { ArrowRight, Users } from 'lucide-react'
 import { mockCurrentUser } from '@/lib/mock-data/users'
 import { NoiseTexture } from '@/components/shared/NoiseTexture'
 
@@ -27,18 +27,27 @@ export function WelcomeBanner() {
             Welcome back, {firstName}.
           </h2>
           <p className="text-white/75 text-body-sm max-w-sm">
-            Your knowledge base is ready. Start a new conversation or continue where you left off.
+            Devy&apos;s knowledge base is ready. Ask a question or open a child profile to get started.
           </p>
         </div>
-        <Link
-          href="/chat"
-          className="flex items-center gap-2 px-5 py-2.5 bg-white text-sage-700 font-semibold text-body-sm rounded-pill shadow-floating hover:bg-sage-50 active:scale-[0.98] flex-shrink-0"
-          style={{ transitionProperty: 'background-color, transform', transitionDuration: '150ms' }}
-        >
-          <MessageCircle size={15} strokeWidth={2} />
-          New chat
-          <ArrowRight size={14} strokeWidth={2.5} />
-        </Link>
+        <div className="flex items-center gap-2 flex-shrink-0">
+          <Link
+            href="/children"
+            className="flex items-center gap-2 px-4 py-2 bg-white/20 text-white font-medium text-body-sm rounded-pill hover:bg-white/30 border border-white/30 active:scale-[0.98]"
+            style={{ transitionProperty: 'background-color, transform', transitionDuration: '150ms' }}
+          >
+            <Users size={14} strokeWidth={2} />
+            My Children
+          </Link>
+          <Link
+            href="/chat"
+            className="flex items-center gap-2 px-5 py-2.5 bg-white text-sage-700 font-semibold text-body-sm rounded-pill shadow-floating hover:bg-sage-50 active:scale-[0.98]"
+            style={{ transitionProperty: 'background-color, transform', transitionDuration: '150ms' }}
+          >
+            New chat
+            <ArrowRight size={14} strokeWidth={2.5} />
+          </Link>
+        </div>
       </div>
     </div>
   )

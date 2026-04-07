@@ -2,6 +2,28 @@
 
 ## Always Do First
 - **Invoke the `frontend-design` skill** before writing any frontend code, every session, no exceptions.
+- **Invoke the `ui-ux-pro-max` skill** (if available) alongside `frontend-design` for enhanced design quality.
+
+## Product Model (V2)
+Devy is a **centralized platform** — not an organization-tenant model.
+- One global admin manages the shared knowledge base for all users.
+- Regular users are parents, caregivers, clinicians, and teachers.
+- The core user experience centers around **child profiles**, not generic users or organizations.
+
+## Routes
+| Route | Description |
+|-------|-------------|
+| `/` | Landing page |
+| `/login` | Login |
+| `/signup` | Signup with account type selector |
+| `/dashboard` | User dashboard |
+| `/children` | Children list (regular users) |
+| `/children/[id]` | Individual child profile |
+| `/chat` | Conversations (accepts `?childId` + `?childName` query params) |
+| `/resources` | Curated resources from knowledge base |
+| `/settings` | Profile, notifications, appearance, AI & Trust |
+| `/admin/documents` | Global Knowledge Base (admin only) |
+| `/admin/users` | Platform Users (admin only) |
 
 ## Reference Images
 - If a reference image is provided: match layout, spacing, typography, and color exactly. Swap in placeholder content (images via `https://placehold.co/`, generic copy). Do not improve or add to the design.
@@ -10,8 +32,7 @@
 
 ## Local Server
 - **Always serve on localhost** — never screenshot a `file:///` URL.
-- Start the dev server: `node serve.mjs` (serves the project root at `http://localhost:3000`)
-- `serve.mjs` lives in the project root. Start it in the background before taking any screenshots.
+- Start the dev server: `npm run dev` (runs Next.js at `http://localhost:3000`)
 - If the server is already running, do not start a second instance.
 
 ## Anti-Generic Guardrails

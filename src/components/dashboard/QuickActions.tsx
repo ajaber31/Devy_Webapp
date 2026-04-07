@@ -1,5 +1,5 @@
 import Link from 'next/link'
-import { MessageCircle, FileText, Users, Settings, ArrowUpRight } from 'lucide-react'
+import { MessageCircle, Users, Settings, ArrowUpRight, BookOpen } from 'lucide-react'
 
 const actions = [
   {
@@ -10,23 +10,23 @@ const actions = [
     color: 'bg-sage-100 text-sage-600',
   },
   {
-    icon: FileText,
-    label: 'Manage documents',
-    description: 'Upload or review files',
-    href: '/admin/documents',
+    icon: Users,
+    label: 'My Children',
+    description: 'View or add profiles',
+    href: '/children',
     color: 'bg-dblue-100 text-dblue-600',
   },
   {
-    icon: Users,
-    label: 'Team members',
-    description: 'View or invite users',
-    href: '/admin/users',
+    icon: BookOpen,
+    label: 'Browse Resources',
+    description: 'Approved knowledge base',
+    href: '/resources',
     color: 'bg-sand-100 text-sand-500',
   },
   {
     icon: Settings,
     label: 'Settings',
-    description: 'Profile & preferences',
+    description: 'Profile &amp; preferences',
     href: '/settings',
     color: 'bg-raised text-ink-secondary',
   },
@@ -45,7 +45,7 @@ export function QuickActions() {
             <li key={action.href}>
               <Link
                 href={action.href}
-                className="flex flex-col gap-2.5 p-3 rounded-card hover:bg-surface border border-transparent hover:border-border group"
+                className="flex flex-col gap-2.5 p-3 rounded-card hover:bg-surface border border-transparent hover:border-border group focus-ring"
                 style={{ transitionProperty: 'background-color, border-color', transitionDuration: '150ms' }}
               >
                 <div className="flex items-start justify-between">
@@ -57,7 +57,7 @@ export function QuickActions() {
                 </div>
                 <div>
                   <p className="text-body-xs font-semibold text-ink">{action.label}</p>
-                  <p className="text-body-xs text-ink-tertiary">{action.description}</p>
+                  <p className="text-body-xs text-ink-tertiary" dangerouslySetInnerHTML={{ __html: action.description }} />
                 </div>
               </Link>
             </li>

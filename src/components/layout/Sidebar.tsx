@@ -6,7 +6,7 @@ import { usePathname } from 'next/navigation'
 import { ChevronDown, LogOut, PanelLeftClose, PanelLeftOpen } from 'lucide-react'
 import { DevyLogo } from '@/components/shared/DevyLogo'
 import { mockCurrentUser } from '@/lib/mock-data/users'
-import { ADMIN_NAV_ITEMS } from '@/lib/constants'
+import { ADMIN_NAV_ITEMS, DASHBOARD_NAV_ITEMS } from '@/lib/constants'
 import { cn, initials } from '@/lib/utils'
 import type { LucideIcon } from 'lucide-react'
 
@@ -86,7 +86,7 @@ export function Sidebar() {
 
       {/* Nav */}
       <nav className="flex-1 px-2 py-4 space-y-0.5 overflow-y-auto" aria-label="App navigation">
-        {ADMIN_NAV_ITEMS.map((item) => (
+        {(mockCurrentUser.role === 'admin' ? ADMIN_NAV_ITEMS : DASHBOARD_NAV_ITEMS).map((item) => (
           <NavItem
             key={item.href}
             href={item.href}

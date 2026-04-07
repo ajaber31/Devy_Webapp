@@ -24,6 +24,24 @@ export interface Conversation {
   messageCount: number
   isPinned: boolean
   tags: string[]
+  childId?: string
+  childName?: string
+}
+
+export interface Child {
+  id: string
+  name: string
+  age: number
+  dateOfBirth: string
+  diagnoses: string[]
+  supportNeeds: string[]
+  strengths: string[]
+  interests: string[]
+  routines: string[]
+  goals: string[]
+  notes: string
+  avatarColor: 'sage' | 'dblue' | 'sand'
+  createdAt: string
 }
 
 export interface Source {
