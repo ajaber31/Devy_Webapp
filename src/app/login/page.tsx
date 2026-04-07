@@ -1,21 +1,36 @@
 'use client'
 
 import { useState } from 'react'
+import { useRouter } from 'next/navigation'
 import Link from 'next/link'
-import { Eye, EyeOff, ArrowRight } from 'lucide-react'
+import { Eye, EyeOff, ArrowRight, AlertCircle } from 'lucide-react'
 import { DevyLogo } from '@/components/shared/DevyLogo'
 import { NoiseTexture } from '@/components/shared/NoiseTexture'
+import { signIn } from '@/lib/actions/auth'
 
 export default function LoginPage() {
+  const router = useRouter()
   const [showPassword, setShowPassword] = useState(false)
   const [email, setEmail] = useState('')
   const [password, setPassword] = useState('')
   const [remember, setRemember] = useState(false)
+  const [error, setError] = useState<string | null>(null)
+  const [isPending, setIsPending] = useState(false)
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
-    // Mock: redirect to dashboard
-    window.location.href = '/dashboard'
+    setError(null)
+    setIsPending(true)
+    const result = await signIn({ email, password })
+    if (result?.error) {
+      setError(result.error)
+      setIsPending(false)
+    } else {
+      // Full page navigation ensures the server reads the fresh session
+      // cookies set by the signIn server action. router.push() can race
+      // with cookie propagation; window.location is reliable.
+      window.location.href = '/dashboard'
+    }
   }
 
   return (
@@ -42,6 +57,12 @@ export default function LoginPage() {
           </div>
 
           <form onSubmit={handleSubmit} className="space-y-5">
+            {error && (
+              <div className="flex items-start gap-2.5 px-4 py-3 bg-danger/5 border border-danger/20 rounded-card">
+                <AlertCircle size={15} className="text-danger flex-shrink-0 mt-0.5" strokeWidth={2} />
+                <p className="text-body-xs text-danger">{error}</p>
+              </div>
+            )}
             <div>
               <label htmlFor="email" className="block text-body-sm font-medium text-ink mb-1.5">
                 Email address
@@ -112,11 +133,12 @@ export default function LoginPage() {
 
             <button
               type="submit"
-              className="w-full py-3 bg-sage-500 text-white font-medium text-body-base rounded-pill shadow-button hover:bg-sage-600 hover:shadow-button-hover active:scale-[0.99] focus-ring flex items-center justify-center gap-2"
+              disabled={isPending}
+              className="w-full py-3 bg-sage-500 text-white font-medium text-body-base rounded-pill shadow-button hover:bg-sage-600 hover:shadow-button-hover active:scale-[0.99] focus-ring flex items-center justify-center gap-2 disabled:opacity-60 disabled:cursor-not-allowed"
               style={{ transitionProperty: 'background-color, box-shadow, transform', transitionDuration: '150ms' }}
             >
-              Sign in
-              <ArrowRight size={16} strokeWidth={2.5} />
+              {isPending ? 'Signing in…' : 'Sign in'}
+              {!isPending && <ArrowRight size={16} strokeWidth={2.5} />}
             </button>
           </form>
 

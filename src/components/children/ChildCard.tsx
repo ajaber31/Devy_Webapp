@@ -2,6 +2,7 @@
 
 import Link from 'next/link'
 import { MessageCircle, ArrowRight, Clock } from 'lucide-react'
+import { ageFromDob } from '@/lib/utils'
 import type { Child } from '@/lib/types'
 
 const avatarBgMap: Record<string, string> = {
@@ -10,7 +11,7 @@ const avatarBgMap: Record<string, string> = {
   sand: 'bg-sand-100 text-sand-500',
 }
 
-const diagnosisBgMap: Record<string, string> = {
+const labelBgMap: Record<string, string> = {
   sage: 'bg-sage-50 text-sage-700 border-sage-200',
   dblue: 'bg-dblue-50 text-dblue-700 border-dblue-200',
   sand: 'bg-sand-50 text-sand-600 border-sand-200',
@@ -22,10 +23,11 @@ interface ChildCardProps {
 
 export function ChildCard({ child }: ChildCardProps) {
   const avatarClass = avatarBgMap[child.avatarColor] ?? avatarBgMap.sage
-  const diagnosisClass = diagnosisBgMap[child.avatarColor] ?? diagnosisBgMap.sage
+  const labelClass = labelBgMap[child.avatarColor] ?? labelBgMap.sage
   const initial = child.name.charAt(0)
-  const shownDiagnoses = child.diagnoses.slice(0, 2)
-  const extraDiagnoses = child.diagnoses.length - 2
+  const age = ageFromDob(child.dateOfBirth)
+  const shownLabels = child.contextLabels.slice(0, 2)
+  const extraLabels = child.contextLabels.length - 2
 
   return (
     <div
@@ -54,24 +56,27 @@ export function ChildCard({ child }: ChildCardProps) {
               {child.name}
             </h3>
             <p className="text-body-xs text-ink-secondary mt-0.5">
-              Age {child.age} &middot; {child.diagnoses[0]}
+              {age !== null ? `Age ${age}` : 'Age not set'}
+              {child.contextLabels[0] ? ` · ${child.contextLabels[0]}` : ''}
             </p>
           </div>
         </div>
 
-        {/* Diagnosis badges */}
-        <div className="flex flex-wrap gap-1.5 mt-3">
-          {shownDiagnoses.map((d) => (
-            <span key={d} className={`inline-block px-2.5 py-0.5 rounded-pill text-body-xs font-medium border ${diagnosisClass}`}>
-              {d}
-            </span>
-          ))}
-          {extraDiagnoses > 0 && (
-            <span className="inline-block px-2.5 py-0.5 rounded-pill text-body-xs font-medium bg-raised text-ink-secondary">
-              +{extraDiagnoses}
-            </span>
-          )}
-        </div>
+        {/* Context label badges */}
+        {shownLabels.length > 0 && (
+          <div className="flex flex-wrap gap-1.5 mt-3">
+            {shownLabels.map((label) => (
+              <span key={label} className={`inline-block px-2.5 py-0.5 rounded-pill text-body-xs font-medium border ${labelClass}`}>
+                {label}
+              </span>
+            ))}
+            {extraLabels > 0 && (
+              <span className="inline-block px-2.5 py-0.5 rounded-pill text-body-xs font-medium bg-raised text-ink-secondary">
+                +{extraLabels}
+              </span>
+            )}
+          </div>
+        )}
 
         {/* Support needs preview */}
         {child.supportNeeds.length > 0 && (

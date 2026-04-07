@@ -3,10 +3,10 @@ import type { Child } from '@/lib/types'
 export const mockChildren: Child[] = [
   {
     id: 'ch1',
+    userId: 'mock-user',
     name: 'Emma Okafor',
-    age: 7,
     dateOfBirth: '2018-09-14',
-    diagnoses: ['Autism Spectrum Disorder', 'Sensory Processing Disorder'],
+    contextLabels: ['Autism Spectrum Disorder', 'Sensory Processing Disorder'],
     supportNeeds: [
       'Sensory regulation support',
       'Visual schedule & routine predictability',
@@ -37,10 +37,10 @@ export const mockChildren: Child[] = [
   },
   {
     id: 'ch2',
+    userId: 'mock-user',
     name: 'Liam Chen',
-    age: 5,
     dateOfBirth: '2020-11-03',
-    diagnoses: ['Expressive Language Delay', 'Apraxia of Speech'],
+    contextLabels: ['Expressive Language Delay', 'Apraxia of Speech'],
     supportNeeds: [
       'AAC device modeling and support',
       'Augmentative communication strategies',
@@ -71,10 +71,10 @@ export const mockChildren: Child[] = [
   },
   {
     id: 'ch3',
+    userId: 'mock-user',
     name: 'Sophia Martinez',
-    age: 10,
     dateOfBirth: '2015-04-22',
-    diagnoses: ['ADHD (Combined Type)', 'Dyslexia'],
+    contextLabels: ['ADHD (Combined Type)', 'Dyslexia'],
     supportNeeds: [
       'Executive function scaffolding',
       'Chunked tasks with clear checkpoints',
@@ -105,10 +105,10 @@ export const mockChildren: Child[] = [
   },
   {
     id: 'ch4',
+    userId: 'mock-user',
     name: 'Noah Patel',
-    age: 9,
     dateOfBirth: '2016-07-30',
-    diagnoses: ['Spastic Diplegia Cerebral Palsy', 'Mild Intellectual Disability'],
+    contextLabels: ['Spastic Diplegia Cerebral Palsy', 'Mild Intellectual Disability'],
     supportNeeds: [
       'Fine and gross motor accommodations',
       'Adapted seating and positioning',

@@ -36,3 +36,14 @@ export function formatFileSize(kb: number): string {
 export function initials(name: string): string {
   return name.split(' ').map(n => n[0]).join('').toUpperCase().slice(0, 2)
 }
+
+/** Derive age in years from a date-of-birth string (YYYY-MM-DD). Returns null if dob is null/empty. */
+export function ageFromDob(dob: string | null | undefined): number | null {
+  if (!dob) return null
+  const birth = new Date(dob)
+  const now = new Date()
+  let age = now.getFullYear() - birth.getFullYear()
+  const m = now.getMonth() - birth.getMonth()
+  if (m < 0 || (m === 0 && now.getDate() < birth.getDate())) age--
+  return age
+}

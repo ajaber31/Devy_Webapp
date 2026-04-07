@@ -1,12 +1,14 @@
 import Link from 'next/link'
 import { ArrowRight, Users } from 'lucide-react'
-import { mockCurrentUser } from '@/lib/mock-data/users'
 import { NoiseTexture } from '@/components/shared/NoiseTexture'
 
-export function WelcomeBanner() {
+interface WelcomeBannerProps {
+  firstName: string
+}
+
+export function WelcomeBanner({ firstName }: WelcomeBannerProps) {
   const hour = new Date().getHours()
   const greeting = hour < 12 ? 'Good morning' : hour < 17 ? 'Good afternoon' : 'Good evening'
-  const firstName = mockCurrentUser.name.split(' ')[0]
 
   return (
     <div

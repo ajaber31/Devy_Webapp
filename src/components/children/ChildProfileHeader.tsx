@@ -1,5 +1,6 @@
 import Link from 'next/link'
-import { MessageCircle, ArrowRight, Edit2 } from 'lucide-react'
+import { MessageCircle, ArrowRight } from 'lucide-react'
+import { ageFromDob } from '@/lib/utils'
 import type { Child } from '@/lib/types'
 
 const avatarBgMap: Record<string, string> = {
@@ -8,7 +9,7 @@ const avatarBgMap: Record<string, string> = {
   sand: 'bg-sand-100 text-sand-500',
 }
 
-const diagnosisBgMap: Record<string, string> = {
+const labelBgMap: Record<string, string> = {
   sage: 'bg-sage-50 text-sage-700 border-sage-200',
   dblue: 'bg-dblue-50 text-dblue-700 border-dblue-200',
   sand: 'bg-sand-50 text-sand-600 border-sand-200',
@@ -16,12 +17,14 @@ const diagnosisBgMap: Record<string, string> = {
 
 interface ChildProfileHeaderProps {
   child: Child
+  onEdit?: () => void
 }
 
-export function ChildProfileHeader({ child }: ChildProfileHeaderProps) {
+export function ChildProfileHeader({ child, onEdit }: ChildProfileHeaderProps) {
   const avatarClass = avatarBgMap[child.avatarColor] ?? avatarBgMap.sage
-  const diagnosisClass = diagnosisBgMap[child.avatarColor] ?? diagnosisBgMap.sage
+  const labelClass = labelBgMap[child.avatarColor] ?? labelBgMap.sage
   const initial = child.name.charAt(0)
+  const age = ageFromDob(child.dateOfBirth)
 
   return (
     <div className="bg-white rounded-card-lg shadow-card border border-border/50 px-7 py-6">
@@ -38,29 +41,34 @@ export function ChildProfileHeader({ child }: ChildProfileHeaderProps) {
               {child.name}
             </h1>
             <p className="text-body-sm text-ink-secondary mt-1">
-              Age {child.age} &middot; Born {new Date(child.dateOfBirth).toLocaleDateString('en-US', { month: 'long', day: 'numeric', year: 'numeric' })}
+              {age !== null ? `Age ${age}` : 'Age not set'}
+              {child.dateOfBirth ? ` · Born ${new Date(child.dateOfBirth).toLocaleDateString('en-CA', { month: 'long', day: 'numeric', year: 'numeric' })}` : ''}
             </p>
 
-            {/* Diagnosis badges */}
-            <div className="flex flex-wrap gap-1.5 mt-2.5">
-              {child.diagnoses.map((d) => (
-                <span key={d} className={`inline-block px-2.5 py-0.5 rounded-pill text-body-xs font-medium border ${diagnosisClass}`}>
-                  {d}
-                </span>
-              ))}
-            </div>
+            {/* Context label badges */}
+            {child.contextLabels.length > 0 && (
+              <div className="flex flex-wrap gap-1.5 mt-2.5">
+                {child.contextLabels.map((label) => (
+                  <span key={label} className={`inline-block px-2.5 py-0.5 rounded-pill text-body-xs font-medium border ${labelClass}`}>
+                    {label}
+                  </span>
+                ))}
+              </div>
+            )}
           </div>
         </div>
 
         {/* Actions */}
         <div className="flex items-center gap-2 flex-shrink-0">
-          <button
-            className="flex items-center gap-1.5 px-4 py-2 rounded-card text-body-sm font-medium text-ink-secondary hover:text-ink hover:bg-raised border border-border focus-ring"
-            style={{ transitionProperty: 'color, background-color', transitionDuration: '150ms' }}
-          >
-            <Edit2 size={14} strokeWidth={1.75} />
-            Edit profile
-          </button>
+          {onEdit && (
+            <button
+              onClick={onEdit}
+              className="flex items-center gap-1.5 px-4 py-2 rounded-card text-body-sm font-medium text-ink-secondary hover:text-ink hover:bg-raised border border-border focus-ring"
+              style={{ transitionProperty: 'color, background-color', transitionDuration: '150ms' }}
+            >
+              Edit profile
+            </button>
+          )}
           <Link
             href={`/chat?childId=${child.id}&childName=${encodeURIComponent(child.name)}`}
             className="flex items-center gap-2 px-5 py-2.5 bg-sage-500 text-white font-semibold text-body-sm rounded-card shadow-button hover:bg-sage-600 active:scale-[0.98] focus-ring"

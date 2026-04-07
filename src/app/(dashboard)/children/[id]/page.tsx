@@ -1,22 +1,24 @@
-'use client'
-
 import { notFound } from 'next/navigation'
 import Link from 'next/link'
 import { Clock, Target, Star, Heart, Calendar, MessageCircle, FileText, ChevronLeft } from 'lucide-react'
 import { ChildProfileHeader } from '@/components/children/ChildProfileHeader'
-import { mockChildren } from '@/lib/mock-data/children'
-import { mockConversations } from '@/lib/mock-data/conversations'
-import { formatDate } from '@/lib/utils'
+import { getChild } from '@/lib/actions/children'
+import { getConversationsForChild } from '@/lib/actions/conversations'
+import { formatDate, ageFromDob } from '@/lib/utils'
 
 interface PageProps {
   params: { id: string }
 }
 
-export default function ChildProfilePage({ params }: PageProps) {
-  const child = mockChildren.find(c => c.id === params.id)
+export default async function ChildProfilePage({ params }: PageProps) {
+  const [child, childConversations] = await Promise.all([
+    getChild(params.id),
+    getConversationsForChild(params.id),
+  ])
+
   if (!child) notFound()
 
-  const childConversations = mockConversations.filter(c => c.childId === child.id)
+  const age = ageFromDob(child.dateOfBirth)
 
   const sections = [
     {
@@ -61,13 +63,17 @@ export default function ChildProfilePage({ params }: PageProps) {
                 <Icon size={15} strokeWidth={1.75} className="text-ink-secondary" />
                 <h3 className="font-display text-[0.95rem] font-semibold text-ink">{label}</h3>
               </div>
-              <div className="flex flex-wrap gap-2">
-                {items.map((item) => (
-                  <span key={item} className={`inline-block px-3 py-1 rounded-pill text-body-xs font-medium ${chipClass}`}>
-                    {item}
-                  </span>
-                ))}
-              </div>
+              {items.length > 0 ? (
+                <div className="flex flex-wrap gap-2">
+                  {items.map((item) => (
+                    <span key={item} className={`inline-block px-3 py-1 rounded-pill text-body-xs font-medium ${chipClass}`}>
+                      {item}
+                    </span>
+                  ))}
+                </div>
+              ) : (
+                <p className="text-body-xs text-ink-tertiary">None added yet.</p>
+              )}
             </div>
           ))}
 
@@ -77,14 +83,18 @@ export default function ChildProfilePage({ params }: PageProps) {
               <Target size={15} strokeWidth={1.75} className="text-ink-secondary" />
               <h3 className="font-display text-[0.95rem] font-semibold text-ink">Goals &amp; Focus Areas</h3>
             </div>
-            <ul className="space-y-2">
-              {child.goals.map((goal, i) => (
-                <li key={i} className="flex items-start gap-3">
-                  <div className="w-5 h-5 rounded border-2 border-sage-300 flex-shrink-0 mt-0.5" />
-                  <span className="text-body-sm text-ink leading-snug">{goal}</span>
-                </li>
-              ))}
-            </ul>
+            {child.goals.length > 0 ? (
+              <ul className="space-y-2">
+                {child.goals.map((goal, i) => (
+                  <li key={i} className="flex items-start gap-3">
+                    <div className="w-5 h-5 rounded border-2 border-sage-300 flex-shrink-0 mt-0.5" />
+                    <span className="text-body-sm text-ink leading-snug">{goal}</span>
+                  </li>
+                ))}
+              </ul>
+            ) : (
+              <p className="text-body-xs text-ink-tertiary">No goals added yet.</p>
+            )}
           </div>
 
           {/* Routines */}
@@ -93,29 +103,35 @@ export default function ChildProfilePage({ params }: PageProps) {
               <Clock size={15} strokeWidth={1.75} className="text-ink-secondary" />
               <h3 className="font-display text-[0.95rem] font-semibold text-ink">Routines</h3>
             </div>
-            <ol className="space-y-2">
-              {child.routines.map((routine, i) => (
-                <li key={i} className="flex items-start gap-3">
-                  <span className="w-5 h-5 rounded-full bg-sage-100 text-sage-700 flex items-center justify-center text-body-xs font-bold flex-shrink-0 mt-0.5">
-                    {i + 1}
-                  </span>
-                  <span className="text-body-sm text-ink leading-snug">{routine}</span>
-                </li>
-              ))}
-            </ol>
+            {child.routines.length > 0 ? (
+              <ol className="space-y-2">
+                {child.routines.map((routine, i) => (
+                  <li key={i} className="flex items-start gap-3">
+                    <span className="w-5 h-5 rounded-full bg-sage-100 text-sage-700 flex items-center justify-center text-body-xs font-bold flex-shrink-0 mt-0.5">
+                      {i + 1}
+                    </span>
+                    <span className="text-body-sm text-ink leading-snug">{routine}</span>
+                  </li>
+                ))}
+              </ol>
+            ) : (
+              <p className="text-body-xs text-ink-tertiary">No routines added yet.</p>
+            )}
           </div>
 
           {/* Notes */}
-          <div className="bg-white rounded-card-lg shadow-card border border-border/50 px-5 py-4">
-            <div className="flex items-center gap-2 mb-3">
-              <FileText size={15} strokeWidth={1.75} className="text-ink-secondary" />
-              <h3 className="font-display text-[0.95rem] font-semibold text-ink">Notes</h3>
+          {child.notes && (
+            <div className="bg-white rounded-card-lg shadow-card border border-border/50 px-5 py-4">
+              <div className="flex items-center gap-2 mb-3">
+                <FileText size={15} strokeWidth={1.75} className="text-ink-secondary" />
+                <h3 className="font-display text-[0.95rem] font-semibold text-ink">Notes</h3>
+              </div>
+              <p className="text-body-sm text-ink-secondary leading-relaxed">{child.notes}</p>
             </div>
-            <p className="text-body-sm text-ink-secondary leading-relaxed">{child.notes}</p>
-          </div>
+          )}
         </div>
 
-        {/* Right column — conversations */}
+        {/* Right column — conversations + profile meta */}
         <div className="space-y-5">
           <div className="bg-white rounded-card-lg shadow-card border border-border/50 px-5 py-4">
             <div className="flex items-center gap-2 mb-3">
@@ -127,10 +143,10 @@ export default function ChildProfilePage({ params }: PageProps) {
               <p className="text-body-xs text-ink-tertiary">No conversations yet.</p>
             ) : (
               <ul className="space-y-2">
-                {childConversations.map((convo) => (
+                {childConversations.slice(0, 5).map((convo) => (
                   <li key={convo.id}>
                     <Link
-                      href={`/chat?childId=${child.id}&childName=${encodeURIComponent(child.name)}`}
+                      href={`/chat?conversationId=${convo.id}&childId=${child.id}&childName=${encodeURIComponent(child.name)}`}
                       className="block p-3 rounded-card hover:bg-surface border border-transparent hover:border-border group focus-ring"
                       style={{ transitionProperty: 'background-color, border-color', transitionDuration: '150ms' }}
                     >
@@ -168,14 +184,18 @@ export default function ChildProfilePage({ params }: PageProps) {
             <dl className="space-y-2">
               <div className="flex justify-between gap-2">
                 <dt className="text-body-xs text-ink-tertiary">Age</dt>
-                <dd className="text-body-xs text-ink font-medium">{child.age} years old</dd>
-              </div>
-              <div className="flex justify-between gap-2">
-                <dt className="text-body-xs text-ink-tertiary">Date of birth</dt>
                 <dd className="text-body-xs text-ink font-medium">
-                  {new Date(child.dateOfBirth).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' })}
+                  {age !== null ? `${age} years old` : 'Not set'}
                 </dd>
               </div>
+              {child.dateOfBirth && (
+                <div className="flex justify-between gap-2">
+                  <dt className="text-body-xs text-ink-tertiary">Date of birth</dt>
+                  <dd className="text-body-xs text-ink font-medium">
+                    {new Date(child.dateOfBirth).toLocaleDateString('en-CA', { month: 'short', day: 'numeric', year: 'numeric' })}
+                  </dd>
+                </div>
+              )}
               <div className="flex justify-between gap-2">
                 <dt className="text-body-xs text-ink-tertiary">Profile created</dt>
                 <dd className="text-body-xs text-ink font-medium">{formatDate(child.createdAt)}</dd>

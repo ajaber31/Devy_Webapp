@@ -6,56 +6,105 @@ import { MessageBubble } from './MessageBubble'
 import { TypingIndicator } from './TypingIndicator'
 import { ExamplePrompts } from './ExamplePrompts'
 import { ChatInput } from './ChatInput'
-import { mockMessages, mockResponses } from '@/lib/mock-data/messages'
-import type { Message } from '@/lib/types'
+import { mockResponses } from '@/lib/mock-data/messages'
+import { insertMessage, createConversation } from '@/lib/actions/conversations'
+import type { Message, Conversation } from '@/lib/types'
 import { MoreHorizontal, Star, ArrowUpRight } from 'lucide-react'
 
 interface ChatAreaProps {
-  conversationId: string
+  // null = brand-new conversation not yet created in DB
+  conversationId: string | null
   conversationTitle: string
+  initialMessages: Message[]
   childId?: string
   childName?: string
+  /** Called when a new conversation is auto-created on first send */
+  onConversationCreated?: (conversation: Conversation) => void
 }
 
-export function ChatArea({ conversationId, conversationTitle, childId, childName }: ChatAreaProps) {
-  const [messages, setMessages] = useState<Message[]>(
-    conversationId === 'c1' ? mockMessages : []
-  )
+export function ChatArea({
+  conversationId: initialConversationId,
+  conversationTitle,
+  initialMessages,
+  childId,
+  childName,
+  onConversationCreated,
+}: ChatAreaProps) {
+  const [messages, setMessages] = useState<Message[]>(initialMessages)
   const [input, setInput] = useState('')
   const [isTyping, setIsTyping] = useState(false)
+  // Track the actual conversation ID (may be set lazily on first send)
+  const [convoId, setConvoId] = useState<string | null>(initialConversationId)
   const bottomRef = useRef<HTMLDivElement>(null)
   const responseIndex = useRef(0)
+
+  // Sync if parent changes the active conversation
+  useEffect(() => {
+    setMessages(initialMessages)
+    setConvoId(initialConversationId)
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [initialConversationId])
 
   useEffect(() => {
     bottomRef.current?.scrollIntoView({ behavior: 'smooth' })
   }, [messages, isTyping])
 
-  const handleSend = () => {
+  const handleSend = async () => {
     if (!input.trim() || isTyping) return
 
-    const userMsg: Message = {
-      id: `msg-${Date.now()}`,
-      conversationId,
-      role: 'user',
-      content: input.trim(),
-      createdAt: new Date().toISOString(),
+    const content = input.trim()
+    setInput('')
+
+    // Create conversation in DB on first send if one doesn't exist yet
+    let activeConvoId = convoId
+    if (!activeConvoId) {
+      const result = await createConversation({
+        title: content.slice(0, 60),
+        childId,
+      })
+      if (result.error || !result.data) {
+        console.error('Failed to create conversation:', result.error)
+        return
+      }
+      activeConvoId = result.data.id
+      setConvoId(activeConvoId)
+      onConversationCreated?.(result.data)
     }
 
+    // Optimistic user message
+    const userMsg: Message = {
+      id: `msg-${Date.now()}`,
+      conversationId: activeConvoId,
+      role: 'user',
+      content,
+      createdAt: new Date().toISOString(),
+    }
     setMessages(prev => [...prev, userMsg])
-    setInput('')
     setIsTyping(true)
 
-    setTimeout(() => {
+    // Persist user message
+    await insertMessage({ conversationId: activeConvoId, role: 'user', content })
+
+    // Mock AI response (replaced by real AI in next phase)
+    setTimeout(async () => {
       const response = mockResponses[responseIndex.current % mockResponses.length]
       responseIndex.current += 1
       const aiMsg: Message = {
         ...response,
         id: `ai-${Date.now()}`,
-        conversationId,
+        conversationId: activeConvoId!,
         createdAt: new Date().toISOString(),
       }
       setMessages(prev => [...prev, aiMsg])
       setIsTyping(false)
+
+      // Persist AI message
+      await insertMessage({
+        conversationId: activeConvoId!,
+        role: 'assistant',
+        content: response.content,
+        notFoundNote: response.notFoundNote,
+      })
     }, 1500)
   }
 
@@ -70,10 +119,18 @@ export function ChatArea({ conversationId, conversationTitle, childId, childName
           <h2 className="font-display text-[1rem] font-semibold text-ink truncate">{conversationTitle}</h2>
         </div>
         <div className="flex items-center gap-1 flex-shrink-0">
-          <button className="p-2 rounded text-ink-tertiary hover:text-ink hover:bg-raised focus-ring" style={{ transitionProperty: 'color, background-color', transitionDuration: '150ms' }} aria-label="Save conversation">
+          <button
+            className="p-2 rounded text-ink-tertiary hover:text-ink hover:bg-raised focus-ring"
+            style={{ transitionProperty: 'color, background-color', transitionDuration: '150ms' }}
+            aria-label="Save conversation"
+          >
             <Star size={16} strokeWidth={1.75} />
           </button>
-          <button className="p-2 rounded text-ink-tertiary hover:text-ink hover:bg-raised focus-ring" style={{ transitionProperty: 'color, background-color', transitionDuration: '150ms' }} aria-label="More options">
+          <button
+            className="p-2 rounded text-ink-tertiary hover:text-ink hover:bg-raised focus-ring"
+            style={{ transitionProperty: 'color, background-color', transitionDuration: '150ms' }}
+            aria-label="More options"
+          >
             <MoreHorizontal size={16} strokeWidth={1.75} />
           </button>
         </div>

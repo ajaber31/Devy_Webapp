@@ -1,13 +1,22 @@
+import { redirect } from 'next/navigation'
 import { Sidebar } from '@/components/layout/Sidebar'
 import { MobileSidebar } from '@/components/layout/MobileSidebar'
 import { Bell, Search } from 'lucide-react'
+import { getProfile } from '@/lib/actions/profile'
+import { initials } from '@/lib/utils'
 
-export default function DashboardLayout({ children }: { children: React.ReactNode }) {
+export default async function DashboardLayout({ children }: { children: React.ReactNode }) {
+  const profile = await getProfile()
+
+  if (!profile) {
+    redirect('/login')
+  }
+
   return (
     <div className="flex h-screen overflow-hidden bg-canvas">
       {/* Desktop sidebar */}
       <div className="hidden lg:flex">
-        <Sidebar />
+        <Sidebar profile={profile} />
       </div>
 
       {/* Main area */}
@@ -16,7 +25,7 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
         <header className="h-14 flex items-center justify-between px-4 lg:px-6 border-b border-border bg-canvas flex-shrink-0">
           {/* Mobile: hamburger */}
           <div className="lg:hidden">
-            <MobileSidebar />
+            <MobileSidebar profile={profile} />
           </div>
 
           {/* Search (desktop only) */}
@@ -42,7 +51,7 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
               <span className="absolute top-1.5 right-1.5 w-2 h-2 rounded-full bg-sage-500" />
             </button>
             <div className="w-8 h-8 rounded-full bg-sage-200 text-sage-800 flex items-center justify-center text-body-xs font-semibold ml-1">
-              AR
+              {initials(profile.name)}
             </div>
           </div>
         </header>

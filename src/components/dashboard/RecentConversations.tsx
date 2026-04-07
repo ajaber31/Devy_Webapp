@@ -1,10 +1,32 @@
 import Link from 'next/link'
 import { MessageCircle, Pin, ArrowRight, Clock } from 'lucide-react'
-import { mockConversations } from '@/lib/mock-data/conversations'
 import { formatDate, truncate } from '@/lib/utils'
+import type { Conversation } from '@/lib/types'
 
-export function RecentConversations() {
-  const conversations = mockConversations.slice(0, 5)
+interface RecentConversationsProps {
+  conversations: Conversation[]
+}
+
+export function RecentConversations({ conversations }: RecentConversationsProps) {
+  if (conversations.length === 0) {
+    return (
+      <div className="bg-white rounded-card-lg shadow-card border border-border/50 overflow-hidden">
+        <div className="px-5 py-4 border-b border-border flex items-center justify-between">
+          <div className="flex items-center gap-2">
+            <MessageCircle size={16} className="text-sage-500" strokeWidth={2} />
+            <h3 className="font-display text-[1.05rem] font-semibold text-ink">Recent conversations</h3>
+          </div>
+          <Link href="/chat" className="text-body-xs text-sage-600 hover:text-sage-700 font-medium flex items-center gap-1"
+            style={{ transitionProperty: 'color', transitionDuration: '150ms' }}>
+            Start one <ArrowRight size={12} strokeWidth={2.5} />
+          </Link>
+        </div>
+        <div className="px-5 py-10 text-center">
+          <p className="text-body-sm text-ink-tertiary">No conversations yet. Start a new chat to get going.</p>
+        </div>
+      </div>
+    )
+  }
 
   return (
     <div className="bg-white rounded-card-lg shadow-card border border-border/50 overflow-hidden">
@@ -13,7 +35,8 @@ export function RecentConversations() {
           <MessageCircle size={16} className="text-sage-500" strokeWidth={2} />
           <h3 className="font-display text-[1.05rem] font-semibold text-ink">Recent conversations</h3>
         </div>
-        <Link href="/chat" className="text-body-xs text-sage-600 hover:text-sage-700 font-medium flex items-center gap-1 transition-colors duration-150">
+        <Link href="/chat" className="text-body-xs text-sage-600 hover:text-sage-700 font-medium flex items-center gap-1"
+          style={{ transitionProperty: 'color', transitionDuration: '150ms' }}>
           View all <ArrowRight size={12} strokeWidth={2.5} />
         </Link>
       </div>
@@ -22,7 +45,7 @@ export function RecentConversations() {
         {conversations.map((convo, i) => (
           <li key={convo.id}>
             <Link
-              href="/chat"
+              href={`/chat?conversationId=${convo.id}`}
               className="flex items-start gap-3 px-5 py-3.5 hover:bg-surface group"
               style={{ transitionProperty: 'background-color', transitionDuration: '150ms' }}
             >
@@ -40,7 +63,7 @@ export function RecentConversations() {
                     <span className="flex-shrink-0 px-1.5 py-0.5 bg-sage-100 text-sage-700 rounded text-[0.65rem] font-medium">Pinned</span>
                   )}
                 </div>
-                <p className="text-body-xs text-ink-tertiary truncate">{truncate(convo.preview, 70)}</p>
+                <p className="text-body-xs text-ink-tertiary truncate">{truncate(convo.preview || 'No messages yet', 70)}</p>
                 <div className="flex items-center gap-3 mt-1">
                   <span className="flex items-center gap-1 text-body-xs text-ink-tertiary">
                     <Clock size={10} strokeWidth={2} />

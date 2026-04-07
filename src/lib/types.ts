@@ -4,6 +4,18 @@ export type DocumentStatus = 'processing' | 'ready' | 'error'
 export type MessageRole = 'user' | 'assistant'
 export type DeltaDirection = 'up' | 'down' | 'neutral'
 
+/** Authenticated user's profile from the profiles table */
+export interface Profile {
+  id: string
+  name: string
+  email: string
+  role: UserRole
+  status: UserStatus
+  avatarUrl?: string
+  createdAt: string
+}
+
+/** Used for admin user management listing */
 export interface User {
   id: string
   name: string
@@ -30,10 +42,11 @@ export interface Conversation {
 
 export interface Child {
   id: string
+  userId: string
   name: string
-  age: number
-  dateOfBirth: string
-  diagnoses: string[]
+  dateOfBirth: string | null
+  /** User-defined descriptive labels. Not clinical diagnoses. */
+  contextLabels: string[]
   supportNeeds: string[]
   strengths: string[]
   interests: string[]

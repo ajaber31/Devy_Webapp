@@ -1,41 +1,31 @@
-'use client'
+import { Suspense } from 'react'
+import { getConversations, getMessages } from '@/lib/actions/conversations'
+import { ChatPageClient } from './ChatPageClient'
 
-import { useState, Suspense } from 'react'
-import { useSearchParams } from 'next/navigation'
-import { ConversationSidebar } from '@/components/chat/ConversationSidebar'
-import { ChatArea } from '@/components/chat/ChatArea'
-import { mockConversations } from '@/lib/mock-data/conversations'
+export default async function ChatPage({
+  searchParams,
+}: {
+  searchParams: { childId?: string; childName?: string; conversationId?: string }
+}) {
+  const conversations = await getConversations()
 
-function ChatPageInner() {
-  const searchParams = useSearchParams()
-  const childId = searchParams.get('childId') ?? undefined
-  const childName = searchParams.get('childName') ?? undefined
-
-  const [activeId, setActiveId] = useState('c1')
-  const activeConvo = mockConversations.find(c => c.id === activeId)
+  // If a specific conversation was requested, pre-load its messages
+  const activeId = searchParams.conversationId ?? conversations[0]?.id ?? null
+  const initialMessages = activeId ? await getMessages(activeId) : []
 
   return (
-    <div className="flex h-full overflow-hidden">
-      {/* Conversation sidebar — hidden on small screens */}
-      <div className="hidden md:flex">
-        <ConversationSidebar activeId={activeId} onSelect={setActiveId} />
+    <Suspense fallback={
+      <div className="flex h-full items-center justify-center text-body-sm text-ink-tertiary">
+        Loading…
       </div>
-
-      {/* Chat area */}
-      <ChatArea
-        conversationId={activeId}
-        conversationTitle={activeConvo?.title ?? 'New conversation'}
-        childId={childId}
-        childName={childName}
+    }>
+      <ChatPageClient
+        initialConversations={conversations}
+        initialActiveId={activeId}
+        initialMessages={initialMessages}
+        childId={searchParams.childId}
+        childName={searchParams.childName}
       />
-    </div>
-  )
-}
-
-export default function ChatPage() {
-  return (
-    <Suspense fallback={<div className="flex h-full items-center justify-center text-body-sm text-ink-tertiary">Loading…</div>}>
-      <ChatPageInner />
     </Suspense>
   )
 }

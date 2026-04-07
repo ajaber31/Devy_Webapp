@@ -2,20 +2,48 @@
 
 import { useState } from 'react'
 import Link from 'next/link'
-import { Eye, EyeOff, ArrowRight, Check } from 'lucide-react'
+import { Eye, EyeOff, ArrowRight, Check, AlertCircle, MailCheck } from 'lucide-react'
 import { DevyLogo } from '@/components/shared/DevyLogo'
 import { NoiseTexture } from '@/components/shared/NoiseTexture'
 import { ACCOUNT_TYPE_OPTIONS } from '@/lib/constants'
 import { cn } from '@/lib/utils'
+import { signUp } from '@/lib/actions/auth'
 
 export default function SignupPage() {
   const [showPassword, setShowPassword] = useState(false)
   const [accountType, setAccountType] = useState<string>('')
   const [form, setForm] = useState({ name: '', email: '', password: '', confirm: '' })
+  const [error, setError] = useState<string | null>(null)
+  const [isPending, setIsPending] = useState(false)
+  const [successMessage, setSuccessMessage] = useState<string | null>(null)
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
-    window.location.href = '/dashboard'
+    setError(null)
+
+    if (form.password !== form.confirm) {
+      setError('Passwords do not match.')
+      return
+    }
+    if (!accountType) {
+      setError('Please select an account type.')
+      return
+    }
+
+    setIsPending(true)
+    const result = await signUp({
+      name: form.name,
+      email: form.email,
+      password: form.password,
+      accountType,
+    })
+
+    if (result?.error) {
+      setError(result.error)
+      setIsPending(false)
+    } else if (result?.success) {
+      setSuccessMessage(result.message ?? 'Account created! Check your email.')
+    }
   }
 
   const field = (key: keyof typeof form) => ({
@@ -43,7 +71,31 @@ export default function SignupPage() {
             <p className="text-body-sm text-ink-secondary">Start getting grounded, trusted support today.</p>
           </div>
 
+          {successMessage ? (
+            <div className="flex flex-col items-center text-center gap-4 py-4">
+              <div className="w-14 h-14 rounded-full bg-sage-100 flex items-center justify-center">
+                <MailCheck size={26} className="text-sage-600" strokeWidth={1.75} />
+              </div>
+              <div>
+                <h2 className="font-display text-display-sm font-semibold text-ink mb-1.5">Check your email</h2>
+                <p className="text-body-sm text-ink-secondary">{successMessage}</p>
+              </div>
+              <Link
+                href="/login"
+                className="mt-2 px-6 py-2.5 bg-sage-500 text-white font-medium text-body-sm rounded-pill shadow-button hover:bg-sage-600 focus-ring"
+                style={{ transitionProperty: 'background-color', transitionDuration: '150ms' }}
+              >
+                Go to sign in
+              </Link>
+            </div>
+          ) : (
           <form onSubmit={handleSubmit} className="space-y-5">
+            {error && (
+              <div className="flex items-start gap-2.5 px-4 py-3 bg-danger/5 border border-danger/20 rounded-card">
+                <AlertCircle size={15} className="text-danger flex-shrink-0 mt-0.5" strokeWidth={2} />
+                <p className="text-body-xs text-danger">{error}</p>
+              </div>
+            )}
             {/* Full name */}
             <div>
               <label htmlFor="name" className="block text-body-sm font-medium text-ink mb-1.5">Full name</label>
@@ -150,13 +202,15 @@ export default function SignupPage() {
 
             <button
               type="submit"
-              className="w-full py-3 bg-sage-500 text-white font-medium text-body-base rounded-pill shadow-button hover:bg-sage-600 hover:shadow-button-hover active:scale-[0.99] focus-ring flex items-center justify-center gap-2 mt-2"
+              disabled={isPending}
+              className="w-full py-3 bg-sage-500 text-white font-medium text-body-base rounded-pill shadow-button hover:bg-sage-600 hover:shadow-button-hover active:scale-[0.99] focus-ring flex items-center justify-center gap-2 mt-2 disabled:opacity-60 disabled:cursor-not-allowed"
               style={{ transitionProperty: 'background-color, box-shadow, transform', transitionDuration: '150ms' }}
             >
-              Create account
-              <ArrowRight size={16} strokeWidth={2.5} />
+              {isPending ? 'Creating account…' : 'Create account'}
+              {!isPending && <ArrowRight size={16} strokeWidth={2.5} />}
             </button>
           </form>
+          )}
 
           <p className="text-center text-body-sm text-ink-secondary mt-6">
             Already have an account?{' '}
