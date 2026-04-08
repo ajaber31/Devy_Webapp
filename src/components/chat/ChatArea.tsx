@@ -35,9 +35,17 @@ export function ChatArea({
   // Track the actual conversation ID (may be set lazily on first send)
   const [convoId, setConvoId] = useState<string | null>(initialConversationId)
   const bottomRef = useRef<HTMLDivElement>(null)
+  // Tracks IDs we created internally so we can ignore the parent echo-back
+  const selfCreatedId = useRef<string | null>(null)
 
-  // Sync if parent changes the active conversation
+  // Sync when the parent switches to a different conversation.
+  // Skip if the new ID is one we just created ourselves — the parent echoing
+  // our own creation back would otherwise wipe the optimistic messages.
   useEffect(() => {
+    if (selfCreatedId.current !== null && initialConversationId === selfCreatedId.current) {
+      selfCreatedId.current = null
+      return
+    }
     setMessages(initialMessages)
     setConvoId(initialConversationId)
   // eslint-disable-next-line react-hooks/exhaustive-deps
@@ -65,6 +73,7 @@ export function ChatArea({
         return
       }
       activeConvoId = result.data.id
+      selfCreatedId.current = activeConvoId  // prevent useEffect from wiping optimistic msgs
       setConvoId(activeConvoId)
       onConversationCreated?.(result.data)
     }

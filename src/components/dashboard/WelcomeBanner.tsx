@@ -4,9 +4,10 @@ import { NoiseTexture } from '@/components/shared/NoiseTexture'
 
 interface WelcomeBannerProps {
   firstName: string
+  nounPlural: string
 }
 
-export function WelcomeBanner({ firstName }: WelcomeBannerProps) {
+export function WelcomeBanner({ firstName, nounPlural }: WelcomeBannerProps) {
   const hour = new Date().getHours()
   const greeting = hour < 12 ? 'Good morning' : hour < 17 ? 'Good afternoon' : 'Good evening'
 
@@ -29,7 +30,7 @@ export function WelcomeBanner({ firstName }: WelcomeBannerProps) {
             Welcome back, {firstName}.
           </h2>
           <p className="text-white/75 text-body-sm max-w-sm">
-            Devy&apos;s knowledge base is ready. Ask a question or open a child profile to get started.
+            Devy&apos;s knowledge base is ready. Ask a question or open a profile to get started.
           </p>
         </div>
         <div className="flex items-center gap-2 flex-shrink-0">
@@ -39,7 +40,7 @@ export function WelcomeBanner({ firstName }: WelcomeBannerProps) {
             style={{ transitionProperty: 'background-color, transform', transitionDuration: '150ms' }}
           >
             <Users size={14} strokeWidth={2} />
-            My Children
+            My {nounPlural}
           </Link>
           <Link
             href="/chat"

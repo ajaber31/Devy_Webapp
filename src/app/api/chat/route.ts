@@ -8,25 +8,15 @@ import {
   buildContextBlock,
   chunksToSources,
   detectNotFoundNote,
+  FALLBACK_SYSTEM_PROMPT,
 } from '@/lib/ai/prompt-builder'
 import type { Database } from '@/lib/supabase/database.types'
-import type { Source } from '@/lib/types'
 
 // Vercel Pro — up to 60s; ignored locally
 export const maxDuration = 60
 
 const HISTORY_LIMIT = 6       // last 3 exchanges for context
 const PEER_REVIEWED_MIN = 2   // fall back to all docs if fewer peer-reviewed results
-
-// ─── Response when no knowledge base results are found ───────────────────────
-
-const noKbResponse = {
-  content:
-    "I wasn't able to find relevant information in Devy's knowledge base to answer your question.",
-  notFoundNote:
-    "No supporting documents were found for this question. For professional guidance, please consult a qualified specialist.",
-  sources: [] as Source[],
-}
 
 // ─── Helpers ──────────────────────────────────────────────────────────────────
 
@@ -103,15 +93,18 @@ export async function POST(request: NextRequest) {
     chunks = await searchChunks(message, { topK: 8 })
   }
 
-  if (chunks.length === 0) {
-    return NextResponse.json(noKbResponse)
-  }
-
   // ── Build prompt + context ─────────────────────────────────────────────────
-  const systemPrompt = buildSystemPrompt(childName)
-  const contextBlock = buildContextBlock(chunks)
-  const fullSystem = `${systemPrompt}\n\n## DOCUMENT CONTEXT\n\n${contextBlock}`
-  const sources = chunksToSources(chunks)
+  const hasChunks = chunks.length > 0
+  const sources = hasChunks ? chunksToSources(chunks) : []
+
+  let fullSystem: string
+  if (hasChunks) {
+    const contextBlock = buildContextBlock(chunks)
+    fullSystem = `${buildSystemPrompt(childName)}\n\n## DOCUMENT CONTEXT\n\n${contextBlock}`
+  } else {
+    // No KB results — use conversational fallback (allows greetings + general Qs)
+    fullSystem = FALLBACK_SYSTEM_PROMPT
+  }
 
   // ── Call OpenAI ────────────────────────────────────────────────────────────
   try {
@@ -129,7 +122,9 @@ export async function POST(request: NextRequest) {
     const content =
       completion.choices[0]?.message?.content?.trim() ?? noKbResponse.content
 
-    const notFoundNote = detectNotFoundNote(content)
+    // Only surface a notFoundNote when no sources were retrieved — showing
+    // a "not enough info" disclaimer alongside source cards is contradictory.
+    const notFoundNote = sources.length === 0 ? detectNotFoundNote(content) : undefined
 
     return NextResponse.json({ content, sources, notFoundNote })
   } catch (err) {

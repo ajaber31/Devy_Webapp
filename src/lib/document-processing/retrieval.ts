@@ -30,7 +30,7 @@ export async function searchChunks(
   query: string,
   options: ChunkSearchOptions = {},
 ): Promise<RetrievedChunk[]> {
-  const { topK = 8, threshold = 0.70, tags } = options
+  const { topK = 8, threshold = 0.40, tags } = options
 
   const { embeddings, error } = await generateEmbeddings([query])
   if (error || embeddings.length === 0) {

@@ -30,7 +30,7 @@ export default async function DashboardPage() {
 
   return (
     <div className="p-6 max-w-7xl mx-auto space-y-6">
-      <WelcomeBanner firstName={firstName} />
+      <WelcomeBanner firstName={firstName} nounPlural={terms.nounPlural} />
 
       {/* Stats row */}
       <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
@@ -45,7 +45,7 @@ export default async function DashboardPage() {
           <RecentConversations conversations={conversations.slice(0, 5)} />
         </div>
         <div className="space-y-5">
-          <QuickActions />
+          <QuickActions nounPlural={terms.nounPlural} />
           <PrivacyNotice />
         </div>
       </div>

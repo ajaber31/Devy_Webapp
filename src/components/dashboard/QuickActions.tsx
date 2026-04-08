@@ -1,38 +1,41 @@
 import Link from 'next/link'
 import { MessageCircle, Users, Settings, ArrowUpRight, BookOpen } from 'lucide-react'
 
-const actions = [
-  {
-    icon: MessageCircle,
-    label: 'Start a chat',
-    description: 'Ask a new question',
-    href: '/chat',
-    color: 'bg-sage-100 text-sage-600',
-  },
-  {
-    icon: Users,
-    label: 'My Children',
-    description: 'View or add profiles',
-    href: '/children',
-    color: 'bg-dblue-100 text-dblue-600',
-  },
-  {
-    icon: BookOpen,
-    label: 'Browse Resources',
-    description: 'Approved knowledge base',
-    href: '/resources',
-    color: 'bg-sand-100 text-sand-500',
-  },
-  {
-    icon: Settings,
-    label: 'Settings',
-    description: 'Profile &amp; preferences',
-    href: '/settings',
-    color: 'bg-raised text-ink-secondary',
-  },
-]
+interface QuickActionsProps {
+  nounPlural: string
+}
 
-export function QuickActions() {
+export function QuickActions({ nounPlural }: QuickActionsProps) {
+  const actions = [
+    {
+      icon: MessageCircle,
+      label: 'Start a chat',
+      description: 'Ask a new question',
+      href: '/chat',
+      color: 'bg-sage-100 text-sage-600',
+    },
+    {
+      icon: Users,
+      label: `My ${nounPlural}`,
+      description: 'View or add profiles',
+      href: '/children',
+      color: 'bg-dblue-100 text-dblue-600',
+    },
+    {
+      icon: BookOpen,
+      label: 'Browse Resources',
+      description: 'Approved knowledge base',
+      href: '/resources',
+      color: 'bg-sand-100 text-sand-500',
+    },
+    {
+      icon: Settings,
+      label: 'Settings',
+      description: 'Profile &amp; preferences',
+      href: '/settings',
+      color: 'bg-raised text-ink-secondary',
+    },
+  ]
   return (
     <div className="bg-white rounded-card-lg shadow-card border border-border/50 overflow-hidden">
       <div className="px-5 py-4 border-b border-border">

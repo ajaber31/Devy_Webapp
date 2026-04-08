@@ -1,7 +1,7 @@
 'use client'
 
 import { useState } from 'react'
-import { Search, Plus, Pin, MessageCircle } from 'lucide-react'
+import { Search, Plus, Pin, MessageCircle, User } from 'lucide-react'
 import { formatDate, truncate, cn } from '@/lib/utils'
 import type { Conversation } from '@/lib/types'
 
@@ -89,7 +89,7 @@ export function ConversationSidebar({
               className="text-body-xs text-sage-600 hover:text-sage-700 font-medium"
               style={{ transitionProperty: 'color', transitionDuration: '150ms' }}
             >
-              Start your first chat →
+              Select a profile to start →
             </button>
           </div>
         )}
@@ -130,6 +130,12 @@ function ConvoItem({
         <p className={cn('text-body-xs font-medium truncate', active ? 'text-sage-800' : 'text-ink')}>
           {convo.title}
         </p>
+        {convo.childName && (
+          <p className="flex items-center gap-1 text-[0.65rem] text-dblue-600 font-medium mt-0.5">
+            <User size={9} strokeWidth={2.5} />
+            {convo.childName}
+          </p>
+        )}
         <p className="text-body-xs text-ink-tertiary truncate mt-0.5">
           {truncate(convo.preview || 'No messages yet', 45)}
         </p>

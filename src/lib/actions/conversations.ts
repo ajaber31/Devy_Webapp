@@ -12,7 +12,7 @@ export async function getConversations(): Promise<Conversation[]> {
 
   const { data } = await supabase
     .from('conversations')
-    .select('*, messages(count)')
+    .select('*, messages(count), children(name)')
     .eq('user_id', user.id)
     .order('updated_at', { ascending: false })
 
@@ -23,11 +23,11 @@ export async function getConversations(): Promise<Conversation[]> {
     title: row.title,
     preview: row.preview,
     updatedAt: row.updated_at,
-    // Supabase returns count as [{count: N}]
     messageCount: Array.isArray(row.messages) ? (row.messages[0] as { count: number } | undefined)?.count ?? 0 : 0,
     isPinned: row.is_pinned,
     tags: row.tags ?? [],
     childId: row.child_id ?? undefined,
+    childName: (row.children as { name: string } | null)?.name ?? undefined,
   }))
 }
 
@@ -38,7 +38,7 @@ export async function getConversationsForChild(childId: string): Promise<Convers
 
   const { data } = await supabase
     .from('conversations')
-    .select('*, messages(count)')
+    .select('*, messages(count), children(name)')
     .eq('user_id', user.id)
     .eq('child_id', childId)
     .order('updated_at', { ascending: false })
@@ -54,6 +54,7 @@ export async function getConversationsForChild(childId: string): Promise<Convers
     isPinned: row.is_pinned,
     tags: row.tags ?? [],
     childId: row.child_id ?? undefined,
+    childName: (row.children as { name: string } | null)?.name ?? undefined,
   }))
 }
 
