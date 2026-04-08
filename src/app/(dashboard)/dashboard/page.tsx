@@ -5,6 +5,7 @@ import { QuickActions } from '@/components/dashboard/QuickActions'
 import { PrivacyNotice } from '@/components/dashboard/PrivacyNotice'
 import { mockStats } from '@/lib/mock-data/resources'
 import { getProfile } from '@/lib/actions/profile'
+import { getRoleTerminology } from '@/lib/role-terminology'
 import { getConversationCount, getConversations, getUserMessageCount } from '@/lib/actions/conversations'
 import { getChildrenCount } from '@/lib/actions/children'
 
@@ -18,10 +19,11 @@ export default async function DashboardPage() {
   ])
 
   const firstName = profile?.name.split(' ')[0] ?? 'there'
+  const terms = getRoleTerminology(profile?.role ?? 'parent')
 
   const stats = mockStats.map(stat => {
     if (stat.label === 'Conversations') return { ...stat, value: String(conversationCount) }
-    if (stat.label === 'Child Profiles')  return { ...stat, value: String(childrenCount) }
+    if (stat.label === 'Child Profiles')  return { ...stat, label: terms.statLabel, value: String(childrenCount) }
     if (stat.label === 'Questions Asked') return { ...stat, value: String(messageCount) }
     return stat
   })

@@ -38,7 +38,20 @@
       "Read(//tmp/**)",
       "mcp__claude_ai_Supabase__execute_sql",
       "Bash(curl -s -o /dev/null -w \"%{http_code}\" http://localhost:3000/dashboard)",
-      "mcp__claude_ai_Supabase__list_projects"
+      "mcp__claude_ai_Supabase__list_projects",
+      "mcp__claude_ai_Supabase__get_project",
+      "Bash(node -e \"require\\('pdf-parse/lib/pdf-parse.js'\\); require\\('mammoth'\\); require\\('openai'\\); console.log\\('all ok'\\)\")",
+      "Bash(node -e \"const p = require\\('./node_modules/pdf-parse/package.json'\\); console.log\\(p.version, JSON.stringify\\(p.exports\\)\\)\")",
+      "Bash(node -e \"const p = require\\('pdf-parse/node'\\); console.log\\(typeof p.default || typeof p\\)\")",
+      "Bash(node -e \"const p = require\\('pdf-parse/node'\\); console.log\\(Object.keys\\(p\\)\\)\")",
+      "Bash(node -e \"const p = require\\('pdf-parse'\\); console.log\\(typeof p, Object.keys\\(p\\).slice\\(0,10\\)\\)\")",
+      "Bash(node -e \"const { PDFParse } = require\\('pdf-parse'\\); console.log\\(typeof PDFParse\\)\")",
+      "Bash(pkill -f \"next dev\")",
+      "Bash(curl -s http://localhost:3001/admin/documents -o /dev/null -w \"%{http_code}\")",
+      "Bash(node -e \"console.log\\(require\\('./node_modules/@supabase/ssr/package.json'\\).version\\)\")",
+      "Bash(rm -rf .next)",
+      "Bash(taskkill /F /IM node.exe)",
+      "Bash(taskkill //F //IM node.exe)"
     ]
   }
 }

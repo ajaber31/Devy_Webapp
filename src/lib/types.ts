@@ -1,6 +1,6 @@
 export type UserRole = 'parent' | 'caregiver' | 'clinician' | 'teacher' | 'admin'
 export type UserStatus = 'active' | 'invited' | 'suspended'
-export type DocumentStatus = 'processing' | 'ready' | 'error'
+export type DocumentStatus = 'uploaded' | 'parsing' | 'chunking' | 'embedding' | 'ready' | 'failed'
 export type MessageRole = 'user' | 'assistant'
 export type DeltaDirection = 'up' | 'down' | 'neutral'
 
@@ -77,14 +77,18 @@ export interface Message {
 
 export interface Document {
   id: string
-  name: string
-  type: 'pdf' | 'docx' | 'txt' | 'url'
-  sizeKb: number
+  title: string
+  originalFilename: string
+  type: 'pdf' | 'docx' | 'txt'
+  fileSizeBytes: number
+  storagePath: string
   status: DocumentStatus
-  uploadedBy: string
+  uploadedBy: string | null
   uploadedAt: string
+  processedAt: string | null
   tags: string[]
-  chunkCount?: number
+  chunkCount: number
+  errorMessage: string | null
 }
 
 export interface Resource {

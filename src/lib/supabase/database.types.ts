@@ -170,9 +170,110 @@ export interface Database {
           }
         ]
       }
+      documents: {
+        Row: {
+          id: string
+          title: string
+          original_filename: string
+          file_type: 'pdf' | 'docx' | 'txt'
+          storage_path: string
+          uploaded_by: string | null
+          status: 'uploaded' | 'parsing' | 'chunking' | 'embedding' | 'ready' | 'failed'
+          error_message: string | null
+          tags: string[]
+          chunk_count: number
+          uploaded_at: string
+          processed_at: string | null
+          file_size_bytes: number | null
+        }
+        Insert: {
+          id?: string
+          title: string
+          original_filename: string
+          file_type: 'pdf' | 'docx' | 'txt'
+          storage_path: string
+          uploaded_by?: string | null
+          status?: 'uploaded' | 'parsing' | 'chunking' | 'embedding' | 'ready' | 'failed'
+          error_message?: string | null
+          tags?: string[]
+          chunk_count?: number
+          uploaded_at?: string
+          processed_at?: string | null
+          file_size_bytes?: number | null
+        }
+        Update: {
+          title?: string
+          status?: 'uploaded' | 'parsing' | 'chunking' | 'embedding' | 'ready' | 'failed'
+          error_message?: string | null
+          tags?: string[]
+          chunk_count?: number
+          processed_at?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: 'documents_uploaded_by_fkey'
+            columns: ['uploaded_by']
+            isOneToOne: false
+            referencedRelation: 'profiles'
+            referencedColumns: ['id']
+          }
+        ]
+      }
+      document_chunks: {
+        Row: {
+          id: string
+          document_id: string
+          chunk_index: number
+          content: string
+          embedding: string | null
+          metadata: Json
+          created_at: string
+        }
+        Insert: {
+          id?: string
+          document_id: string
+          chunk_index: number
+          content: string
+          embedding?: string | null
+          metadata?: Json
+          created_at?: string
+        }
+        Update: {
+          embedding?: string | null
+          metadata?: Json
+        }
+        Relationships: [
+          {
+            foreignKeyName: 'document_chunks_document_id_fkey'
+            columns: ['document_id']
+            isOneToOne: false
+            referencedRelation: 'documents'
+            referencedColumns: ['id']
+          }
+        ]
+      }
     }
     Views: Record<string, never>
-    Functions: Record<string, never>
+    Functions: {
+      match_chunks: {
+        Args: {
+          query_embedding: string
+          match_threshold?: number
+          match_count?: number
+          filter_tags?: string[] | null
+        }
+        Returns: {
+          id: string
+          document_id: string
+          chunk_index: number
+          content: string
+          metadata: Json
+          similarity: number
+          document_title: string
+          original_filename: string
+        }[]
+      }
+    }
     Enums: Record<string, never>
     CompositeTypes: Record<string, never>
   }

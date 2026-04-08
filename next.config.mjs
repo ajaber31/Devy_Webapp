@@ -5,6 +5,10 @@ const nextConfig = {
       { hostname: 'placehold.co' },
     ],
   },
+  experimental: {
+    // pdf-parse and mammoth use Node.js native modules — must not be bundled by webpack
+    serverComponentsExternalPackages: ['pdf-parse', 'mammoth'],
+  },
 }
 
 export default nextConfig

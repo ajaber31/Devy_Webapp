@@ -4,7 +4,11 @@ import { useState } from 'react'
 import { Plus } from 'lucide-react'
 import { AddChildModal } from '@/components/children/AddChildModal'
 
-export function AddChildButton() {
+interface AddChildButtonProps {
+  label?: string
+}
+
+export function AddChildButton({ label = 'Add Child' }: AddChildButtonProps) {
   const [open, setOpen] = useState(false)
 
   return (
@@ -15,7 +19,7 @@ export function AddChildButton() {
         style={{ transitionProperty: 'background-color, transform', transitionDuration: '150ms' }}
       >
         <Plus size={15} strokeWidth={2.5} />
-        Add Child
+        {label}
       </button>
 
       {open && <AddChildModal onClose={() => setOpen(false)} />}

@@ -9,8 +9,9 @@ export async function middleware(request: NextRequest) {
   const response = NextResponse.next({ request })
   const supabase = createClient(request, response)
 
-  // Refresh session — required by @supabase/ssr to keep cookies in sync
-  const { data: { session } } = await supabase.auth.getSession()
+  // getUser() validates the JWT with Supabase Auth and properly sets the auth
+  // context for RLS. getSession() only reads from the cookie without verifying.
+  const { data: { user } } = await supabase.auth.getUser()
 
   const { pathname } = request.nextUrl
 
@@ -18,28 +19,17 @@ export async function middleware(request: NextRequest) {
   const isPublic = PUBLIC_PATHS.has(pathname) || pathname.startsWith('/auth/')
 
   // Redirect unauthenticated users away from protected routes
-  if (!session && !isPublic) {
+  if (!user && !isPublic) {
     return NextResponse.redirect(new URL('/login', request.url))
   }
 
   // Redirect authenticated users away from login/signup
-  if (session && (pathname === '/login' || pathname === '/signup')) {
+  if (user && (pathname === '/login' || pathname === '/signup')) {
     return NextResponse.redirect(new URL('/dashboard', request.url))
   }
 
-  // Protect admin routes — verify role from DB
-  if (session && pathname.startsWith('/admin')) {
-    const { data } = await supabase
-      .from('profiles')
-      .select('role')
-      .eq('id', session.user.id)
-      .single()
-
-    const profile = data as { role: string } | null
-    if (!profile || profile.role !== 'admin') {
-      return NextResponse.redirect(new URL('/dashboard', request.url))
-    }
-  }
+  // Admin role check is handled by the (admin) layout via getProfile().
+  // Middleware only enforces authentication — role-based access is enforced server-side.
 
   return response
 }

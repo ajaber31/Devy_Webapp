@@ -58,7 +58,7 @@ Devy is a **centralized platform** — not an organization-tenant model.
 - Login → session cookie set by `@supabase/ssr` → middleware refreshes on every request
 - Logout → `signOut()` server action → redirects to `/login`
 - Protected routes: middleware redirects unauthenticated users to `/login`
-- Admin routes: middleware checks `profiles.role = 'admin'`
+- Admin routes: middleware enforces authentication only; admin role check is handled by `(admin)/layout.tsx` via `getProfile()`
 
 ### Server Actions Pattern
 All data mutations use Next.js Server Actions in `src/lib/actions/`:
@@ -87,6 +87,23 @@ NEXT_PUBLIC_SITE_URL=http://localhost:3000
 - `admin` — global platform admin, unlocks `/admin/*` routes
 - Role is set at signup from `accountType` selection and stored in `profiles.role`
 
+### RLS Policy Convention — `public.get_user_role()`
+The `profiles` table has a `SECURITY DEFINER` helper function to avoid infinite recursion:
+```sql
+-- Created to break recursive RLS: policies on `profiles` cannot SELECT from `profiles` directly
+CREATE OR REPLACE FUNCTION public.get_user_role()
+RETURNS text LANGUAGE sql SECURITY DEFINER SET search_path = public AS $$
+  SELECT role FROM public.profiles WHERE id = auth.uid();
+$$;
+```
+**Rule:** Any RLS policy on `profiles` that needs to check the user's role MUST use `public.get_user_role()`, never a bare `SELECT FROM profiles` subquery (causes `42P17: infinite recursion`).
+
+Current admin policies on `profiles`:
+```sql
+CREATE POLICY "admin read all profiles" ON public.profiles FOR SELECT USING ( public.get_user_role() = 'admin' );
+CREATE POLICY "admin update all profiles" ON public.profiles FOR UPDATE USING ( public.get_user_role() = 'admin' );
+```
+
 ## Anti-Generic Guardrails
 - **Colors:** Never use default Tailwind palette (indigo-500, blue-600, etc.). Pick a custom brand color and derive from it.
 - **Shadows:** Never use flat `shadow-md`. Use layered, color-tinted shadows with low opacity.
@@ -105,6 +122,107 @@ NEXT_PUBLIC_SITE_URL=http://localhost:3000
 - Do not use `transition-all`
 - Do not use default Tailwind blue/indigo as primary color
 
+## Role Terminology (Dynamic)
+
+Regular users see role-dependent labels for the children/clients section:
+- `parent`, `caregiver`, `admin` → "Children" / "My Children" / "Child Profiles" / "Add Child"
+- `clinician`, `teacher` → "Clients" / "My Clients" / "Client Profiles" / "Add Client"
+
+Implementation: `src/lib/role-terminology.ts` — pure `getRoleTerminology(role)` utility.
+Consumed by: `Sidebar.tsx`, `children/page.tsx`, `dashboard/page.tsx`, `AddChildButton.tsx`.
+No duplicate pages — all role-aware logic is data-driven from the profile.
+
+---
+
+## Phase 2: Knowledge Base Ingestion (Complete)
+
+### Architecture
+
+**Document ingestion flow:**
+```
+Admin uploads file (browser)
+  → Supabase Storage bucket "documents"
+  → createDocumentRecord() server action → status: uploaded
+  → POST /api/documents/[id]/process (fire-and-forget)
+      → status: parsing   → extractText() (pdf-parse v2 / mammoth / utf-8)
+      → status: chunking  → chunkText() (paragraph-aware sliding window)
+      → status: embedding → generateEmbeddings() (OpenAI text-embedding-3-small)
+      → INSERT document_chunks in batches of 50
+      → status: ready
+```
+
+**Retrieval flow (foundation only — not connected to chat yet):**
+```
+searchChunks(query, options)
+  → generateEmbeddings([query])
+  → match_chunks() Postgres RPC (cosine similarity via pgvector)
+  → returns RetrievedChunk[] with documentTitle, similarity, metadata
+```
+
+### New Database Tables
+
+| Table | Purpose |
+|-------|---------|
+| `documents` | Metadata, status, storage path, tags for each uploaded file |
+| `document_chunks` | Parsed text chunks + vector(1536) embeddings for semantic search |
+
+**RLS:** `documents` — admin-only. `document_chunks` — read by all authenticated users, insert/delete by admin.
+
+### match_chunks RPC
+Postgres function `public.match_chunks(query_embedding, match_threshold, match_count, filter_tags)`.
+Returns top-K chunks above threshold with `document_title` and `original_filename` for citation.
+Supports optional tag filtering (e.g., `filter_tags: ['peer-reviewed']`).
+
+### New Source Files
+
+| File | Purpose |
+|------|---------|
+| `src/lib/role-terminology.ts` | Maps role → UI labels |
+| `src/lib/get-base-url.ts` | Server-to-server fetch base URL (avoids localhost deadlock) |
+| `src/lib/supabase/storage.ts` | Storage helpers (signed URLs, delete) — server-only, uses service role key |
+| `src/lib/document-processing/parser.ts` | Text extraction (pdf-parse v2 / mammoth / txt) |
+| `src/lib/document-processing/chunker.ts` | Paragraph-aware sliding window chunker |
+| `src/lib/document-processing/embedder.ts` | OpenAI text-embedding-3-small, batched, with retry |
+| `src/lib/document-processing/retrieval.ts` | `searchChunks()` — embed query + call match_chunks RPC |
+| `src/lib/actions/documents.ts` | Server actions: getDocuments, createDocumentRecord, deleteDocument, reprocessDocument |
+| `src/app/api/documents/[id]/process/route.ts` | POST — full pipeline (auth-gated, service role DB client) |
+
+### Peer-Reviewed Sources
+No special table — peer-reviewed docs are tagged `'peer-reviewed'` in `documents.tags`.
+Filter via `searchChunks(query, { tags: ['peer-reviewed'] })`.
+The system only uses knowledge from indexed documents; no external runtime queries.
+
+### Environment Variables (Phase 2 additions)
+```bash
+OPENAI_API_KEY=sk-...                    # For text-embedding-3-small
+SUPABASE_SERVICE_ROLE_KEY=eyJ...         # Service role — NEVER prefix with NEXT_PUBLIC_
+```
+
+### Manual Setup Steps
+
+1. **Enable pgvector extension:**
+   Supabase Dashboard → Database → Extensions → search "vector" → Enable
+
+2. **Run the migration SQL:**
+   Supabase Dashboard → SQL Editor → paste contents of `supabase/migrations/002_knowledge_base.sql`
+
+3. **Create the Storage bucket:**
+   Supabase Dashboard → Storage → New Bucket
+   Name: `documents`   Access: Private (Restricted)
+
+4. **Add env vars to `.env.local`:**
+   ```
+   OPENAI_API_KEY=sk-...
+   SUPABASE_SERVICE_ROLE_KEY=eyJ...
+   ```
+
+### Admin UI
+- `DocumentUploadZone` — real upload to Storage + record creation + fire-and-forget processing trigger
+- `DocumentTable` — real data from DB, polls every 3s while any document is in-progress, stops when all done
+- `StatusBadge` — 6 states: Queued / Parsing / Chunking / Embedding / Ready / Failed
+
+---
+
 ## What Was Done (Phase 1 Foundation)
 - Supabase project created, schema migrated, RLS policies applied
 - Real auth: signup, login, logout, email confirmation, protected routes
@@ -116,12 +234,14 @@ NEXT_PUBLIC_SITE_URL=http://localhost:3000
 - `ageFromDob()` utility replaces stored `age` field
 
 ## Next Phase
-The next session should focus on the **AI/RAG pipeline**:
-1. Install `pgvector` extension in Supabase
-2. Create a `document_chunks` table with vector embeddings column
-3. Set up Supabase Storage bucket for document uploads
-4. Build the admin document upload flow (real — not mock)
-5. Wire document chunking + embedding pipeline (Edge Function or API route)
-6. Connect the chat `handleSend` flow to a real AI endpoint (Claude API via `@anthropic-ai/sdk`)
-7. Implement semantic retrieval from the knowledge base
-8. Display real source citations in chat responses
+The next session should connect the chat interface to the knowledge base:
+1. Install `@anthropic-ai/sdk` — chat answers via Claude API
+2. Update `handleSend` in the chat page to call a real AI endpoint
+3. Create `POST /api/chat` route that:
+   - Calls `searchChunks(userMessage)` to retrieve top-K relevant chunks
+   - Passes chunks + conversation history to Claude as context
+   - Streams the response back to the client
+4. Display source citations from `RetrievedChunk[]` in the chat UI
+5. Implement "not found" note when no relevant chunks meet the similarity threshold
+6. Add safety/disclaimer behavior for clinical/medical content
+7. Implement peer-reviewed-only mode (toggle in settings or per-conversation)

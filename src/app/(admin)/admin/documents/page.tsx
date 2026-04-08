@@ -1,6 +1,5 @@
 import { PageHeader } from '@/components/shared/PageHeader'
-import { DocumentUploadZone } from '@/components/admin/DocumentUploadZone'
-import { DocumentTable } from '@/components/admin/DocumentTable'
+import { DocumentsPageContent } from './DocumentsPageContent'
 
 export default function AdminDocumentsPage() {
   return (
@@ -9,8 +8,7 @@ export default function AdminDocumentsPage() {
         title="Global Knowledge Base"
         description="Centrally managed, expert-reviewed source materials. Every answer Devy gives is grounded in these approved documents — available to all platform users."
       />
-      <DocumentUploadZone />
-      <DocumentTable />
+      <DocumentsPageContent />
     </div>
   )
 }
