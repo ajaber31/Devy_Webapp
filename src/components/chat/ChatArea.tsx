@@ -6,7 +6,6 @@ import { MessageBubble } from './MessageBubble'
 import { TypingIndicator } from './TypingIndicator'
 import { ExamplePrompts } from './ExamplePrompts'
 import { ChatInput } from './ChatInput'
-import { mockResponses } from '@/lib/mock-data/messages'
 import { insertMessage, createConversation } from '@/lib/actions/conversations'
 import type { Message, Conversation } from '@/lib/types'
 import { MoreHorizontal, Star, ArrowUpRight } from 'lucide-react'
@@ -36,7 +35,6 @@ export function ChatArea({
   // Track the actual conversation ID (may be set lazily on first send)
   const [convoId, setConvoId] = useState<string | null>(initialConversationId)
   const bottomRef = useRef<HTMLDivElement>(null)
-  const responseIndex = useRef(0)
 
   // Sync if parent changes the active conversation
   useEffect(() => {
@@ -85,27 +83,58 @@ export function ChatArea({
     // Persist user message
     await insertMessage({ conversationId: activeConvoId, role: 'user', content })
 
-    // Mock AI response (replaced by real AI in next phase)
-    setTimeout(async () => {
-      const response = mockResponses[responseIndex.current % mockResponses.length]
-      responseIndex.current += 1
-      const aiMsg: Message = {
-        ...response,
-        id: `ai-${Date.now()}`,
-        conversationId: activeConvoId!,
-        createdAt: new Date().toISOString(),
+    // Call real AI endpoint
+    try {
+      const res = await fetch('/api/chat', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          message: content,
+          conversationId: activeConvoId,
+          childId,
+          childName,
+        }),
+      })
+
+      if (!res.ok) {
+        const err = await res.json().catch(() => ({}))
+        throw new Error(err.error ?? `HTTP ${res.status}`)
       }
-      setMessages(prev => [...prev, aiMsg])
-      setIsTyping(false)
+
+      const { content: aiContent, sources, notFoundNote } = await res.json()
 
       // Persist AI message
-      await insertMessage({
+      const saved = await insertMessage({
         conversationId: activeConvoId!,
         role: 'assistant',
-        content: response.content,
-        notFoundNote: response.notFoundNote,
+        content: aiContent,
+        sources,
+        notFoundNote,
       })
-    }, 1500)
+
+      const aiMsg: Message = {
+        id: saved.data?.id ?? `ai-${Date.now()}`,
+        conversationId: activeConvoId!,
+        role: 'assistant',
+        content: aiContent,
+        createdAt: new Date().toISOString(),
+        sources,
+        notFoundNote,
+      }
+      setMessages(prev => [...prev, aiMsg])
+    } catch (err) {
+      console.error('[chat] Error:', err)
+      const errMsg: Message = {
+        id: `err-${Date.now()}`,
+        conversationId: activeConvoId!,
+        role: 'assistant',
+        content: 'Something went wrong while generating a response. Please try again.',
+        createdAt: new Date().toISOString(),
+      }
+      setMessages(prev => [...prev, errMsg])
+    } finally {
+      setIsTyping(false)
+    }
   }
 
   const hasMessages = messages.length > 0

@@ -4,6 +4,8 @@ import { Clock, Target, Star, Heart, Calendar, MessageCircle, FileText, ChevronL
 import { ChildProfileHeader } from '@/components/children/ChildProfileHeader'
 import { getChild } from '@/lib/actions/children'
 import { getConversationsForChild } from '@/lib/actions/conversations'
+import { getProfile } from '@/lib/actions/profile'
+import { getRoleTerminology } from '@/lib/role-terminology'
 import { formatDate, ageFromDob } from '@/lib/utils'
 
 interface PageProps {
@@ -11,10 +13,12 @@ interface PageProps {
 }
 
 export default async function ChildProfilePage({ params }: PageProps) {
-  const [child, childConversations] = await Promise.all([
+  const [child, childConversations, profile] = await Promise.all([
     getChild(params.id),
     getConversationsForChild(params.id),
+    getProfile(),
   ])
+  const terms = getRoleTerminology(profile?.role ?? 'parent')
 
   if (!child) notFound()
 
@@ -46,7 +50,7 @@ export default async function ChildProfilePage({ params }: PageProps) {
         style={{ transitionProperty: 'color', transitionDuration: '150ms' }}
       >
         <ChevronLeft size={14} strokeWidth={2} />
-        Back to Children
+        Back to {terms.nounPlural}
       </Link>
 
       {/* Profile header */}

@@ -223,25 +223,64 @@ SUPABASE_SERVICE_ROLE_KEY=eyJ...         # Service role — NEVER prefix with NE
 
 ---
 
+## Phase 3: Grounded AI Chat (Complete)
+
+### Architecture
+
+**Chat flow:**
+```
+User sends message (ChatArea)
+  → POST /api/chat { message, conversationId, childId, childName }
+      → Auth check (getUser)
+      → Load last 6 messages as conversation history
+      → searchChunks(message, { topK: 8, tags: ['peer-reviewed'] })
+          → if < 2 peer-reviewed results → searchChunks(message, { topK: 8 }) (all docs)
+          → if 0 results → return noKbResponse immediately (no OpenAI call)
+      → buildSystemPrompt(childName?) + buildContextBlock(chunks)
+      → gpt-4o completion (temperature: 0.1, max_tokens: 1000)
+      → detectNotFoundNote(content)
+      → return { content, sources: Source[], notFoundNote? }
+  → insertMessage (assistant) → persisted to DB
+  → MessageBubble renders content + SourceCitationCards
+```
+
+### Safety Design Decisions
+
+- **No general knowledge**: System prompt explicitly forbids answering outside the provided context. Temperature 0.1 minimises hallucination.
+- **Hard not-found path**: If `searchChunks` returns 0 results, OpenAI is never called. The "no information" response is deterministic, not AI-generated.
+- **Soft not-found detection**: `detectNotFoundNote()` parses the model's response for "I don't have enough information…" patterns and surfaces a UI disclaimer if triggered.
+- **Clinical disclaimer**: The system prompt requires the model to append `⚠️ This information comes from Devy's knowledge base…` on any clinical/medical topic.
+- **No diagnosis rule**: Explicitly stated in the system prompt as a non-negotiable constraint.
+- **Peer-reviewed priority**: Retrieval tries peer-reviewed documents first. Falls back to all documents only if fewer than 2 peer-reviewed chunks are found.
+
+### New Source Files (Phase 3)
+
+| File | Purpose |
+|------|---------|
+| `src/lib/ai/prompt-builder.ts` | System prompt, context block assembly, source deduplication, not-found detection |
+| `src/app/api/chat/route.ts` | POST /api/chat — auth, retrieval, OpenAI call, response |
+
+### Key Behaviour
+
+- **Source citations**: `chunksToSources()` deduplicates by document (highest-similarity chunk per doc). Rendered as expandable `SourceCitationCard` components.
+- **Conversation history**: Last 6 messages (3 exchanges) sent to OpenAI as context for follow-up questions.
+- **Token budget**: Context capped at ~14 000 chars (~3 500 tokens). Chunks are truncated to fit if the result set is large.
+- **Error handling**: Network/OpenAI errors surface as a polite in-chat error message (not a crash).
+- **`OPENAI_API_KEY`** is shared between embeddings (Phase 2) and chat completions (Phase 3) — no new env vars required.
+
+---
+
 ## What Was Done (Phase 1 Foundation)
 - Supabase project created, schema migrated, RLS policies applied
 - Real auth: signup, login, logout, email confirmation, protected routes
 - Real user profiles: fetched from DB, shown in sidebar/header/settings
 - Real children: create (modal), list, view profile — all persisted to DB
 - Real conversations: created on first chat send, messages persisted
-- Mock AI responses remain for now — real AI is next phase
 - `contextLabels` replaces `diagnoses` throughout (privacy-conscious design)
 - `ageFromDob()` utility replaces stored `age` field
 
-## Next Phase
-The next session should connect the chat interface to the knowledge base:
-1. Install `@anthropic-ai/sdk` — chat answers via Claude API
-2. Update `handleSend` in the chat page to call a real AI endpoint
-3. Create `POST /api/chat` route that:
-   - Calls `searchChunks(userMessage)` to retrieve top-K relevant chunks
-   - Passes chunks + conversation history to Claude as context
-   - Streams the response back to the client
-4. Display source citations from `RetrievedChunk[]` in the chat UI
-5. Implement "not found" note when no relevant chunks meet the similarity threshold
-6. Add safety/disclaimer behavior for clinical/medical content
-7. Implement peer-reviewed-only mode (toggle in settings or per-conversation)
+## Next Steps
+- Add peer-reviewed toggle per conversation (UI setting in ChatArea header)
+- Stream responses for faster perceived latency (replace fetch-and-wait pattern)
+- Admin view of conversations + document usage analytics
+- `/resources` page wired to knowledge base (curated doc listing)
