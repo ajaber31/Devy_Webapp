@@ -24,10 +24,10 @@ export function CtaSection() {
           <div className="relative z-10">
             <p className="text-body-sm font-medium text-sage-200 uppercase tracking-wider mb-4">Ready to get started?</p>
             <h2 className="font-display text-display-lg font-bold text-white tracking-tight mb-5">
-              Support that shows its work.
+              Support grounded in real evidence.
             </h2>
             <p className="text-body-lg text-white/80 max-w-lg mx-auto mb-10 leading-relaxed">
-              Join families, educators, and clinicians who use Devy to get clear, grounded answers — with the sources right there beside them.
+              Join families, educators, and clinicians who use Devy to get clear, grounded answers — backed by peer-reviewed research and our trusted clinical knowledge base.
             </p>
 
             <div className="flex flex-wrap items-center justify-center gap-4">

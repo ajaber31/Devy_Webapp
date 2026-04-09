@@ -14,7 +14,7 @@ interface ChatPageClientProps {
   // URL params — set when navigating from a profile or conversation link
   childId?: string
   childName?: string
-  // Profile selector
+  // Profile selector shown initially (no conversations exist yet)
   showSelector: boolean
   children: Child[]
   nounSingular: string
@@ -39,18 +39,27 @@ export function ChatPageClient({
   const [messages, setMessages] = useState<Message[]>(initialMessages)
   const [isLoadingMessages, setIsLoadingMessages] = useState(false)
 
+  // Profile selector visibility — shown initially when no conversations,
+  // or when the user explicitly clicks "New Conversation"
+  const [selectorOpen, setSelectorOpen] = useState(initialShowSelector && !initialActiveId)
+
+  // Child context for the active chat (may come from URL params, selector, or active conversation)
+  const [chatChildId, setChatChildId] = useState<string | undefined>(urlChildId)
+  const [chatChildName, setChatChildName] = useState<string | undefined>(urlChildName)
+
   const activeConvo = conversations.find(c => c.id === activeId)
 
-  // Child context: prefer URL params (when navigating from a profile),
-  // fall back to the child stored on the active conversation.
-  const effectiveChildId   = urlChildId   ?? activeConvo?.childId
-  const effectiveChildName = urlChildName ?? activeConvo?.childName
+  // Effective child: explicit URL/selector state > active conversation's stored child
+  const effectiveChildId   = chatChildId   ?? activeConvo?.childId
+  const effectiveChildName = chatChildName ?? activeConvo?.childName
 
-  // Show the profile selector when: no URL childId AND no conversation is actively open
-  const showSelector = initialShowSelector && !activeId
+  // ── Handlers ───────────────────────────────────────────────────────────────
 
   const handleSelect = async (id: string) => {
     if (id === activeId) return
+    setSelectorOpen(false)
+    setChatChildId(undefined)
+    setChatChildName(undefined)
     setActiveId(id)
     setIsLoadingMessages(true)
     const msgs = await getMessages(id)
@@ -58,14 +67,33 @@ export function ChatPageClient({
     setIsLoadingMessages(false)
   }
 
+  // "+" button — show profile selector so user can pick context for new chat
   const handleNewConversation = () => {
     setActiveId(null)
     setMessages([])
+    setChatChildId(undefined)
+    setChatChildName(undefined)
+    setSelectorOpen(true)
+  }
+
+  // User picked a child profile from the selector
+  const handleProfileSelect = (child: Child) => {
+    setSelectorOpen(false)
+    setChatChildId(child.id)
+    setChatChildName(child.name)
+  }
+
+  // User chose "General question" — no child profile attached
+  const handleGeneralChat = () => {
+    setSelectorOpen(false)
+    setChatChildId(undefined)
+    setChatChildName(undefined)
   }
 
   const handleConversationCreated = (conversation: Conversation) => {
     setConversations(prev => [conversation, ...prev])
     setActiveId(conversation.id)
+    setSelectorOpen(false)
   }
 
   return (
@@ -81,12 +109,14 @@ export function ChatPageClient({
       </div>
 
       {/* Main area: profile selector OR chat */}
-      {showSelector ? (
+      {selectorOpen ? (
         <ProfileSelector
           children={children}
           nounSingular={nounSingular}
           nounPlural={nounPlural}
           addLabel={addLabel}
+          onSelectChild={handleProfileSelect}
+          onGeneral={handleGeneralChat}
         />
       ) : (
         <ChatArea

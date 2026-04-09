@@ -16,7 +16,7 @@ const steps = [
     number: '02',
     title: 'Devy searches trusted sources',
     description:
-      'Devy searches only your organization\'s vetted knowledge base — clinical guidelines, therapy handbooks, and evidence-based resources — to find relevant information.',
+      'Devy searches its clinician-curated knowledge base and, when needed, peer-reviewed research from PubMed — to find relevant, evidence-based information.',
     icon: (
       <svg className="w-6 h-6" viewBox="0 0 24 24" fill="none">
         <circle cx="11" cy="11" r="7" stroke="currentColor" strokeWidth="1.5"/>
@@ -27,9 +27,9 @@ const steps = [
   },
   {
     number: '03',
-    title: 'Get a clear, cited answer',
+    title: 'Get a clear, grounded answer',
     description:
-      'You receive a calm, clear response with source cards showing exactly which document the information came from — and a note if something wasn\'t found.',
+      'You receive a calm, clear response drawn from real clinical evidence — and a note if something wasn\'t found.',
     icon: (
       <svg className="w-6 h-6" viewBox="0 0 24 24" fill="none">
         <rect x="3" y="3" width="18" height="18" rx="3" stroke="currentColor" strokeWidth="1.5"/>

@@ -30,7 +30,7 @@ export function HeroSection() {
         <div className="animate-fade-up">
           <div className="inline-flex items-center gap-2 px-3.5 py-1.5 bg-sage-100 text-sage-700 rounded-pill text-body-xs font-medium mb-6 border border-sage-200">
             <ShieldCheck size={13} strokeWidth={2.5} />
-            Evidence-based · Source-cited · Built for families
+            Evidence-based · PubMed-grounded · Built for families
           </div>
 
           <h1 className="font-display text-display-xl font-bold text-ink leading-[1.08] tracking-[-0.03em] mb-6">
@@ -39,7 +39,7 @@ export function HeroSection() {
           </h1>
 
           <p className="text-body-lg text-ink-secondary max-w-lg mb-8 leading-relaxed">
-            Devy is an AI assistant designed for parents, caregivers, teachers, and clinicians supporting children with special needs. Every answer is grounded in trusted knowledge sources — and clearly shows where it came from.
+            Devy is an AI assistant designed for parents, caregivers, teachers, and clinicians supporting children with special needs. Every answer is grounded in Devy&apos;s clinician-curated knowledge base and peer-reviewed PubMed research — so you can ask anything with confidence.
           </p>
 
           <div className="flex flex-wrap items-center gap-4">
@@ -63,7 +63,7 @@ export function HeroSection() {
           <div className="mt-10 flex items-center gap-6 flex-wrap">
             {[
               'No hallucination-prone responses',
-              'All answers cite their sources',
+              'Grounded in peer-reviewed research',
               'Built with clinicians',
             ].map((point) => (
               <div key={point} className="flex items-center gap-2 text-body-sm text-ink-secondary">
@@ -98,15 +98,10 @@ export function HeroSection() {
                     There are several well-supported approaches. Proactive sensory diet activities in the morning, environmental modifications like reduced visual clutter, and clear transition warnings tend to have the strongest evidence base.
                   </div>
 
-                  {/* Source card */}
-                  <div className="bg-raised border border-border rounded-lg px-3.5 py-2.5 flex items-start gap-2.5">
-                    <div className="w-6 h-6 rounded bg-sage-100 flex items-center justify-center flex-shrink-0 mt-0.5">
-                      <svg className="w-3.5 h-3.5 text-sage-600" viewBox="0 0 16 16" fill="none"><rect x="2" y="1" width="9" height="12" rx="1.5" stroke="currentColor" strokeWidth="1.2"/><path d="M5 4.5H8M5 7H9M5 9.5H7.5" stroke="currentColor" strokeWidth="1.2" strokeLinecap="round"/><path d="M11 5L14 5M11 8H14M11 11H12.5" stroke="currentColor" strokeWidth="1.2" strokeLinecap="round"/></svg>
-                    </div>
-                    <div>
-                      <p className="text-body-xs font-medium text-ink">ASHA SPD Clinical Guidelines 2024</p>
-                      <p className="text-body-xs text-ink-tertiary mt-0.5">Page 47 · Sensory Diet Section</p>
-                    </div>
+                  {/* Research trust badge */}
+                  <div className="inline-flex items-center gap-1.5 px-3 py-1.5 border border-sage-200 bg-sage-50 rounded-full text-xs font-medium text-sage-700">
+                    <svg className="w-3 h-3" viewBox="0 0 12 12" fill="none"><path d="M6 1a2 2 0 0 1 2 2c0 .8-.4 1.5-1 1.8V6h1.5a.5.5 0 0 1 0 1H6.5v1h.5a2 2 0 1 1 0 4H5a2 2 0 1 1 0-4h.5V7H4a.5.5 0 0 1 0-1h1.5V4.8A2 2 0 0 1 6 1z" stroke="currentColor" strokeWidth="0.8" fill="none"/></svg>
+                    Grounded in peer-reviewed research
                   </div>
                 </div>
               </div>
@@ -128,8 +123,8 @@ export function HeroSection() {
               <ShieldCheck size={16} className="text-sage-600" strokeWidth={2} />
             </div>
             <div>
-              <p className="text-body-xs font-semibold text-ink">Source-grounded</p>
-              <p className="text-body-xs text-ink-tertiary">Every answer cites its source</p>
+              <p className="text-body-xs font-semibold text-ink">Research-grounded</p>
+              <p className="text-body-xs text-ink-tertiary">Backed by PubMed &amp; clinical KB</p>
             </div>
           </div>
         </div>

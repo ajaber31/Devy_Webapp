@@ -5,13 +5,13 @@ const features = [
     icon: ShieldCheck,
     title: 'Source-grounded answers',
     description:
-      'Every response is drawn from your organization\'s vetted knowledge base. Devy never invents information or fills gaps with guesswork.',
+      'Every response is drawn from Devy\'s clinician-backed knowledge base. Devy never invents information or fills gaps with guesswork.',
   },
   {
     icon: BookOpen,
-    title: 'Transparent citations',
+    title: 'Research-grounded answers',
     description:
-      'Answers include clear source cards showing which document the information came from, including page references. You always know the basis of what you\'re reading.',
+      'When the knowledge base doesn\'t have the answer, Devy automatically searches PubMed for peer-reviewed abstracts and adds them to its knowledge base — so responses are always grounded in real evidence, never guesswork.',
   },
   {
     icon: MessageSquare,
@@ -27,9 +27,9 @@ const features = [
   },
   {
     icon: Users,
-    title: 'Designed for your team',
+    title: 'Continuously updated',
     description:
-      'Administrators can upload and manage the documents that inform Devy\'s knowledge base — so every team member draws from the same trusted sources.',
+      'Our clinical team continuously expands Devy\'s knowledge base with vetted resources — so every user draws from the same trusted, up-to-date sources.',
   },
   {
     icon: Layers,

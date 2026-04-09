@@ -1,85 +1,84 @@
 'use client'
 
-import { useState } from 'react'
-import { Monitor, Sun, Moon, Check } from 'lucide-react'
+import { useState, useEffect } from 'react'
+import { Sun, Check } from 'lucide-react'
 import { cn } from '@/lib/utils'
 
-const themes = [
-  { id: 'light',  label: 'Light',  icon: Sun },
-  { id: 'system', label: 'System', icon: Monitor },
-  { id: 'dark',   label: 'Dark',   icon: Moon },
+const fontSizes = [
+  { id: 'small',   label: 'Small',   px: '13px' },
+  { id: 'default', label: 'Default', px: '15px' },
+  { id: 'large',   label: 'Large',   px: '17px' },
 ]
 
-const fontSizes = ['Small', 'Default', 'Large']
+function applyFontSize(px: string) {
+  document.documentElement.style.setProperty('--base-font-size', px)
+}
 
 export function AppearanceSection() {
-  const [theme, setTheme] = useState('light')
-  const [fontSize, setFontSize] = useState('Default')
+  const [fontSize, setFontSize] = useState('default')
+
+  // Load saved preference on mount
+  useEffect(() => {
+    const saved = localStorage.getItem('devy-font-size') ?? 'default'
+    setFontSize(saved)
+    const option = fontSizes.find(f => f.id === saved)
+    if (option) applyFontSize(option.px)
+  }, [])
+
+  const handleFontSize = (id: string) => {
+    setFontSize(id)
+    localStorage.setItem('devy-font-size', id)
+    const option = fontSizes.find(f => f.id === id)
+    if (option) applyFontSize(option.px)
+  }
 
   return (
     <div className="space-y-6">
+      {/* Theme — light mode only (dark mode coming soon) */}
       <div className="bg-white rounded-card-lg shadow-card border border-border/50 p-6">
         <h3 className="font-display text-display-sm font-semibold text-ink mb-1">Theme</h3>
-        <p className="text-body-sm text-ink-secondary mb-5">Choose your preferred color scheme.</p>
+        <p className="text-body-sm text-ink-secondary mb-5">Devy currently uses a light theme optimised for readability.</p>
         <div className="flex gap-3">
-          {themes.map(({ id, label, icon: Icon }) => (
-            <button
-              key={id}
-              onClick={() => setTheme(id)}
-              className={cn(
-                'flex-1 flex flex-col items-center gap-2.5 py-4 rounded-card border focus-ring',
-                theme === id
-                  ? 'border-sage-400 bg-sage-50 ring-2 ring-sage-300 ring-offset-1'
-                  : 'border-border bg-surface hover:bg-raised'
-              )}
-              style={{ transitionProperty: 'border-color, background-color, box-shadow', transitionDuration: '150ms' }}
-            >
-              <div className={cn('w-8 h-8 rounded-full flex items-center justify-center', theme === id ? 'bg-sage-100 text-sage-600' : 'bg-raised text-ink-secondary')}>
-                <Icon size={16} strokeWidth={1.75} />
-              </div>
-              <div className="flex items-center gap-1">
-                {theme === id && <Check size={11} className="text-sage-600" strokeWidth={2.5} />}
-                <span className={cn('text-body-xs font-medium', theme === id ? 'text-sage-700' : 'text-ink-secondary')}>{label}</span>
-              </div>
-            </button>
-          ))}
+          <div className="flex-1 flex flex-col items-center gap-2.5 py-4 rounded-card border border-sage-400 bg-sage-50 ring-2 ring-sage-300 ring-offset-1">
+            <div className="w-8 h-8 rounded-full bg-sage-100 text-sage-600 flex items-center justify-center">
+              <Sun size={16} strokeWidth={1.75} />
+            </div>
+            <div className="flex items-center gap-1">
+              <Check size={11} className="text-sage-600" strokeWidth={2.5} />
+              <span className="text-body-xs font-medium text-sage-700">Light</span>
+            </div>
+          </div>
+          <div className="flex-1 flex flex-col items-center gap-2.5 py-4 rounded-card border border-border bg-surface opacity-40 cursor-not-allowed" title="Coming soon">
+            <div className="w-8 h-8 rounded-full bg-raised text-ink-secondary flex items-center justify-center">
+              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.75"><path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"/></svg>
+            </div>
+            <span className="text-body-xs font-medium text-ink-tertiary">Dark (soon)</span>
+          </div>
         </div>
       </div>
 
+      {/* Font size */}
       <div className="bg-white rounded-card-lg shadow-card border border-border/50 p-6">
-        <h3 className="font-display text-display-sm font-semibold text-ink mb-1">Font size</h3>
-        <p className="text-body-sm text-ink-secondary mb-5">Adjust the text size across the app.</p>
+        <h3 className="font-display text-display-sm font-semibold text-ink mb-1">Text size</h3>
+        <p className="text-body-sm text-ink-secondary mb-5">Adjust the base text size across the app.</p>
         <div className="flex gap-3">
           {fontSizes.map((size) => (
             <button
-              key={size}
-              onClick={() => setFontSize(size)}
+              key={size.id}
+              onClick={() => handleFontSize(size.id)}
               className={cn(
                 'flex-1 py-2.5 rounded-card border text-body-sm font-medium focus-ring',
-                fontSize === size
+                fontSize === size.id
                   ? 'border-sage-400 bg-sage-50 text-sage-700'
                   : 'border-border bg-surface text-ink-secondary hover:bg-raised'
               )}
               style={{ transitionProperty: 'border-color, background-color, color', transitionDuration: '150ms' }}
             >
-              {size}
+              {size.label}
             </button>
           ))}
         </div>
-      </div>
-
-      <div className="bg-white rounded-card-lg shadow-card border border-border/50 p-6">
-        <h3 className="font-display text-display-sm font-semibold text-ink mb-1">Sidebar</h3>
-        <p className="text-body-sm text-ink-secondary mb-4">Customize the sidebar behavior.</p>
-        <div className="flex items-center justify-between">
-          <div>
-            <p className="text-body-sm font-medium text-ink">Auto-collapse on small screens</p>
-            <p className="text-body-xs text-ink-secondary mt-0.5">Sidebar collapses automatically on screens narrower than 1024px.</p>
-          </div>
-          <div className="w-10 h-[22px] rounded-full bg-sage-500 relative cursor-default">
-            <span className="absolute top-0.5 right-0.5 w-[18px] h-[18px] rounded-full bg-white shadow-card" />
-          </div>
-        </div>
+        <p className="text-body-xs text-ink-tertiary mt-3">Changes apply immediately and are saved for your next visit.</p>
       </div>
     </div>
   )

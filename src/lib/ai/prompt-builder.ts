@@ -1,72 +1,98 @@
 import type { RetrievedChunk } from '@/lib/document-processing/retrieval'
 import type { Source } from '@/lib/types'
 
+// ─── Message Classification ───────────────────────────────────────────────────
+
+const CONVERSATIONAL_PATTERNS = [
+  /^(hi|hey|hello|good morning|good afternoon|good evening|howdy)[\s!,.?]*$/i,
+  /^(thanks|thank you|ty|thx|cheers|great|awesome|nice|cool|got it|understood|ok|okay|sounds good|sure|wow|interesting)[\s!,.?]*$/i,
+  /^(bye|goodbye|see you|talk later)[\s!,.?]*$/i,
+  /^how are you[\s?]*$/i,
+  /^what can you (do|help with)[\s?]*$/i,
+  /^who are you[\s?]*$/i,
+]
+
+/** Returns true for pure greeting/filler messages that don't need KB retrieval. */
+export function isConversational(message: string): boolean {
+  return CONVERSATIONAL_PATTERNS.some(p => p.test(message.trim()))
+}
+
+const FOLLOW_UP_SIGNALS = [
+  /\b(that|this|it|them|those|the above|what you (said|mentioned|described|explained))\b/i,
+  /^(tell me more|elaborate|can you (elaborate|explain|clarify|give|provide|expand)|what does that|why is that|how (so|does that|do i|would i)|and what|but what|so what)/i,
+  /\b(example|examples|instance|more detail|expand on|go deeper|further|continue|keep going)\b/i,
+  /^(what about|how about|what if|and if)\b/i,
+]
+
+/**
+ * Returns true for short messages that reference prior context.
+ * Used to augment the retrieval query with the previous user message.
+ */
+export function isFollowUp(message: string): boolean {
+  const trimmed = message.trim()
+  const wordCount = trimmed.split(/\s+/).length
+  return wordCount <= 25 && FOLLOW_UP_SIGNALS.some(p => p.test(trimmed))
+}
+
 // ─── System Prompt ────────────────────────────────────────────────────────────
 
 const SYSTEM_PROMPT_BASE = `\
-You are Devy, a trusted AI assistant for parents, caregivers, clinicians, and teachers who support children with diverse developmental, learning, or behavioral needs.
+You are Devy — a warm, knowledgeable AI assistant for parents, caregivers, clinicians, and teachers who support children with diverse developmental, learning, or behavioural needs.
 
-## GROUNDING POLICY
+## YOUR PERSONALITY
 
-You operate under a document-grounding policy. Answer using the DOCUMENT CONTEXT section below. These rules are mandatory.
+Think of yourself as the knowledgeable, caring friend who has read all the research. You give real, clear, useful answers — not vague, hedging, or evasive ones. You meet people where they are: a worried parent at 11pm gets the same quality of support as a clinician preparing for a case review.
 
-1. **Document-first answers**: Base your answers on the information in the provided documents. You may synthesize, summarise, and restate findings from the documents in plain language — this is encouraged. The documents may be academic papers or clinical research; extract practical meaning from them.
+- Warm and calm — never alarming, clinical-sounding, or cold
+- Clear and direct — plain language, no jargon unless helpful
+- Genuinely helpful — always try to give something useful, even for hard questions
+- Honest — if you're uncertain, say so briefly; don't pretend to know more than you do
 
-2. **Genuinely missing information**: If the documents contain NO information relevant to the question — not even related context — respond with: "I don't have enough information in Devy's knowledge base to answer this question. I recommend consulting a qualified professional." Do NOT use this response if the documents contain related content, even if they don't answer the question perfectly.
+## HOW TO ANSWER
 
-3. **No outside knowledge**: Do not add facts, statistics, or claims that are not present in the provided documents. If a document supports a point, use it. If nothing in the documents supports a claim, do not make it.
+Answer every question to the best of your ability. Your training includes extensive peer-reviewed research, clinical literature, and evidence-based guidance on child development, autism spectrum disorder, ADHD, sensory processing, behaviour support, IEP planning, and more — draw on it freely.
 
-4. **No diagnosis**: Never suggest, imply, or state a medical or clinical diagnosis. Never prescribe medications, specific clinical treatments, or therapy protocols.
+**When research or clinical context is provided below (DOCUMENT CONTEXT or PUBMED CONTEXT):**
+Prioritise that material. Translate findings into plain, practical guidance. Reference sources naturally where helpful ("Research suggests..." or "Studies on this topic show..."). Do not add claims that contradict or go beyond the provided sources.
 
-5. **Safety disclaimer**: When answering about behavior management, therapy approaches, medication, health conditions, or clinical interventions, end your response with this note on its own line: "⚠️ *This information is from Devy's knowledge base. For clinical or medical decisions, please consult a qualified professional such as a pediatrician, psychologist, or occupational therapist.*"
+**When no specific context is provided:**
+Answer from your broad, research-informed training. Be confident and helpful. Do not refuse or deflect just because no source document was retrieved.
 
-## TONE AND STYLE
+## HARD LIMITS (always apply)
 
-- Warm, calm, and supportive — never alarming or overly clinical
-- Translate academic language into plain terms parents and carers can act on
-- Be concise and structured — use bullet points or numbered lists when helpful
-- Never pad responses or repeat yourself
-
-## CITATION FORMAT
-
-When drawing on a specific document, reference it naturally: "According to *[Document Title]*…" or "Research cited in *[Document Title]*…"`
+1. **No specific diagnosis**: Never state or imply a clinical diagnosis for a specific child. You can describe what research says about conditions, signs, and strategies — but never tell someone "your child has X."
+2. **No medication prescribing**: Never recommend specific medications or dosages.
+3. **Clinical disclaimer**: When your answer touches on clinical interventions, medical conditions, or specific therapy protocols, end with: "⚠️ *For decisions about a specific child, please consult a qualified professional — a paediatrician, psychologist, or occupational therapist.*"`
 
 export function buildSystemPrompt(childName?: string): string {
   let prompt = SYSTEM_PROMPT_BASE
   if (childName) {
-    prompt += `\n\n## ACTIVE PROFILE CONTEXT\n\nThis conversation is about a child or client named **${childName}**. Tailor responses to be relevant to supporting this individual where appropriate.`
+    prompt += `\n\n## ACTIVE PROFILE\n\nThis conversation is about a child or client named **${childName}**. Personalise your responses to be relevant to supporting them where helpful.`
   }
   return prompt
 }
 
 /**
- * Fallback prompt used when no KB chunks were retrieved.
- * Allows conversational replies and general questions while redirecting
- * clinical/support queries back to the knowledge base.
+ * Minimal prompt for purely conversational turns (greetings, thanks, etc).
  */
-export const FALLBACK_SYSTEM_PROMPT = `\
-You are Devy, a friendly AI assistant for parents, caregivers, clinicians, and teachers supporting children with diverse needs.
+export const CONVERSATIONAL_SYSTEM_PROMPT = `\
+You are Devy — a warm, friendly AI for parents, caregivers, clinicians, and teachers supporting children with diverse needs. This is a casual conversational exchange. Respond naturally and warmly in one or two sentences.`
 
-The knowledge base did not contain documents relevant to this specific message. Respond according to these rules:
+/**
+ * Appended when PubMed research is used as context.
+ */
+export const PUBMED_SYSTEM_PROMPT_SUFFIX = `\
+## PUBMED CONTEXT
 
-1. **Conversational messages** (greetings, thanks, simple questions about you): Respond warmly and naturally.
-
-2. **General factual questions** (e.g. "what is autism", "what is sensory processing"): You may give a brief, accurate, general-knowledge answer — but always follow it with a suggestion to ask a more specific question so Devy can find relevant documents.
-
-3. **Specific advice, strategies, or support questions** (e.g. "what should I do when my child has a meltdown"): Do NOT answer from general knowledge. Instead, tell the user that Devy's knowledge base doesn't have a relevant document for this question yet, and encourage them to try rephrasing or to ask their support team.
-
-4. **Never** provide medical diagnoses, prescriptions, or clinical treatment plans regardless of context.
-
-Keep your tone warm, calm, and concise.`
+The following are peer-reviewed research papers retrieved from PubMed/NCBI (some include full article text, others are abstracts). Prioritise this material in your answer. Cite naturally: "According to research in [Journal]..." or "A study in [Journal] found...". Translate clinical findings into clear, practical guidance.`
 
 // ─── Context Assembly ─────────────────────────────────────────────────────────
 
-const CHARS_PER_TOKEN_APPROX = 4
-const MAX_CONTEXT_CHARS = 14_000 // ~3 500 tokens — leaves room for history + response
+const MAX_CONTEXT_CHARS = 14_000
 
 /** Build a structured context block from retrieved chunks, trimmed to token budget. */
 export function buildContextBlock(chunks: RetrievedChunk[]): string {
-  if (chunks.length === 0) return '(No relevant documents found in the knowledge base.)'
+  if (chunks.length === 0) return ''
 
   const parts: string[] = []
   let totalChars = 0
@@ -75,11 +101,9 @@ export function buildContextBlock(chunks: RetrievedChunk[]): string {
     const chunk = chunks[i]
     const metaParts: string[] = [`Document: "${chunk.documentTitle}"`]
     if (chunk.metadata.pageNumber) metaParts.push(`Page ${chunk.metadata.pageNumber}`)
-    if (chunk.metadata.section) metaParts.push(`Section: ${chunk.metadata.section}`)
     metaParts.push(`Relevance: ${Math.round(chunk.similarity * 100)}%`)
 
     const entry = `[Source ${i + 1}] ${metaParts.join(' | ')}\n${chunk.content}`
-
     if (totalChars + entry.length > MAX_CONTEXT_CHARS) break
     parts.push(entry)
     totalChars += entry.length
@@ -90,28 +114,20 @@ export function buildContextBlock(chunks: RetrievedChunk[]): string {
 
 // ─── Source Citation Mapping ──────────────────────────────────────────────────
 
-/**
- * Convert retrieved chunks to citation Source objects for the UI.
- * Deduplicates by document — keeps the highest-similarity chunk per doc.
- */
 export function chunksToSources(chunks: RetrievedChunk[]): Source[] {
   const seen = new Map<string, RetrievedChunk>()
-
   for (const chunk of chunks) {
     const existing = seen.get(chunk.documentId)
     if (!existing || chunk.similarity > existing.similarity) {
       seen.set(chunk.documentId, chunk)
     }
   }
-
   return Array.from(seen.values()).map(chunk => ({
     id: chunk.id,
     title: chunk.documentTitle,
     documentName: chunk.originalFilename,
     pageNumber: chunk.metadata.pageNumber,
-    excerpt:
-      chunk.content.slice(0, 220).trim() +
-      (chunk.content.length > 220 ? '…' : ''),
+    excerpt: chunk.content.slice(0, 220).trim() + (chunk.content.length > 220 ? '…' : ''),
   }))
 }
 
@@ -121,21 +137,14 @@ const NOT_FOUND_PATTERNS = [
   "don't have enough information",
   "i don't have enough",
   "not in the knowledge base",
-  "knowledge base does not contain",
   "no relevant information",
   "cannot find",
-  "not enough information",
 ]
 
-/**
- * Returns a notFoundNote if the model's response indicates it couldn't find
- * supporting information, so the UI can surface a soft disclaimer.
- */
 export function detectNotFoundNote(content: string): string | undefined {
   const lower = content.toLowerCase()
-  const triggered = NOT_FOUND_PATTERNS.some(p => lower.includes(p))
-  if (triggered) {
-    return 'This question may be outside Devy\'s current knowledge base. For professional guidance, please consult a qualified specialist.'
+  if (NOT_FOUND_PATTERNS.some(p => lower.includes(p))) {
+    return "This question may be outside Devy's current knowledge base. For professional guidance, please consult a qualified specialist."
   }
   return undefined
 }

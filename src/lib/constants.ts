@@ -1,10 +1,9 @@
-import { LayoutDashboard, MessageCircle, Users, Settings, BookOpen, Library } from 'lucide-react'
+import { LayoutDashboard, MessageCircle, Users, Settings, Library } from 'lucide-react'
 
 export const DASHBOARD_NAV_ITEMS = [
   { label: 'Dashboard',     href: '/dashboard', icon: LayoutDashboard },
   { label: 'Children',      href: '/children',  icon: Users },
   { label: 'Conversations', href: '/chat',       icon: MessageCircle },
-  { label: 'Resources',     href: '/resources',  icon: BookOpen },
   { label: 'Settings',      href: '/settings',   icon: Settings },
 ]
 

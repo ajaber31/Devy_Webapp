@@ -18,11 +18,14 @@ export default async function ChatPage({
 
   const terms = getRoleTerminology(profile?.role ?? 'parent')
 
-  // Show selector when neither a profile nor a specific conversation was requested
-  const showSelector = !searchParams.childId && !searchParams.conversationId
+  // Show selector only when no URL params AND no existing conversations
+  const hasUrlContext = !!(searchParams.childId || searchParams.conversationId)
+  const showSelector = !hasUrlContext && conversations.length === 0
 
-  // Only pre-load messages when a specific conversation is requested
-  const activeId = showSelector ? null : (searchParams.conversationId ?? null)
+  // Active conversation: explicit URL param > most recent existing > null (new)
+  const activeId = searchParams.conversationId
+    ?? ((!searchParams.childId && conversations.length > 0) ? conversations[0].id : null)
+
   const initialMessages = activeId ? await getMessages(activeId) : []
 
   return (

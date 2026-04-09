@@ -1,7 +1,7 @@
 'use client'
 
 import { AlertCircle } from 'lucide-react'
-import { SourceCitationCard } from './SourceCitationCard'
+import { ResearchBadge } from './ResearchBadge'
 import type { Message } from '@/lib/types'
 
 interface MessageBubbleProps {
@@ -62,20 +62,11 @@ export function MessageBubble({ message }: MessageBubbleProps) {
           </div>
         </div>
 
-        {/* Sources */}
+        {/* Research trust badge */}
         {message.sources && message.sources.length > 0 && (
-          <div className="space-y-1.5">
-            <p className="text-body-xs font-medium text-ink-tertiary px-0.5 flex items-center gap-1.5">
-              <svg className="w-3 h-3 text-sage-500" viewBox="0 0 12 12" fill="none">
-                <rect x="1" y="1" width="10" height="10" rx="2" stroke="currentColor" strokeWidth="1.2"/>
-                <path d="M3.5 4.5H8.5M3.5 6.5H7M3.5 8.5H6" stroke="currentColor" strokeWidth="1.2" strokeLinecap="round"/>
-              </svg>
-              Supporting sources
-            </p>
-            {message.sources.map(source => (
-              <SourceCitationCard key={source.id} source={source} />
-            ))}
-          </div>
+          <ResearchBadge
+            hasPubMed={message.sources.some(s => s.id.startsWith('pubmed-'))}
+          />
         )}
 
         {/* Not found note */}

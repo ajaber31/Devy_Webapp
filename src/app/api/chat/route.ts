@@ -8,15 +8,71 @@ import {
   buildContextBlock,
   chunksToSources,
   detectNotFoundNote,
-  FALLBACK_SYSTEM_PROMPT,
+  CONVERSATIONAL_SYSTEM_PROMPT,
+  PUBMED_SYSTEM_PROMPT_SUFFIX,
+  isConversational,
+  isFollowUp,
 } from '@/lib/ai/prompt-builder'
+import { searchPubMed, buildPubMedContextBlock, pubMedSourcesToSources } from '@/lib/ai/pubmed'
+import { ingestPubMedSources } from '@/lib/ai/pubmed-ingest'
+import type { Source } from '@/lib/types'
 import type { Database } from '@/lib/supabase/database.types'
 
 // Vercel Pro — up to 60s; ignored locally
 export const maxDuration = 60
 
-const HISTORY_LIMIT = 6       // last 3 exchanges for context
-const PEER_REVIEWED_MIN = 2   // fall back to all docs if fewer peer-reviewed results
+// ─── PubMed Query Helper ──────────────────────────────────────────────────────
+
+/**
+ * Convert a natural-language user question into a clean PubMed search query.
+ *
+ * Strips:
+ * - Conversational framing ("how do I know if", "can you tell me about", etc.)
+ * - Child names
+ * - Possessives and personal references ("my son", "her daughter", etc.)
+ *
+ * Example: "how do i know if my son has autism" → "autism diagnosis children"
+ */
+function toPubMedQuery(message: string, childName?: string): string {
+  let q = message.toLowerCase()
+
+  // Strip child name
+  if (childName) {
+    q = q.replace(new RegExp(childName.toLowerCase(), 'g'), '')
+  }
+
+  // Strip conversational framing patterns
+  const framePatterns = [
+    /^(can you (tell me|explain|describe|help me understand)|please (explain|describe|tell me))\s+/,
+    /^(how do i (know|find out|tell|figure out|check|identify|recognize) (if|whether|when|that))\s+/,
+    /^(what (are|is) (the )?(signs?|symptoms?|indicators?|ways?|best ways?) (of|for|to))\s+/,
+    /^(what should i (do|know|look for|watch for|expect))\s+/,
+    /^(i('m| am) (worried|concerned|unsure|not sure|wondering) (about|if|whether))\s+/,
+    /^(is (it|there) (possible|normal|common|typical|okay|ok) (that|for|to))\s+/,
+    /^(does (my|our|the|a))?\s*/,
+    /^(help me (with|understand|find))\s+/,
+    /\b(my|our|his|her|their)\s+(son|daughter|child|kid|boy|girl|student|client|patient)\b/g,
+    /\b(he|she|they)\s+(has|have|might have|could have|may have)\b/g,
+  ]
+
+  for (const pattern of framePatterns) {
+    q = q.replace(pattern, ' ')
+  }
+
+  // Compress whitespace
+  q = q.replace(/\s+/g, ' ').trim()
+
+  // If stripping left something too short or empty, fall back to original minus child name
+  if (q.length < 8) {
+    q = childName
+      ? message.replace(new RegExp(childName, 'gi'), '').replace(/\s+/g, ' ').trim()
+      : message
+  }
+
+  return q
+}
+
+const HISTORY_LIMIT = 6   // last 3 exchanges for context
 
 // ─── Helpers ──────────────────────────────────────────────────────────────────
 
@@ -86,31 +142,82 @@ export async function POST(request: NextRequest) {
     }
   }
 
-  // ── Retrieval — peer-reviewed first, then all docs ─────────────────────────
-  let chunks = await searchChunks(message, { topK: 8, tags: ['peer-reviewed'] })
-
-  if (chunks.length < PEER_REVIEWED_MIN) {
-    chunks = await searchChunks(message, { topK: 8 })
+  // ── Short-circuit: purely conversational (greetings, thanks, etc.) ─────────
+  if (isConversational(message)) {
+    try {
+      const completion = await getOpenAI().chat.completions.create({
+        model: 'gpt-4o',
+        temperature: 0.5,
+        max_tokens: 150,
+        messages: [
+          { role: 'system', content: CONVERSATIONAL_SYSTEM_PROMPT },
+          ...history,
+          { role: 'user', content: message },
+        ],
+      })
+      const content = completion.choices[0]?.message?.content?.trim() ?? "Hi! How can I help you today?"
+      return NextResponse.json({ content, sources: [] })
+    } catch (err) {
+      const msg = err instanceof Error ? err.message : String(err)
+      console.error('[/api/chat] OpenAI error (conversational):', msg)
+      return NextResponse.json({ error: `AI generation failed: ${msg}` }, { status: 500 })
+    }
   }
+
+  // ── Build retrieval query — augment follow-ups with prior user message ─────
+  // "Can you elaborate?" alone embeds poorly; combining with the original
+  // question retrieves the right KB documents so follow-ups stay grounded.
+  let retrievalQuery = message
+  if (isFollowUp(message) && history.length > 0) {
+    const lastUserMsg = [...history].reverse().find(m => m.role === 'user')
+    if (lastUserMsg) {
+      retrievalQuery = `${lastUserMsg.content} ${message}`
+    }
+  }
+
+  // ── Retrieval — search all docs (peer-reviewed docs get higher natural similarity) ──
+  const chunks = await searchChunks(retrievalQuery, { topK: 8 })
 
   // ── Build prompt + context ─────────────────────────────────────────────────
-  const hasChunks = chunks.length > 0
-  const sources = hasChunks ? chunksToSources(chunks) : []
+  // Strategy: enrich the base prompt with the best available research context.
+  // When no context is found, Devy still answers from its training — it never refuses.
+  let pubMedSources: Source[] = []
+  const basePrompt = buildSystemPrompt(childName)
 
   let fullSystem: string
-  if (hasChunks) {
+
+  if (chunks.length > 0) {
+    // KB has relevant chunks — use them as primary context
     const contextBlock = buildContextBlock(chunks)
-    fullSystem = `${buildSystemPrompt(childName)}\n\n## DOCUMENT CONTEXT\n\n${contextBlock}`
+    fullSystem = `${basePrompt}\n\n## DOCUMENT CONTEXT\n\n${contextBlock}`
   } else {
-    // No KB results — use conversational fallback (allows greetings + general Qs)
-    fullSystem = FALLBACK_SYSTEM_PROMPT
+    // No KB results — try PubMed to enrich the answer with current research
+    const pubMedQuery = toPubMedQuery(retrievalQuery, childName)
+    const pubResult = await searchPubMed(pubMedQuery)
+
+    if (pubResult.length > 0) {
+      pubMedSources = pubMedSourcesToSources(pubResult)
+      const pubContext = buildPubMedContextBlock(pubResult)
+      fullSystem = `${basePrompt}\n\n${PUBMED_SYSTEM_PROMPT_SUFFIX}\n\n${pubContext}`
+      // Fire-and-forget: persist to KB so future similar queries hit the DB
+      ingestPubMedSources(pubResult).catch(err => console.error('[pubmed-ingest]', err))
+    } else {
+      // Neither KB nor PubMed found anything — Devy answers from its trained knowledge
+      fullSystem = basePrompt
+    }
   }
 
+  const sources = chunks.length > 0 ? chunksToSources(chunks) : pubMedSources
+
   // ── Call OpenAI ────────────────────────────────────────────────────────────
+  // Use slightly higher temperature when no specific research context is available
+  // so general answers feel natural rather than terse.
+  const temperature = sources.length > 0 ? 0.1 : 0.3
+
   try {
     const completion = await getOpenAI().chat.completions.create({
       model: 'gpt-4o',
-      temperature: 0.1,   // low temperature for factual, grounded responses
+      temperature,
       max_tokens: 1_000,
       messages: [
         { role: 'system', content: fullSystem },
@@ -119,11 +226,9 @@ export async function POST(request: NextRequest) {
       ],
     })
 
-    const content =
-      completion.choices[0]?.message?.content?.trim() ?? noKbResponse.content
+    const content = completion.choices[0]?.message?.content?.trim()
+      ?? "I'm sorry, I wasn't able to generate a response. Please try again."
 
-    // Only surface a notFoundNote when no sources were retrieved — showing
-    // a "not enough info" disclaimer alongside source cards is contradictory.
     const notFoundNote = sources.length === 0 ? detectNotFoundNote(content) : undefined
 
     return NextResponse.json({ content, sources, notFoundNote })

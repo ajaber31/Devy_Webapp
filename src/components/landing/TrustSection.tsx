@@ -2,7 +2,7 @@ import { Lock, FileCheck, AlertCircle } from 'lucide-react'
 
 const testimonials = [
   {
-    quote: "For the first time, I have a tool that doesn't just give me a confident-sounding answer — it shows me where the information comes from. That transparency changes everything as a clinician.",
+    quote: "I know every answer is grounded in real clinical evidence — either from Devy's knowledge base or peer-reviewed research. That kind of reliability changes everything as a clinician.",
     author: 'Maya T.',
     role: 'Occupational Therapist',
     initials: 'MT',
@@ -20,13 +20,13 @@ const testimonials = [
 const trustPoints = [
   {
     icon: Lock,
-    title: 'Your documents, your sources',
-    description: 'Devy only draws from the specific knowledge base your organization uploads and approves. No external internet searches.',
+    title: 'Trusted sources only',
+    description: 'Devy draws only from its clinician-curated knowledge base and peer-reviewed PubMed research. No unverified internet sources.',
   },
   {
     icon: FileCheck,
-    title: 'Every answer is cited',
-    description: 'Source cards appear beneath every AI response, showing the exact document, section, and page number used.',
+    title: 'Every answer is grounded',
+    description: 'Responses draw exclusively from Devy\'s clinical knowledge base and PubMed peer-reviewed research. Never invented, never speculative.',
   },
   {
     icon: AlertCircle,

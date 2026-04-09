@@ -1,9 +1,8 @@
 import { redirect } from 'next/navigation'
 import { Sidebar } from '@/components/layout/Sidebar'
 import { MobileSidebar } from '@/components/layout/MobileSidebar'
-import { Bell, Search } from 'lucide-react'
+import { Search } from 'lucide-react'
 import { getProfile } from '@/lib/actions/profile'
-import { initials } from '@/lib/utils'
 
 export default async function DashboardLayout({ children }: { children: React.ReactNode }) {
   const profile = await getProfile()
@@ -41,19 +40,6 @@ export default async function DashboardLayout({ children }: { children: React.Re
             </div>
           </div>
 
-          <div className="flex items-center gap-2 ml-auto">
-            <button
-              className="relative p-2 rounded-full text-ink-secondary hover:text-ink hover:bg-raised focus-ring"
-              style={{ transitionProperty: 'color, background-color', transitionDuration: '150ms' }}
-              aria-label="Notifications"
-            >
-              <Bell size={18} strokeWidth={1.75} />
-              <span className="absolute top-1.5 right-1.5 w-2 h-2 rounded-full bg-sage-500" />
-            </button>
-            <div className="w-8 h-8 rounded-full bg-sage-200 text-sage-800 flex items-center justify-center text-body-xs font-semibold ml-1">
-              {initials(profile.name)}
-            </div>
-          </div>
         </header>
 
         {/* Page content */}

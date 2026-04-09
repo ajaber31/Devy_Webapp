@@ -1,4 +1,63 @@
-# CLAUDE.md — Frontend Website Rules
+# CLAUDE.md
+
+This file provides guidance to Claude Code (claude.ai/code) when working with code in this repository.
+
+## Commands
+
+```bash
+npm run dev      # Start Next.js dev server at http://localhost:3000
+npm run build    # Production build (type-checks + exports)
+npm run lint     # ESLint via next lint
+```
+
+TypeScript type-check without building: `npx tsc --noEmit`
+
+## App Structure
+
+**Next.js 14 App Router** with two route groups:
+- `src/app/(dashboard)/` — authenticated user routes (dashboard, chat, children, resources, settings). Shared layout: `Sidebar` + `MobileSidebar`.
+- `src/app/(admin)/` — admin-only routes (`/admin/documents`, `/admin/users`). Layout checks `getProfile()` and redirects non-admins.
+- `src/app/` root — public pages (`/`, `/login`, `/signup`) and API routes under `src/app/api/`.
+
+**Key architectural split:**
+- Pages are Server Components; data-fetching happens at the page level via Server Actions.
+- Client interactivity is pushed into `*Client.tsx` co-located files (e.g., `ChatPageClient.tsx`, `DocumentsPageContent.tsx`) or into `src/components/`.
+- `src/middleware.ts` — session refresh + auth redirect for all protected routes.
+
+**Component folders under `src/components/`:**
+- `chat/` — ChatArea, ConversationSidebar, ProfileSelector, MessageBubble, SourceCitationCard
+- `children/` — AddChildModal, ChildCard, ChildProfileHeader
+- `dashboard/` — WelcomeBanner, QuickActions, RecentConversations, StatCard, PrivacyNotice
+- `admin/` — DocumentUploadZone, DocumentTable, StatusBadge, UserTable
+- `settings/` — ProfileSection, AppearanceSection, AiTrustSection, NotificationsSection
+- `landing/` — HeroSection, WhoItIsForSection, HowItWorksSection, TrustSection, CtaSection
+- `layout/` — Navbar, Sidebar, Footer, MobileSidebar
+- `shared/` — DevyLogo, EmptyState, NoiseTexture, PageHeader
+- `ui/` — shadcn/radix primitives (button, dialog, select, tabs, etc.)
+
+## Brand Tokens (Tailwind)
+
+**Color palette** (never use default Tailwind indigo/blue):
+- `sage` (50–900) — primary green brand color; `sage-500` = `#5C8651`
+- `dblue` (50–900) — secondary blue; `dblue-500` = `#4F739F`
+- `sand` (100–500) — warm accent; `sand-500` = `#B87333`
+- `canvas` / `surface` / `raised` / `border` / `muted` — neutral surface scale
+- `ink` / `ink-secondary` / `ink-tertiary` — text scale
+
+**Typography:**
+- `font-display` → Lora (serif, headings)
+- `font-body` → Inter (sans, body)
+- Use `text-display-2xl` through `text-display-sm` for headings (custom scale with tight tracking pre-applied)
+
+**Named shadows:** `shadow-card`, `shadow-card-hover`, `shadow-elevated`, `shadow-floating`, `shadow-input`, `shadow-button`
+
+**Named gradients:** `bg-gradient-hero`, `bg-gradient-cta`, `bg-gradient-sidebar`, `bg-gradient-card`
+
+**Easing:** `ease-spring` (overshoot), `ease-smooth` (standard)
+
+**Animations:** `animate-bounce-dot`, `animate-fade-up`, `animate-fade-in`
+
+---
 
 ## Always Do First
 - **Invoke the `frontend-design` skill** before writing any frontend code, every session, no exceptions.
@@ -20,8 +79,8 @@ Devy is a **centralized platform** — not an organization-tenant model.
 | `/children` | Children list (regular users) |
 | `/children/[id]` | Individual child profile |
 | `/chat` | Conversations (accepts `?childId` + `?childName` + `?conversationId` query params) |
-| `/resources` | Curated resources from knowledge base |
-| `/settings` | Profile, notifications, appearance, AI & Trust |
+| `/resources` | Internal — not linked from nav; content sourcing not exposed to users |
+| `/settings` | Profile, appearance, AI & Trust (Notifications removed) |
 | `/admin/documents` | Global Knowledge Base (admin only) |
 | `/admin/users` | Platform Users (admin only) |
 
@@ -279,8 +338,109 @@ User sends message (ChatArea)
 - `contextLabels` replaces `diagnoses` throughout (privacy-conscious design)
 - `ageFromDob()` utility replaces stored `age` field
 
+## Phase 4: PubMed Fallback + UI Trust Signals (Complete)
+
+### Architecture
+
+**Chat fallback chain:**
+```
+KB search → 0 results + not conversational
+  → searchPubMed(query)          ← PubMed E-utilities (no API key needed)
+      → esearch: systematic review / meta-analysis / RCT filter first
+      → efetch: XML abstracts, parsed with string methods (no extra packages)
+  → if results: grounded prompt with PubMed context block → grounded response
+  → fire-and-forget ingestPubMedSources() → stored in KB for future queries
+  → if no results: FALLBACK_SYSTEM_PROMPT
+```
+
+**PubMed ingestion (background):**
+- Deduplication by `pmid:XXXXX` tag — skips if document already `status='ready'`
+- Stores abstract text as `file_type='txt'`, `storage_path='pubmed/{pmid}'` (no actual Storage file)
+- Tags: `['pubmed-auto', 'peer-reviewed', 'pmid:{pmid}']`
+- Chunks + embeds using same pipeline as admin-uploaded documents
+- Visible in `/admin/documents` after ingestion
+
+### New Source Files (Phase 4)
+
+| File | Purpose |
+|------|---------|
+| `src/lib/ai/pubmed.ts` | PubMed E-utilities client — `searchPubMed()`, `buildPubMedContextBlock()`, `pubMedSourcesToSources()` |
+| `src/lib/ai/pubmed-ingest.ts` | `ingestPubMedSources()` — dedup + chunk + embed + store to KB |
+| `src/components/chat/ResearchBadge.tsx` | Trust badge (sage = KB source, dblue = PubMed) — replaces source citation cards |
+| `src/app/(dashboard)/resources/ResourcesPageContent.tsx` | Client component for `/resources` filter UI |
+
+### Key Behaviour
+
+- **Source citation cards removed**: Users never see raw citations. A small `ResearchBadge` shows "Grounded in Devy's clinical knowledge base" (sage) or "Grounded in PubMed peer-reviewed research" (dblue).
+- **Sources still stored to DB**: `messages.sources` (JSONB) still populated — PubMed sources use `id: 'pubmed-{pmid}'`, enabling future admin analytics.
+- **PubMed auto-grows KB**: First query to trigger PubMed ingests the abstract into `documents`. Subsequent similar queries find it via KB semantic search — no repeat PubMed call.
+- **Resources page**: Wired to real `documents` table. Shows `status='ready'` docs with tags as filter categories. Handles empty state.
+
+### Positioning (Landing Page)
+
+Devy is a **centralized platform** with one shared KB curated by the Devy team. Landing page copy reflects:
+- "Devy's clinician-curated knowledge base" — not "your organization's" data
+- "Grounded in peer-reviewed research" — not "source-cited"
+- PubMed mentioned explicitly as the external research layer
+
+### Admin Note
+
+All 33 existing documents have **no tags**. The peer-reviewed-first KB pass always returns 0 and falls through to untagged search. Tag documents as `peer-reviewed` in the admin UI to get KB priority behavior. PubMed-ingested documents are automatically tagged `peer-reviewed`.
+
+## Phase 5: AI Reliability + UX Fixes (Complete)
+
+### Critical Bug Fixed — documents RLS
+The `documents` table had an **admin-only RLS policy (`FOR ALL`)**. This meant the JOIN inside `match_chunks` returned 0 rows for regular users, causing every chat query to fall through to the fallback "not found" response. Fixed by adding:
+```sql
+CREATE POLICY "Authenticated users can read documents"
+  ON public.documents FOR SELECT
+  USING (auth.uid() IS NOT NULL);
+```
+Also updated `match_chunks` to add `SET search_path = public` and lowered default threshold to `0.10`.
+
+### AI Philosophy — "Knowledgeable Friend"
+Devy never refuses to answer. Devy has a warm, calm personality and always gives a real, useful response:
+- **With KB or PubMed context**: answer primarily from that research, cite naturally
+- **Without any context**: answer from trained knowledge (GPT-4o is trained on extensive clinical literature)
+- Temperature: 0.1 with context (precise), 0.3 without (natural-sounding)
+- Hard limits only: no specific diagnosis, no medication prescribing, clinical disclaimer on health topics
+- `FALLBACK_SYSTEM_PROMPT` removed — base prompt is used for all content questions
+
+### PubMed Query Extraction
+`toPubMedQuery()` in `route.ts` strips conversational framing before PubMed search:
+- "how do i know if my son has autism" → "autism diagnosis children"
+- "what strategies help my daughter with sensory overload" → "sensory overload strategies children"
+- Removes: question framing, possessives, child name, personal references
+
+### Chat UX — Profile Selector Restored
+`ProfileSelector` now works via callbacks (no page reload):
+- `onSelectChild(child)` — user picks a child profile, chat uses that context
+- `onGeneral()` — user picks "General question", chat starts without a profile
+- "New Conversation" (`+` button) shows selector; selecting re-opens blank chat with chosen context
+- Auto-loads most recent conversation on `/chat` direct navigation (no more ProfileSelector on every load)
+
+### Settings Cleanup
+- Notifications tab removed
+- AI Trust section: all 4 policies are always-on with Canadian law references (PIPEDA/PHIPA), no toggles
+- Appearance: font size is functional (localStorage + CSS custom property), dark mode marked "coming soon"
+
+### Nav/Header Cleanup
+- Resources removed from sidebar nav (content sourcing not exposed to users)
+- Notification bell and user initials removed from top bar
+
+### Retrieval Improvements
+- Single-pass retrieval (removed wasted peer-reviewed-first pass when 0 docs are tagged)
+- Child name stripped before PubMed query
+- Threshold: 0.10 (was 0.35)
+
+### PMC Full Text
+`pubmed.ts` now attempts to fetch open-access full text from PubMed Central:
+1. `elink` API: PMID → PMC ID (only for Open Access papers)
+2. `efetch` on PMC: full XML article → parsed sections (abstract, intro, methods, results, discussion)
+3. Falls back to abstract if paper not in PMC OA
+`pubmed-ingest.ts` stores whichever is richer (full text or abstract) in the KB
+
 ## Next Steps
-- Add peer-reviewed toggle per conversation (UI setting in ChatArea header)
 - Stream responses for faster perceived latency (replace fetch-and-wait pattern)
+- Tag existing knowledge base documents as `peer-reviewed` in admin UI
 - Admin view of conversations + document usage analytics
-- `/resources` page wired to knowledge base (curated doc listing)

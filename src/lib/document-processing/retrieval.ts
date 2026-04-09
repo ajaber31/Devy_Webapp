@@ -3,7 +3,7 @@ import { generateEmbeddings } from './embedder'
 
 export interface ChunkSearchOptions {
   topK?: number       // default 8
-  threshold?: number  // cosine similarity minimum, default 0.70
+  threshold?: number  // cosine similarity minimum, default 0.10
   tags?: string[]     // filter to documents tagged with any of these
 }
 
@@ -30,7 +30,7 @@ export async function searchChunks(
   query: string,
   options: ChunkSearchOptions = {},
 ): Promise<RetrievedChunk[]> {
-  const { topK = 8, threshold = 0.40, tags } = options
+  const { topK = 8, threshold = 0.10, tags } = options
 
   const { embeddings, error } = await generateEmbeddings([query])
   if (error || embeddings.length === 0) {
