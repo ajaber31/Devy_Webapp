@@ -440,7 +440,35 @@ Devy never refuses to answer. Devy has a warm, calm personality and always gives
 3. Falls back to abstract if paper not in PMC OA
 `pubmed-ingest.ts` stores whichever is richer (full text or abstract) in the KB
 
+## Phase 6: Deployment-Readiness QA Pass (Complete)
+
+### Bugs Fixed
+
+| Issue | File(s) | Severity |
+|-------|---------|----------|
+| `/forgot-password` missing from `PUBLIC_PATHS` — unauthenticated users redirected to login | `src/middleware.ts` | **Critical** |
+| `profiles_role_check` DB constraint missing `'other'` — signup with Teacher/Caregiver/Other would fail at DB level | `database.types.ts` + Supabase migration | **Critical** |
+| `MobileSidebar` not applying role-terminology label (showed "Children" for clinicians on mobile) | `src/components/layout/MobileSidebar.tsx` | **High** |
+| Signup confirm-password field not toggling with show/hide button | `src/app/signup/page.tsx` | **Medium** |
+| Social login buttons (Google/Microsoft) were non-functional placeholders | `src/app/login/page.tsx` | **Medium** |
+| Non-functional search bar in dashboard top bar | `src/app/(dashboard)/layout.tsx` | **Medium** |
+| Non-functional Bell notification button in admin layout | `src/app/(admin)/layout.tsx` | **Medium** |
+| Fake "Invite user" button with no-op handler | `src/components/admin/UserSearchFilter.tsx` | **Medium** |
+| `QuickActions` used `dangerouslySetInnerHTML` for plain text + literal `&amp;` entity | `src/components/dashboard/QuickActions.tsx` | **Low** |
+| Outdated AI Trust policy text (claimed "no general knowledge" but Phase 5 changed behavior) | `src/components/settings/AiTrustSection.tsx` | **Low** |
+| Dead Terms/Privacy links (`href="#"`) on signup footer | `src/app/signup/page.tsx` | **Low** |
+
+### Improvements Made
+- **Admin nav**: Added "Conversations" link — admins can now access `/chat` from the sidebar
+- **Dashboard 4th stat**: Replaced placeholder "Sources Cited / Coming with AI" with real `getReadyDocumentCount()` showing live KB document count
+- **Not-found page**: Created styled `src/app/not-found.tsx` consistent with app branding
+- **TypeScript**: All types pass `npx tsc --noEmit` with zero errors
+
+### Dead Code Notes (not removed — no runtime impact)
+- `src/components/dashboard/PinnedResources.tsx` — not imported anywhere; uses mock data
+- `src/components/settings/OrgBrandingSection.tsx` — not imported anywhere; uses mock data
+
 ## Next Steps
-- Stream responses for faster perceived latency (replace fetch-and-wait pattern)
 - Tag existing knowledge base documents as `peer-reviewed` in admin UI
 - Admin view of conversations + document usage analytics
+- Monetization via Stripe (subscriptions, billing, plan limits)

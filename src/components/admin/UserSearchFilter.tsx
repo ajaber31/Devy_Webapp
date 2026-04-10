@@ -1,6 +1,6 @@
 'use client'
 
-import { Search, UserPlus } from 'lucide-react'
+import { Search } from 'lucide-react'
 
 interface UserSearchFilterProps {
   query: string
@@ -9,11 +9,10 @@ interface UserSearchFilterProps {
   onRoleChange: (r: string) => void
   status: string
   onStatusChange: (s: string) => void
-  onInvite: () => void
 }
 
 export function UserSearchFilter({
-  query, onQueryChange, role, onRoleChange, status, onStatusChange, onInvite
+  query, onQueryChange, role, onRoleChange, status, onStatusChange
 }: UserSearchFilterProps) {
   return (
     <div className="flex flex-col sm:flex-row items-start sm:items-center gap-3 mb-6">
@@ -58,16 +57,6 @@ export function UserSearchFilter({
         <option value="invited">Invited</option>
         <option value="suspended">Suspended</option>
       </select>
-
-      {/* Invite */}
-      <button
-        onClick={onInvite}
-        className="flex items-center gap-2 px-4 py-2.5 bg-sage-500 text-white font-medium text-body-sm rounded-pill shadow-button hover:bg-sage-600 hover:shadow-button-hover active:scale-[0.98] focus-ring ml-auto"
-        style={{ transitionProperty: 'background-color, box-shadow, transform', transitionDuration: '150ms' }}
-      >
-        <UserPlus size={15} strokeWidth={2} />
-        Invite user
-      </button>
     </div>
   )
 }

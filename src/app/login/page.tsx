@@ -142,33 +142,6 @@ export default function LoginPage() {
             </button>
           </form>
 
-          {/* Divider */}
-          <div className="flex items-center gap-3 my-6">
-            <div className="flex-1 h-px bg-border" />
-            <span className="text-body-xs text-ink-tertiary">or continue with</span>
-            <div className="flex-1 h-px bg-border" />
-          </div>
-
-          {/* Social placeholders */}
-          <div className="grid grid-cols-2 gap-3">
-            {[
-              { label: 'Google', icon: 'G' },
-              { label: 'Microsoft', icon: 'M' },
-            ].map((provider) => (
-              <button
-                key={provider.label}
-                type="button"
-                className="flex items-center justify-center gap-2 px-4 py-2.5 bg-surface border border-border rounded-card text-body-sm font-medium text-ink-secondary hover:bg-raised hover:text-ink focus-ring"
-                style={{ transitionProperty: 'background-color, color', transitionDuration: '150ms' }}
-              >
-                <span className="w-4 h-4 rounded text-xs flex items-center justify-center font-bold bg-raised text-ink">
-                  {provider.icon}
-                </span>
-                {provider.label}
-              </button>
-            ))}
-          </div>
-
           <p className="text-center text-body-sm text-ink-secondary mt-6">
             Don&apos;t have an account?{' '}
             <Link href="/signup" className="text-sage-600 hover:text-sage-700 font-medium transition-colors duration-150">

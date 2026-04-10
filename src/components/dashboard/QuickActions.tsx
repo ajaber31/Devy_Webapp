@@ -31,7 +31,7 @@ export function QuickActions({ nounPlural }: QuickActionsProps) {
     {
       icon: Settings,
       label: 'Settings',
-      description: 'Profile &amp; preferences',
+      description: 'Profile & preferences',
       href: '/settings',
       color: 'bg-raised text-ink-secondary',
     },
@@ -60,7 +60,7 @@ export function QuickActions({ nounPlural }: QuickActionsProps) {
                 </div>
                 <div>
                   <p className="text-body-xs font-semibold text-ink">{action.label}</p>
-                  <p className="text-body-xs text-ink-tertiary" dangerouslySetInnerHTML={{ __html: action.description }} />
+                  <p className="text-body-xs text-ink-tertiary">{action.description}</p>
                 </div>
               </Link>
             </li>

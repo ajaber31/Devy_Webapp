@@ -56,6 +56,16 @@ export async function getDocuments(): Promise<Document[]> {
   return (data ?? []).map(mapRow)
 }
 
+/** Returns the count of documents with status='ready' — usable by all authenticated users. */
+export async function getReadyDocumentCount(): Promise<number> {
+  const supabase = await createClient()
+  const { count } = await supabase
+    .from('documents')
+    .select('*', { count: 'exact', head: true })
+    .eq('status', 'ready')
+  return count ?? 0
+}
+
 /** Creates a document metadata record after the file is already in Storage.
  *  Does NOT trigger processing — the caller is responsible for that.
  */

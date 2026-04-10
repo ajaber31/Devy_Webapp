@@ -7,7 +7,7 @@ export interface Database {
         Row: {
           id: string
           name: string
-          role: 'parent' | 'caregiver' | 'clinician' | 'teacher' | 'admin'
+          role: 'parent' | 'caregiver' | 'clinician' | 'teacher' | 'other' | 'admin'
           status: 'active' | 'invited' | 'suspended'
           avatar_url: string | null
           created_at: string
@@ -16,7 +16,7 @@ export interface Database {
         Insert: {
           id: string
           name: string
-          role?: 'parent' | 'caregiver' | 'clinician' | 'teacher' | 'admin'
+          role?: 'parent' | 'caregiver' | 'clinician' | 'teacher' | 'other' | 'admin'
           status?: 'active' | 'invited' | 'suspended'
           avatar_url?: string | null
           created_at?: string
@@ -25,7 +25,7 @@ export interface Database {
         Update: {
           id?: string
           name?: string
-          role?: 'parent' | 'caregiver' | 'clinician' | 'teacher' | 'admin'
+          role?: 'parent' | 'caregiver' | 'clinician' | 'teacher' | 'other' | 'admin'
           status?: 'active' | 'invited' | 'suspended'
           avatar_url?: string | null
           updated_at?: string

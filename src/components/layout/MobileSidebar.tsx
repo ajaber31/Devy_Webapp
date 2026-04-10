@@ -8,6 +8,7 @@ import { DevyLogo } from '@/components/shared/DevyLogo'
 import { ADMIN_NAV_ITEMS, DASHBOARD_NAV_ITEMS } from '@/lib/constants'
 import { cn, initials } from '@/lib/utils'
 import { signOut } from '@/lib/actions/auth'
+import { getRoleTerminology } from '@/lib/role-terminology'
 import type { Profile } from '@/lib/types'
 
 interface MobileSidebarProps {
@@ -17,7 +18,11 @@ interface MobileSidebarProps {
 export function MobileSidebar({ profile }: MobileSidebarProps) {
   const pathname = usePathname()
   const [open, setOpen] = useState(false)
-  const navItems = profile.role === 'admin' ? ADMIN_NAV_ITEMS : DASHBOARD_NAV_ITEMS
+  const rawNavItems = profile.role === 'admin' ? ADMIN_NAV_ITEMS : DASHBOARD_NAV_ITEMS
+  const terms = getRoleTerminology(profile.role)
+  const navItems = rawNavItems.map(item =>
+    item.href === '/children' ? { ...item, label: terms.nounPlural } : item
+  )
 
   return (
     <>

@@ -43,7 +43,6 @@ export function AdminUsersPageContent({ initialUsers }: AdminUsersPageContentPro
         onRoleChange={setRole}
         status={status}
         onStatusChange={setStatus}
-        onInvite={() => {}}
       />
       <UserTable
         users={filtered}

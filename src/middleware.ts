@@ -3,7 +3,7 @@ import type { NextRequest } from 'next/server'
 import { createClient } from '@/lib/supabase/middleware'
 
 // Paths that don't require authentication
-const PUBLIC_PATHS = new Set(['/', '/login', '/signup'])
+const PUBLIC_PATHS = new Set(['/', '/login', '/signup', '/forgot-password'])
 
 export async function middleware(request: NextRequest) {
   const response = NextResponse.next({ request })

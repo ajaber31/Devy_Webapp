@@ -156,7 +156,7 @@ export default function SignupPage() {
               <label htmlFor="confirm" className="block text-body-sm font-medium text-ink mb-1.5">Confirm password</label>
               <input
                 id="confirm"
-                type="password"
+                type={showPassword ? 'text' : 'password'}
                 autoComplete="new-password"
                 required
                 {...field('confirm')}
@@ -224,10 +224,7 @@ export default function SignupPage() {
         </div>
 
         <p className="text-center text-body-xs text-ink-tertiary mt-6 px-4">
-          By creating an account, you agree to our{' '}
-          <Link href="#" className="underline hover:text-ink-secondary transition-colors duration-150">Terms</Link>
-          {' '}and{' '}
-          <Link href="#" className="underline hover:text-ink-secondary transition-colors duration-150">Privacy Policy</Link>.
+          Devy is an informational tool. It does not provide medical advice.
         </p>
       </div>
     </div>

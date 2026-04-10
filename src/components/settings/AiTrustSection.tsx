@@ -22,8 +22,8 @@ export function AiTrustSection() {
             legal="Required — PHIPA s.3(1) and professional standards for AI-assisted health information"
           />
           <PolicyRow
-            title="'Not found' transparency notices"
-            description="When a question falls outside Devy's knowledge base, Devy says so explicitly rather than speculating or generating an answer from general knowledge."
+            title="Transparency about information sources"
+            description="Devy prioritises its clinician-curated knowledge base and PubMed research. When context is unavailable, responses are drawn from GPT-4o's clinical training and are clearly distinguished from KB-grounded answers."
             legal="Required — PIPEDA Principle 4.3 (Openness) and Principle 4.9 (Individual Access to accuracy)"
           />
           <PolicyRow
