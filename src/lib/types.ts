@@ -1,4 +1,4 @@
-export type UserRole = 'parent' | 'caregiver' | 'clinician' | 'teacher' | 'admin'
+export type UserRole = 'parent' | 'caregiver' | 'clinician' | 'teacher' | 'other' | 'admin'
 export type UserStatus = 'active' | 'invited' | 'suspended'
 export type DocumentStatus = 'uploaded' | 'parsing' | 'chunking' | 'embedding' | 'ready' | 'failed'
 export type MessageRole = 'user' | 'assistant'

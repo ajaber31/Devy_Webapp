@@ -4,7 +4,7 @@ import { useState } from 'react'
 import { ConversationSidebar } from '@/components/chat/ConversationSidebar'
 import { ChatArea } from '@/components/chat/ChatArea'
 import { ProfileSelector } from '@/components/chat/ProfileSelector'
-import { getMessages } from '@/lib/actions/conversations'
+import { getMessages, renameConversation, deleteConversation } from '@/lib/actions/conversations'
 import type { Child, Conversation, Message } from '@/lib/types'
 
 interface ChatPageClientProps {
@@ -109,6 +109,20 @@ export function ChatPageClient({
     setSelectorOpen(false)
   }
 
+  const handleRename = (id: string, title: string) => {
+    setConversations(prev => prev.map(c => c.id === id ? { ...c, title } : c))
+    renameConversation(id, title).catch(console.error)
+  }
+
+  const handleDelete = (id: string) => {
+    setConversations(prev => prev.filter(c => c.id !== id))
+    if (activeId === id) {
+      setActiveId(null)
+      setMessages([])
+    }
+    deleteConversation(id).catch(console.error)
+  }
+
   return (
     <div className="flex h-full overflow-hidden">
       {/* Conversation sidebar */}
@@ -118,6 +132,8 @@ export function ChatPageClient({
           activeId={activeId}
           onSelect={handleSelect}
           onNewConversation={handleNewConversation}
+          onRename={handleRename}
+          onDelete={handleDelete}
         />
       </div>
 

@@ -30,11 +30,14 @@ const CLINICIAN_TERMS: RoleTerminology = {
   statLabel: 'Client Profiles',
 }
 
-export function getRoleTerminology(role: UserRole): RoleTerminology {
+export function getRoleTerminology(role: UserRole | string): RoleTerminology {
   switch (role) {
     case 'clinician':
-    case 'teacher':
+    case 'caregiver':
+    case 'other':
       return CLINICIAN_TERMS
+    case 'teacher':
+    case 'parent':
     default:
       return PARENT_TERMS
   }

@@ -1,7 +1,6 @@
 'use client'
 
 import { useState } from 'react'
-import { Camera } from 'lucide-react'
 import { updateProfile } from '@/lib/actions/profile'
 import { initials } from '@/lib/utils'
 import type { Profile } from '@/lib/types'
@@ -38,18 +37,8 @@ export function ProfileSection({ profile }: ProfileSectionProps) {
 
         {/* Avatar */}
         <div className="flex items-center gap-5 mb-7">
-          <div className="relative">
-            <div className="w-20 h-20 rounded-full bg-sage-200 text-sage-800 flex items-center justify-center text-2xl font-bold font-display">
-              {initials(profile.name)}
-            </div>
-            <button
-              className="absolute bottom-0 right-0 w-7 h-7 rounded-full bg-sage-500 text-white flex items-center justify-center shadow-button hover:bg-sage-600 focus-ring"
-              style={{ transitionProperty: 'background-color', transitionDuration: '150ms' }}
-              aria-label="Change avatar"
-              type="button"
-            >
-              <Camera size={13} strokeWidth={2} />
-            </button>
+          <div className="w-20 h-20 rounded-full bg-sage-200 text-sage-800 flex items-center justify-center text-2xl font-bold font-display">
+            {initials(profile.name)}
           </div>
           <div>
             <p className="text-body-sm font-medium text-ink">{name}</p>

@@ -172,6 +172,8 @@ export default function SignupPage() {
               <div className="grid grid-cols-2 gap-3">
                 {ACCOUNT_TYPE_OPTIONS.map((option) => {
                   const selected = accountType === option.value
+                  // "Other" spans full width when it ends up as the last lone item
+                  const isOther = option.value === 'other'
                   return (
                     <button
                       key={option.value}
@@ -180,6 +182,7 @@ export default function SignupPage() {
                       className={cn(
                         'relative flex flex-col items-start gap-1.5 p-4 rounded-card border text-left',
                         'focus-ring',
+                        isOther ? 'col-span-2' : '',
                         selected
                           ? 'border-sage-400 bg-sage-50 ring-2 ring-sage-300 ring-offset-1'
                           : 'border-border bg-surface hover:bg-raised hover:border-sage-200'

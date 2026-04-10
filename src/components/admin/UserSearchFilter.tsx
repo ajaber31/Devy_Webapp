@@ -42,6 +42,7 @@ export function UserSearchFilter({
         <option value="caregiver">Caregiver</option>
         <option value="clinician">Clinician</option>
         <option value="teacher">Teacher</option>
+        <option value="other">Other</option>
         <option value="admin">Admin</option>
       </select>
 

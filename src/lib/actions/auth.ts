@@ -4,8 +4,13 @@ import { redirect } from 'next/navigation'
 import { createClient } from '@/lib/supabase/server'
 
 function mapAccountTypeToRole(accountType: string): string {
-  if (accountType === 'clinician_professional') return 'clinician'
-  return 'parent'
+  switch (accountType) {
+    case 'clinician_professional': return 'clinician'
+    case 'caregiver':              return 'caregiver'
+    case 'teacher':                return 'teacher'
+    case 'other':                  return 'other'
+    default:                       return 'parent'
+  }
 }
 
 export async function signIn(formData: { email: string; password: string }) {

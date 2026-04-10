@@ -16,16 +16,34 @@ export const ADMIN_NAV_ITEMS = [
 
 export const ACCOUNT_TYPE_OPTIONS = [
   {
-    value: 'parent_caregiver',
-    label: 'Parent / Caregiver',
-    description: 'Get guidance and resources for supporting your child at home and in everyday life.',
+    value: 'parent',
+    label: 'Parent',
+    description: 'Support your child at home with evidence-based guidance and strategies.',
     icon: '🏠',
+  },
+  {
+    value: 'caregiver',
+    label: 'Caregiver',
+    description: 'Get resources and strategies to support the children in your care.',
+    icon: '🤝',
   },
   {
     value: 'clinician_professional',
     label: 'Clinician / Professional',
-    description: 'Access evidence-based clinical resources and practice tools for supporting your clients.',
+    description: 'Access evidence-based clinical resources and practice tools for your clients.',
     icon: '🩺',
+  },
+  {
+    value: 'teacher',
+    label: 'Teacher',
+    description: 'Find classroom strategies and research-backed support approaches for your students.',
+    icon: '📚',
+  },
+  {
+    value: 'other',
+    label: 'Other',
+    description: "Access Devy's knowledge base for professional or personal use.",
+    icon: '✨',
   },
 ]
 

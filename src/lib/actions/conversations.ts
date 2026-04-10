@@ -187,14 +187,33 @@ export async function insertMessage(input: {
   }
 }
 
-export async function updateConversationTitle(id: string, title: string) {
+export async function renameConversation(id: string, title: string): Promise<{ error?: string }> {
   const supabase = createClient()
+  const { data: { user } } = await supabase.auth.getUser()
+  if (!user) return { error: 'Not authenticated' }
+
+  const trimmed = title.trim().slice(0, 100)
+  if (!trimmed) return { error: 'Title cannot be empty' }
+
   const { error } = await supabase
     .from('conversations')
-    .update({ title })
+    .update({ title: trimmed })
     .eq('id', id)
+    .eq('user_id', user.id)
 
-  if (error) return { error: error.message }
-  revalidatePath('/chat')
-  return { success: true }
+  return error ? { error: error.message } : {}
+}
+
+export async function deleteConversation(id: string): Promise<{ error?: string }> {
+  const supabase = createClient()
+  const { data: { user } } = await supabase.auth.getUser()
+  if (!user) return { error: 'Not authenticated' }
+
+  const { error } = await supabase
+    .from('conversations')
+    .delete()
+    .eq('id', id)
+    .eq('user_id', user.id)
+
+  return error ? { error: error.message } : {}
 }
