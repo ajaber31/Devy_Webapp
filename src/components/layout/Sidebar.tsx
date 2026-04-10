@@ -26,7 +26,7 @@ function NavItem({ href, label, icon: Icon, active, collapsed }: NavItemProps) {
       href={href}
       title={collapsed ? label : undefined}
       className={cn(
-        'flex items-center gap-3 px-3 py-2.5 rounded-card text-body-sm font-medium group',
+        'relative flex items-center gap-3 px-3 py-2.5 rounded-card text-body-sm font-medium group overflow-hidden',
         'focus-ring',
         collapsed ? 'justify-center' : '',
         active
@@ -35,6 +35,13 @@ function NavItem({ href, label, icon: Icon, active, collapsed }: NavItemProps) {
       )}
       style={{ transitionProperty: 'background-color, color', transitionDuration: '150ms' }}
     >
+      {/* Left accent bar — only visible when active and not collapsed */}
+      {active && !collapsed && (
+        <span
+          className="absolute left-0 inset-y-1.5 w-[3px] bg-sage-500 rounded-full"
+          style={{ animation: 'accentSlideIn 0.25s cubic-bezier(0.16, 1, 0.3, 1)' }}
+        />
+      )}
       <Icon
         size={18}
         strokeWidth={active ? 2 : 1.75}

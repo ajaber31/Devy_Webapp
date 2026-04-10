@@ -1,6 +1,7 @@
 import { PageHeader } from '@/components/shared/PageHeader'
 import { ChildCard } from '@/components/children/ChildCard'
 import { EmptyState } from '@/components/shared/EmptyState'
+import { AnimateIn } from '@/components/shared/AnimateIn'
 import { AddChildButton } from './AddChildButton'
 import { getChildren } from '@/lib/actions/children'
 import { getProfile } from '@/lib/actions/profile'
@@ -22,16 +23,20 @@ export default async function ChildrenPage() {
       </div>
 
       {children.length === 0 ? (
-        <EmptyState
-          icon={<Users2 size={28} strokeWidth={1.5} />}
-          title={terms.emptyTitle}
-          description={terms.emptyDescription}
-          action={<AddChildButton label={terms.addLabel} />}
-        />
+        <AnimateIn delay={80}>
+          <EmptyState
+            icon={<Users2 size={28} strokeWidth={1.5} />}
+            title={terms.emptyTitle}
+            description={terms.emptyDescription}
+            action={<AddChildButton label={terms.addLabel} />}
+          />
+        </AnimateIn>
       ) : (
         <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
-          {children.map((child) => (
-            <ChildCard key={child.id} child={child} />
+          {children.map((child, i) => (
+            <AnimateIn key={child.id} delay={i * 70}>
+              <ChildCard child={child} />
+            </AnimateIn>
           ))}
         </div>
       )}

@@ -60,11 +60,24 @@ export function ChatPageClient({
     setSelectorOpen(false)
     setChatChildId(undefined)
     setChatChildName(undefined)
-    setActiveId(id)
     setIsLoadingMessages(true)
+    // Fetch BEFORE changing activeId so all three state updates batch together,
+    // ensuring ChatArea receives the correct initialMessages on its first render.
     const msgs = await getMessages(id)
     setMessages(msgs)
+    setActiveId(id)
     setIsLoadingMessages(false)
+  }
+
+  const handleMessageSent = (conversationId: string, preview: string) => {
+    setConversations(prev =>
+      prev
+        .map(c => c.id === conversationId
+          ? { ...c, preview, updatedAt: new Date().toISOString() }
+          : c
+        )
+        .sort((a, b) => new Date(b.updatedAt).getTime() - new Date(a.updatedAt).getTime())
+    )
   }
 
   // "+" button — show profile selector so user can pick context for new chat
@@ -122,10 +135,12 @@ export function ChatPageClient({
         <ChatArea
           conversationId={activeId}
           conversationTitle={activeConvo?.title ?? 'New conversation'}
-          initialMessages={isLoadingMessages ? [] : messages}
+          initialMessages={messages}
+          isLoading={isLoadingMessages}
           childId={effectiveChildId}
           childName={effectiveChildName}
           onConversationCreated={handleConversationCreated}
+          onMessageSent={handleMessageSent}
         />
       )}
     </div>

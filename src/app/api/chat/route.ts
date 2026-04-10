@@ -15,33 +15,29 @@ import {
 } from '@/lib/ai/prompt-builder'
 import { searchPubMed, buildPubMedContextBlock, pubMedSourcesToSources } from '@/lib/ai/pubmed'
 import { ingestPubMedSources } from '@/lib/ai/pubmed-ingest'
-import type { Source } from '@/lib/types'
+import type { Child, Source } from '@/lib/types'
 import type { Database } from '@/lib/supabase/database.types'
 
 // Vercel Pro — up to 60s; ignored locally
 export const maxDuration = 60
 
-// ─── PubMed Query Helper ──────────────────────────────────────────────────────
+// ─── Helpers ──────────────────────────────────────────────────────────────────
+
+let _openai: OpenAI | null = null
+function getOpenAI(): OpenAI {
+  if (!_openai) _openai = new OpenAI({ apiKey: process.env.OPENAI_API_KEY })
+  return _openai
+}
 
 /**
- * Convert a natural-language user question into a clean PubMed search query.
- *
- * Strips:
- * - Conversational framing ("how do I know if", "can you tell me about", etc.)
- * - Child names
- * - Possessives and personal references ("my son", "her daughter", etc.)
- *
- * Example: "how do i know if my son has autism" → "autism diagnosis children"
+ * Convert a natural-language question into a clean PubMed search query.
+ * Strips conversational framing, possessives, child names.
  */
 function toPubMedQuery(message: string, childName?: string): string {
   let q = message.toLowerCase()
 
-  // Strip child name
-  if (childName) {
-    q = q.replace(new RegExp(childName.toLowerCase(), 'g'), '')
-  }
+  if (childName) q = q.replace(new RegExp(childName.toLowerCase(), 'g'), '')
 
-  // Strip conversational framing patterns
   const framePatterns = [
     /^(can you (tell me|explain|describe|help me understand)|please (explain|describe|tell me))\s+/,
     /^(how do i (know|find out|tell|figure out|check|identify|recognize) (if|whether|when|that))\s+/,
@@ -55,14 +51,9 @@ function toPubMedQuery(message: string, childName?: string): string {
     /\b(he|she|they)\s+(has|have|might have|could have|may have)\b/g,
   ]
 
-  for (const pattern of framePatterns) {
-    q = q.replace(pattern, ' ')
-  }
-
-  // Compress whitespace
+  for (const pattern of framePatterns) q = q.replace(pattern, ' ')
   q = q.replace(/\s+/g, ' ').trim()
 
-  // If stripping left something too short or empty, fall back to original minus child name
   if (q.length < 8) {
     q = childName
       ? message.replace(new RegExp(childName, 'gi'), '').replace(/\s+/g, ' ').trim()
@@ -72,15 +63,90 @@ function toPubMedQuery(message: string, childName?: string): string {
   return q
 }
 
-const HISTORY_LIMIT = 6   // last 3 exchanges for context
-
-// ─── Helpers ──────────────────────────────────────────────────────────────────
-
-let _openai: OpenAI | null = null
-function getOpenAI(): OpenAI {
-  if (!_openai) _openai = new OpenAI({ apiKey: process.env.OPENAI_API_KEY })
-  return _openai
+/**
+ * Map a DB children row to the Child type.
+ */
+function toChild(row: Record<string, unknown>): Child {
+  return {
+    id: row.id as string,
+    userId: row.user_id as string,
+    name: row.name as string,
+    dateOfBirth: (row.date_of_birth as string | null) ?? null,
+    avatarColor: (row.avatar_color as 'sage' | 'dblue' | 'sand') ?? 'sage',
+    contextLabels: (row.context_labels as string[]) ?? [],
+    supportNeeds: (row.support_needs as string[]) ?? [],
+    strengths: (row.strengths as string[]) ?? [],
+    interests: (row.interests as string[]) ?? [],
+    routines: (row.routines as string[]) ?? [],
+    goals: (row.goals as string[]) ?? [],
+    notes: (row.notes as string) ?? '',
+    createdAt: row.created_at as string,
+  }
 }
+
+/**
+ * Build and return an SSE streaming response.
+ * Sends:
+ *   { type: 'metadata', sources: Source[] }
+ *   { type: 'token',    content: string }   (repeated)
+ *   { type: 'done',     notFoundNote?: string }
+ */
+function streamSSE(
+  completionParams: Parameters<OpenAI['chat']['completions']['create']>[0],
+  sources: Source[],
+): Response {
+  const encoder = new TextEncoder()
+  const openai = getOpenAI()
+
+  const body = new ReadableStream({
+    async start(controller) {
+      const send = (obj: object) => {
+        controller.enqueue(encoder.encode(`data: ${JSON.stringify(obj)}\n\n`))
+      }
+
+      // ── Send sources metadata upfront so the client can show the badge early ──
+      send({ type: 'metadata', sources })
+
+      try {
+        const stream = await openai.chat.completions.create({
+          ...completionParams,
+          stream: true,
+        })
+
+        let fullContent = ''
+
+        for await (const chunk of stream) {
+          const token = chunk.choices[0]?.delta?.content
+          if (token) {
+            fullContent += token
+            send({ type: 'token', content: token })
+          }
+        }
+
+        const notFoundNote =
+          sources.length === 0 ? detectNotFoundNote(fullContent) : undefined
+
+        send({ type: 'done', notFoundNote })
+      } catch (err) {
+        const msg = err instanceof Error ? err.message : String(err)
+        console.error('[/api/chat] OpenAI stream error:', msg)
+        send({ type: 'error', message: msg })
+      } finally {
+        controller.close()
+      }
+    },
+  })
+
+  return new Response(body, {
+    headers: {
+      'Content-Type': 'text/event-stream',
+      'Cache-Control': 'no-cache',
+      Connection: 'keep-alive',
+    },
+  })
+}
+
+const HISTORY_LIMIT = 6 // last 3 exchanges
 
 // ─── Route Handler ────────────────────────────────────────────────────────────
 
@@ -94,15 +160,13 @@ export async function POST(request: NextRequest) {
     {
       cookies: {
         getAll: () => cookieStore.getAll(),
-        setAll: () => {}, // read-only in route handlers
+        setAll: () => {},
       },
     },
   )
 
   const { data: { user } } = await supabase.auth.getUser()
-  if (!user) {
-    return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
-  }
+  if (!user) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
 
   // ── Parse body ─────────────────────────────────────────────────────────────
   let body: {
@@ -118,11 +182,29 @@ export async function POST(request: NextRequest) {
     return NextResponse.json({ error: 'Invalid request body' }, { status: 400 })
   }
 
-  const { message, conversationId, childName } = body
+  const { message, conversationId, childId, childName } = body
 
   if (!message?.trim()) {
     return NextResponse.json({ error: 'Message is required' }, { status: 400 })
   }
+
+  // ── Fetch user role + child profile in parallel ────────────────────────────
+  const [profileResult, childResult] = await Promise.all([
+    supabase.from('profiles').select('role').eq('id', user.id).single(),
+    childId
+      ? supabase
+          .from('children')
+          .select('*')
+          .eq('id', childId)
+          .eq('user_id', user.id)
+          .single()
+      : Promise.resolve({ data: null }),
+  ])
+
+  const userRole = profileResult.data?.role ?? undefined
+  const child: Child | null = childResult.data
+    ? toChild(childResult.data as Record<string, unknown>)
+    : null
 
   // ── Load conversation history ──────────────────────────────────────────────
   let history: { role: 'user' | 'assistant'; content: string }[] = []
@@ -144,8 +226,8 @@ export async function POST(request: NextRequest) {
 
   // ── Short-circuit: purely conversational (greetings, thanks, etc.) ─────────
   if (isConversational(message)) {
-    try {
-      const completion = await getOpenAI().chat.completions.create({
+    return streamSSE(
+      {
         model: 'gpt-4o',
         temperature: 0.5,
         max_tokens: 150,
@@ -154,68 +236,53 @@ export async function POST(request: NextRequest) {
           ...history,
           { role: 'user', content: message },
         ],
-      })
-      const content = completion.choices[0]?.message?.content?.trim() ?? "Hi! How can I help you today?"
-      return NextResponse.json({ content, sources: [] })
-    } catch (err) {
-      const msg = err instanceof Error ? err.message : String(err)
-      console.error('[/api/chat] OpenAI error (conversational):', msg)
-      return NextResponse.json({ error: `AI generation failed: ${msg}` }, { status: 500 })
-    }
+      },
+      [],
+    )
   }
 
   // ── Build retrieval query — augment follow-ups with prior user message ─────
-  // "Can you elaborate?" alone embeds poorly; combining with the original
-  // question retrieves the right KB documents so follow-ups stay grounded.
   let retrievalQuery = message
   if (isFollowUp(message) && history.length > 0) {
     const lastUserMsg = [...history].reverse().find(m => m.role === 'user')
-    if (lastUserMsg) {
-      retrievalQuery = `${lastUserMsg.content} ${message}`
-    }
+    if (lastUserMsg) retrievalQuery = `${lastUserMsg.content} ${message}`
   }
 
-  // ── Retrieval — search all docs (peer-reviewed docs get higher natural similarity) ──
+  // ── Retrieval ──────────────────────────────────────────────────────────────
   const chunks = await searchChunks(retrievalQuery, { topK: 8 })
 
-  // ── Build prompt + context ─────────────────────────────────────────────────
-  // Strategy: enrich the base prompt with the best available research context.
-  // When no context is found, Devy still answers from its training — it never refuses.
-  let pubMedSources: Source[] = []
-  const basePrompt = buildSystemPrompt(childName)
+  // ── Build system prompt with full child profile + user role ───────────────
+  const basePrompt = buildSystemPrompt(childName, child, userRole)
 
   let fullSystem: string
+  let sources: Source[] = []
 
   if (chunks.length > 0) {
-    // KB has relevant chunks — use them as primary context
     const contextBlock = buildContextBlock(chunks)
     fullSystem = `${basePrompt}\n\n## DOCUMENT CONTEXT\n\n${contextBlock}`
+    sources = chunksToSources(chunks)
   } else {
-    // No KB results — try PubMed to enrich the answer with current research
-    const pubMedQuery = toPubMedQuery(retrievalQuery, childName)
+    // No KB results — try PubMed
+    const pubMedQuery = toPubMedQuery(retrievalQuery, child?.name ?? childName)
     const pubResult = await searchPubMed(pubMedQuery)
 
     if (pubResult.length > 0) {
-      pubMedSources = pubMedSourcesToSources(pubResult)
+      sources = pubMedSourcesToSources(pubResult)
       const pubContext = buildPubMedContextBlock(pubResult)
       fullSystem = `${basePrompt}\n\n${PUBMED_SYSTEM_PROMPT_SUFFIX}\n\n${pubContext}`
-      // Fire-and-forget: persist to KB so future similar queries hit the DB
+      // Fire-and-forget: persist to KB for future queries
       ingestPubMedSources(pubResult).catch(err => console.error('[pubmed-ingest]', err))
     } else {
-      // Neither KB nor PubMed found anything — Devy answers from its trained knowledge
+      // Neither KB nor PubMed — Devy answers from trained knowledge
       fullSystem = basePrompt
     }
   }
 
-  const sources = chunks.length > 0 ? chunksToSources(chunks) : pubMedSources
-
-  // ── Call OpenAI ────────────────────────────────────────────────────────────
-  // Use slightly higher temperature when no specific research context is available
-  // so general answers feel natural rather than terse.
+  // Temperature: precise with sources, more natural without
   const temperature = sources.length > 0 ? 0.1 : 0.3
 
-  try {
-    const completion = await getOpenAI().chat.completions.create({
+  return streamSSE(
+    {
       model: 'gpt-4o',
       temperature,
       max_tokens: 1_000,
@@ -224,17 +291,7 @@ export async function POST(request: NextRequest) {
         ...history,
         { role: 'user', content: message },
       ],
-    })
-
-    const content = completion.choices[0]?.message?.content?.trim()
-      ?? "I'm sorry, I wasn't able to generate a response. Please try again."
-
-    const notFoundNote = sources.length === 0 ? detectNotFoundNote(content) : undefined
-
-    return NextResponse.json({ content, sources, notFoundNote })
-  } catch (err) {
-    const msg = err instanceof Error ? err.message : String(err)
-    console.error('[/api/chat] OpenAI error:', msg)
-    return NextResponse.json({ error: `AI generation failed: ${msg}` }, { status: 500 })
-  }
+    },
+    sources,
+  )
 }

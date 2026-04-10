@@ -1,6 +1,7 @@
 import { redirect } from 'next/navigation'
 import { Sidebar } from '@/components/layout/Sidebar'
 import { MobileSidebar } from '@/components/layout/MobileSidebar'
+import { PageTransition } from '@/components/shared/PageTransition'
 import { Search } from 'lucide-react'
 import { getProfile } from '@/lib/actions/profile'
 
@@ -44,7 +45,7 @@ export default async function DashboardLayout({ children }: { children: React.Re
 
         {/* Page content */}
         <main className="flex-1 overflow-auto">
-          {children}
+          <PageTransition>{children}</PageTransition>
         </main>
       </div>
     </div>

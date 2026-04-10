@@ -1,5 +1,8 @@
+'use client'
+
 import { MessageCircle, BookOpen, FileCheck, Users, HelpCircle, TrendingUp, TrendingDown, Minus } from 'lucide-react'
 import { cn } from '@/lib/utils'
+import { CountUp } from '@/components/shared/CountUp'
 import type { StatCardData } from '@/lib/types'
 
 const iconMap: Record<string, React.ReactNode> = {
@@ -11,7 +14,7 @@ const iconMap: Record<string, React.ReactNode> = {
 }
 
 const colorMap = {
-  sage:    { icon: 'bg-sage-100 text-sage-600',  delta: 'text-success' },
+  sage:    { icon: 'bg-sage-100 text-sage-600',   delta: 'text-success' },
   dblue:   { icon: 'bg-dblue-100 text-dblue-600', delta: 'text-info' },
   sand:    { icon: 'bg-sand-100 text-sand-500',   delta: 'text-warning' },
   neutral: { icon: 'bg-raised text-ink-secondary', delta: 'text-ink-secondary' },
@@ -19,6 +22,8 @@ const colorMap = {
 
 export function StatCard({ label, value, delta, deltaDirection, icon, color }: StatCardData) {
   const colors = colorMap[color]
+  const numericValue = Number(value)
+  const isNumeric = !isNaN(numericValue) && value.trim() !== ''
 
   const DeltaIcon = deltaDirection === 'up'
     ? TrendingUp
@@ -45,7 +50,9 @@ export function StatCard({ label, value, delta, deltaDirection, icon, color }: S
         </div>
       </div>
       <div>
-        <p className="font-display text-display-md font-bold text-ink leading-none mb-1">{value}</p>
+        <p className="font-display text-display-md font-bold text-ink leading-none mb-1">
+          {isNumeric ? <CountUp value={numericValue} /> : value}
+        </p>
         <p className="text-body-sm text-ink-secondary">{label}</p>
       </div>
     </div>

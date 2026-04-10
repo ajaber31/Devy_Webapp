@@ -1,6 +1,6 @@
 'use client'
 
-import { useRef } from 'react'
+import { useRef, useEffect, useState } from 'react'
 import { SendHorizonal, Paperclip } from 'lucide-react'
 import { cn } from '@/lib/utils'
 
@@ -13,6 +13,21 @@ interface ChatInputProps {
 
 export function ChatInput({ value, onChange, onSend, disabled }: ChatInputProps) {
   const ref = useRef<HTMLTextAreaElement>(null)
+  // Track transition from empty → has content to trigger spring animation
+  const [sendActive, setSendActive] = useState(false)
+  const prevHasContent = useRef(false)
+
+  useEffect(() => {
+    const hasContent = !!value.trim() && !disabled
+    if (hasContent && !prevHasContent.current) {
+      // Just got content — trigger spring animation
+      setSendActive(false)
+      requestAnimationFrame(() => setSendActive(true))
+    } else if (!hasContent) {
+      setSendActive(false)
+    }
+    prevHasContent.current = hasContent
+  }, [value, disabled])
 
   const handleInput = (e: React.ChangeEvent<HTMLTextAreaElement>) => {
     onChange(e.target.value)
@@ -78,7 +93,11 @@ export function ChatInput({ value, onChange, onSend, disabled }: ChatInputProps)
                 ? 'bg-sage-500 text-white hover:bg-sage-600 shadow-button hover:shadow-button-hover active:scale-95'
                 : 'bg-raised text-ink-tertiary cursor-not-allowed'
             )}
-            style={{ transitionProperty: 'background-color, box-shadow, transform', transitionDuration: '150ms' }}
+            style={{
+              transitionProperty: 'background-color, box-shadow, transform',
+              transitionDuration: '150ms',
+              animation: sendActive ? 'sendSpring 0.35s cubic-bezier(0.34, 1.56, 0.64, 1)' : undefined,
+            }}
             aria-label="Send message"
           >
             <SendHorizonal size={15} strokeWidth={2.5} />

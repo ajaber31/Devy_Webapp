@@ -151,6 +151,24 @@ export async function reprocessDocument(id: string): Promise<{ error?: string }>
   return {}
 }
 
+/** Updates the tags array for a document. */
+export async function updateDocumentTags(
+  id: string,
+  tags: string[],
+): Promise<{ error?: string }> {
+  const supabase = await createClient()
+
+  const { error } = await supabase
+    .from('documents')
+    .update({ tags })
+    .eq('id', id)
+
+  if (error) return { error: error.message }
+
+  revalidatePath('/admin/documents')
+  return {}
+}
+
 /** Fetches the current processing status of a single document. */
 export async function getDocumentStatus(id: string): Promise<DocumentStatus | null> {
   const supabase = await createClient()

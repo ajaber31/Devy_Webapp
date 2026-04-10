@@ -117,3 +117,18 @@
     transition-duration: 250ms;
   }
 }
+
+/* ── Named keyframes ──────────────────────────────────────────────────────── */
+
+/* Sidebar active accent bar slides in from the left */
+@keyframes accentSlideIn {
+  from { transform: scaleY(0); opacity: 0; }
+  to   { transform: scaleY(1); opacity: 1; }
+}
+
+/* Send button springs in when chat input has content */
+@keyframes sendSpring {
+  0%   { transform: scale(0.6); opacity: 0; }
+  60%  { transform: scale(1.12); }
+  100% { transform: scale(1);   opacity: 1; }
+}

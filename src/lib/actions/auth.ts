@@ -58,3 +58,17 @@ export async function signOut() {
   await supabase.auth.signOut()
   redirect('/login')
 }
+
+export async function forgotPassword(email: string): Promise<{ error?: string }> {
+  const supabase = createClient()
+  const { error } = await supabase.auth.resetPasswordForEmail(email, {
+    redirectTo: `${process.env.NEXT_PUBLIC_SITE_URL}/auth/callback?next=/reset-password`,
+  })
+  return error ? { error: error.message } : {}
+}
+
+export async function updatePassword(newPassword: string): Promise<{ error?: string }> {
+  const supabase = createClient()
+  const { error } = await supabase.auth.updateUser({ password: newPassword })
+  return error ? { error: error.message } : {}
+}

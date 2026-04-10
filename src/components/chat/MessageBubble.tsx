@@ -6,9 +6,10 @@ import type { Message } from '@/lib/types'
 
 interface MessageBubbleProps {
   message: Message
+  isStreaming?: boolean
 }
 
-export function MessageBubble({ message }: MessageBubbleProps) {
+export function MessageBubble({ message, isStreaming = false }: MessageBubbleProps) {
   const isUser = message.role === 'user'
 
   if (isUser) {
@@ -57,9 +58,29 @@ export function MessageBubble({ message }: MessageBubbleProps) {
       <div className="max-w-[80%] space-y-2.5">
         {/* Main message */}
         <div className="bg-surface rounded-card rounded-bl-sm px-4 py-3.5 shadow-card text-body-sm text-ink leading-relaxed border border-border/40">
-          <div className="space-y-0.5">
-            {formatContent(message.content)}
-          </div>
+          {/* While streaming with no content yet — show inline dots */}
+          {isStreaming && !message.content ? (
+            <div className="flex items-center gap-1.5 h-5">
+              {[0, 1, 2].map(i => (
+                <span
+                  key={i}
+                  className="w-1.5 h-1.5 rounded-full bg-ink-tertiary animate-bounce-dot"
+                  style={{ animationDelay: `${i * 0.15}s` }}
+                />
+              ))}
+            </div>
+          ) : (
+            <div className="space-y-0.5">
+              {formatContent(message.content)}
+              {/* Blinking cursor while tokens are arriving */}
+              {isStreaming && (
+                <span
+                  className="inline-block w-[2px] h-[1.1em] bg-sage-400 rounded-full ml-0.5 align-middle"
+                  style={{ animation: 'pulse 1s ease-in-out infinite' }}
+                />
+              )}
+            </div>
+          )}
         </div>
 
         {/* Research trust badge */}

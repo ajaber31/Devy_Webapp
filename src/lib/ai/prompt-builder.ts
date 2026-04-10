@@ -1,5 +1,16 @@
 import type { RetrievedChunk } from '@/lib/document-processing/retrieval'
-import type { Source } from '@/lib/types'
+import type { Child, Source, UserRole } from '@/lib/types'
+
+// ─── Age Helper ───────────────────────────────────────────────────────────────
+
+function ageInYears(dob: string): number {
+  const birth = new Date(dob)
+  const now = new Date()
+  let age = now.getFullYear() - birth.getFullYear()
+  const m = now.getMonth() - birth.getMonth()
+  if (m < 0 || (m === 0 && now.getDate() < birth.getDate())) age--
+  return Math.max(0, age)
+}
 
 // ─── Message Classification ───────────────────────────────────────────────────
 
@@ -64,11 +75,60 @@ Answer from your broad, research-informed training. Be confident and helpful. Do
 2. **No medication prescribing**: Never recommend specific medications or dosages.
 3. **Clinical disclaimer**: When your answer touches on clinical interventions, medical conditions, or specific therapy protocols, end with: "⚠️ *For decisions about a specific child, please consult a qualified professional — a paediatrician, psychologist, or occupational therapist.*"`
 
-export function buildSystemPrompt(childName?: string): string {
+export function buildSystemPrompt(
+  childName?: string,
+  child?: Child | null,
+  userRole?: UserRole | string,
+): string {
   let prompt = SYSTEM_PROMPT_BASE
-  if (childName) {
+
+  // ── User role context ────────────────────────────────────────────────────
+  if (userRole) {
+    const roleLabels: Record<string, string> = {
+      clinician: 'a clinician or therapist',
+      teacher:   'a teacher or educator',
+      caregiver: 'a caregiver',
+      parent:    'a parent or caregiver',
+      admin:     'an administrator',
+    }
+    const roleLabel = roleLabels[userRole] ?? 'a parent or caregiver'
+    prompt += `\n\n## USER CONTEXT\n\nYou are speaking with **${roleLabel}**. Calibrate your language and level of detail accordingly — use professional terminology where appropriate for clinicians and teachers, and plain accessible language for parents and caregivers.`
+  }
+
+  // ── Child / client profile ───────────────────────────────────────────────
+  if (child) {
+    const parts: string[] = []
+
+    let header = `This conversation is about **${child.name}**`
+    if (child.dateOfBirth) header += `, ${ageInYears(child.dateOfBirth)} years old`
+    header += '.'
+    parts.push(header)
+
+    if (child.contextLabels.length > 0)
+      parts.push(`**Context / background:** ${child.contextLabels.join(', ')}`)
+    if (child.supportNeeds.length > 0)
+      parts.push(`**Support needs:** ${child.supportNeeds.join('; ')}`)
+    if (child.strengths.length > 0)
+      parts.push(`**Strengths:** ${child.strengths.join('; ')}`)
+    if (child.interests.length > 0)
+      parts.push(`**Interests:** ${child.interests.join(', ')}`)
+    if (child.routines.length > 0)
+      parts.push(`**Routines / structure:** ${child.routines.join('; ')}`)
+    if (child.goals.length > 0)
+      parts.push(`**Current goals:** ${child.goals.join('; ')}`)
+    if (child.notes?.trim())
+      parts.push(`**Additional notes:** ${child.notes.trim()}`)
+
+    parts.push(
+      `Personalise your responses to be directly relevant to ${child.name}'s specific context, strengths, and needs. Reference profile details naturally where it adds value.`
+    )
+
+    prompt += `\n\n## ACTIVE PROFILE\n\n${parts.join('\n\n')}`
+  } else if (childName) {
+    // Fallback when only name is known (legacy / no DB lookup)
     prompt += `\n\n## ACTIVE PROFILE\n\nThis conversation is about a child or client named **${childName}**. Personalise your responses to be relevant to supporting them where helpful.`
   }
+
   return prompt
 }
 

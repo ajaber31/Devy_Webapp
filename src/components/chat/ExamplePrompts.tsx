@@ -1,3 +1,6 @@
+'use client'
+
+import { useState } from 'react'
 import { Sparkles } from 'lucide-react'
 import { EXAMPLE_PROMPTS, CHILD_EXAMPLE_PROMPTS } from '@/lib/constants'
 
@@ -6,8 +9,14 @@ interface ExamplePromptsProps {
   childName?: string
 }
 
+const pickRandom = (pool: string[], n: number) =>
+  [...pool].sort(() => Math.random() - 0.5).slice(0, n)
+
 export function ExamplePrompts({ onSelect, childName }: ExamplePromptsProps) {
-  const prompts = childName ? CHILD_EXAMPLE_PROMPTS(childName) : EXAMPLE_PROMPTS
+  const [prompts] = useState(() => {
+    const pool = childName ? CHILD_EXAMPLE_PROMPTS(childName) : EXAMPLE_PROMPTS
+    return pickRandom(pool, 4)
+  })
 
   return (
     <div className="flex-1 flex flex-col items-center justify-center p-8">

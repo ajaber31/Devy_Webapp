@@ -34,13 +34,21 @@ export const EXAMPLE_PROMPTS = [
   'How do I write a measurable IEP goal for communication skills?',
   'What are the early signs of pathological demand avoidance (PDA)?',
   'How can I support a child with ADHD during homework time?',
+  'What does the research say about ABA therapy for autism?',
+  'How do I support a child with dyslexia who is falling behind in reading?',
+  'What are evidence-based approaches for managing meltdowns?',
+  'How can I help a child with anxiety transition between activities?',
 ]
 
 export const CHILD_EXAMPLE_PROMPTS = (childName: string): string[] => [
   `What strategies can help ${childName} with sensory overload?`,
-  `How can I support ${childName}&apos;s communication goals at home?`,
-  `What does the research say about ${childName}&apos;s diagnosis?`,
+  `How can I support ${childName}'s communication goals at home?`,
+  `What does the research say about ${childName}'s diagnosis?`,
   `How do I write an IEP goal for ${childName}?`,
+  `What are the best ways to support ${childName} during transitions?`,
+  `How can I help ${childName} build social skills?`,
+  `What calming strategies work best for a child like ${childName}?`,
+  `How can I track ${childName}'s progress toward their goals?`,
 ]
 
 export const LANDING_NAV_LINKS = [
