@@ -8,7 +8,7 @@ import { ExamplePrompts } from './ExamplePrompts'
 import { ChatInput } from './ChatInput'
 import { insertMessage, createConversation } from '@/lib/actions/conversations'
 import type { Message, Conversation, Source } from '@/lib/types'
-import { MoreHorizontal, Star, ArrowUpRight } from 'lucide-react'
+import { ArrowUpRight, PanelLeft } from 'lucide-react'
 
 interface ChatAreaProps {
   conversationId: string | null
@@ -19,6 +19,7 @@ interface ChatAreaProps {
   childName?: string
   onConversationCreated?: (conversation: Conversation) => void
   onMessageSent?: (conversationId: string, preview: string) => void
+  onShowConversations?: () => void
 }
 
 export function ChatArea({
@@ -30,6 +31,7 @@ export function ChatArea({
   childName,
   onConversationCreated,
   onMessageSent,
+  onShowConversations,
 }: ChatAreaProps) {
   const [messages, setMessages] = useState<Message[]>(initialMessages)
   const [input, setInput] = useState('')
@@ -72,7 +74,7 @@ export function ChatArea({
     // Create conversation on first send
     let activeConvoId = convoId
     if (!activeConvoId) {
-      const result = await createConversation({ title: content.slice(0, 60), childId })
+      const result = await createConversation({ title: content.slice(0, 60), childId, childName })
       if (result.error || !result.data) {
         console.error('Failed to create conversation:', result.error)
         return
@@ -210,24 +212,19 @@ export function ChatArea({
       {/* Chat header */}
       <div className="h-14 flex items-center justify-between px-5 border-b border-border flex-shrink-0 bg-canvas">
         <div className="flex items-center gap-3 min-w-0">
+          {/* Mobile conversations toggle — hidden on desktop */}
+          {onShowConversations && (
+            <button
+              onClick={onShowConversations}
+              className="md:hidden p-1.5 rounded-card text-ink-tertiary hover:text-ink hover:bg-raised focus-ring flex-shrink-0"
+              style={{ transitionProperty: 'color, background-color', transitionDuration: '150ms' }}
+              aria-label="Open conversations"
+            >
+              <PanelLeft size={18} strokeWidth={1.75} />
+            </button>
+          )}
           <div className="w-2 h-2 rounded-full bg-sage-400 flex-shrink-0" />
           <h2 className="font-display text-[1rem] font-semibold text-ink truncate">{conversationTitle}</h2>
-        </div>
-        <div className="flex items-center gap-1 flex-shrink-0">
-          <button
-            className="p-2 rounded text-ink-tertiary hover:text-ink hover:bg-raised focus-ring"
-            style={{ transitionProperty: 'color, background-color', transitionDuration: '150ms' }}
-            aria-label="Save conversation"
-          >
-            <Star size={16} strokeWidth={1.75} />
-          </button>
-          <button
-            className="p-2 rounded text-ink-tertiary hover:text-ink hover:bg-raised focus-ring"
-            style={{ transitionProperty: 'color, background-color', transitionDuration: '150ms' }}
-            aria-label="More options"
-          >
-            <MoreHorizontal size={16} strokeWidth={1.75} />
-          </button>
         </div>
       </div>
 

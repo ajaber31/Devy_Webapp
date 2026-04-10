@@ -20,27 +20,104 @@ interface EditChildModalProps {
   nounSingular?: string
 }
 
+// Reusable tag-input field used for every array field
+function ArrayField({
+  id,
+  label,
+  hint,
+  items,
+  inputValue,
+  onInputChange,
+  onAdd,
+  onRemove,
+  placeholder,
+  chipClass = 'bg-sage-50 text-sage-700 border-sage-200',
+}: {
+  id: string
+  label: string
+  hint?: string
+  items: string[]
+  inputValue: string
+  onInputChange: (v: string) => void
+  onAdd: () => void
+  onRemove: (item: string) => void
+  placeholder: string
+  chipClass?: string
+}) {
+  return (
+    <div>
+      <label htmlFor={id} className="block text-body-sm font-medium text-ink mb-0.5">
+        {label} <span className="text-body-xs text-ink-tertiary font-normal">(optional)</span>
+      </label>
+      {hint && <p className="text-body-xs text-ink-tertiary mb-2">{hint}</p>}
+      <div className="flex gap-2">
+        <input
+          id={id}
+          type="text"
+          value={inputValue}
+          onChange={e => onInputChange(e.target.value)}
+          onKeyDown={e => { if (e.key === 'Enter') { e.preventDefault(); onAdd() } }}
+          placeholder={placeholder}
+          className="flex-1 px-4 py-2 bg-surface border border-border rounded-card text-body-sm text-ink placeholder:text-ink-tertiary shadow-input focus:outline-none focus:shadow-input-focus focus:border-sage-400"
+          style={{ transitionProperty: 'border-color, box-shadow', transitionDuration: '150ms' }}
+        />
+        <button
+          type="button"
+          onClick={onAdd}
+          className="p-2 rounded-card bg-sage-100 text-sage-700 hover:bg-sage-200 focus-ring"
+          style={{ transitionProperty: 'background-color', transitionDuration: '150ms' }}
+          aria-label={`Add ${label}`}
+        >
+          <Plus size={16} strokeWidth={2} />
+        </button>
+      </div>
+      {items.length > 0 && (
+        <div className="flex flex-wrap gap-1.5 mt-2.5">
+          {items.map(item => (
+            <span key={item} className={`flex items-center gap-1 px-2.5 py-0.5 border rounded-pill text-body-xs font-medium ${chipClass}`}>
+              {item}
+              <button
+                type="button"
+                onClick={() => onRemove(item)}
+                className="opacity-60 hover:opacity-100 ml-0.5"
+                aria-label={`Remove ${item}`}
+              >
+                <Trash2 size={10} strokeWidth={2} />
+              </button>
+            </span>
+          ))}
+        </div>
+      )}
+    </div>
+  )
+}
+
+function useArrayField(initial: string[]) {
+  const [items, setItems] = useState<string[]>(initial)
+  const [input, setInput] = useState('')
+  const add = () => {
+    const trimmed = input.trim()
+    if (trimmed && !items.includes(trimmed)) setItems(prev => [...prev, trimmed])
+    setInput('')
+  }
+  const remove = (item: string) => setItems(prev => prev.filter(i => i !== item))
+  return { items, input, setInput, add, remove }
+}
+
 export function EditChildModal({ child, onClose, onSave, nounSingular = 'child' }: EditChildModalProps) {
   const [name, setName] = useState(child.name)
   const [dateOfBirth, setDateOfBirth] = useState(child.dateOfBirth ?? '')
   const [avatarColor, setAvatarColor] = useState<'sage' | 'dblue' | 'sand'>(child.avatarColor)
-  const [labelInput, setLabelInput] = useState('')
-  const [contextLabels, setContextLabels] = useState<string[]>(child.contextLabels)
   const [notes, setNotes] = useState(child.notes)
   const [error, setError] = useState<string | null>(null)
   const [isPending, setIsPending] = useState(false)
 
-  const addLabel = () => {
-    const trimmed = labelInput.trim()
-    if (trimmed && !contextLabels.includes(trimmed)) {
-      setContextLabels(prev => [...prev, trimmed])
-    }
-    setLabelInput('')
-  }
-
-  const removeLabel = (label: string) => {
-    setContextLabels(prev => prev.filter(l => l !== label))
-  }
+  const labels     = useArrayField(child.contextLabels)
+  const support    = useArrayField(child.supportNeeds)
+  const strengths  = useArrayField(child.strengths)
+  const interests  = useArrayField(child.interests)
+  const goals      = useArrayField(child.goals)
+  const routines   = useArrayField(child.routines)
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
@@ -54,7 +131,12 @@ export function EditChildModal({ child, onClose, onSave, nounSingular = 'child' 
       name: name.trim(),
       dateOfBirth: dateOfBirth || undefined,
       avatarColor,
-      contextLabels,
+      contextLabels: labels.items,
+      supportNeeds: support.items,
+      strengths: strengths.items,
+      interests: interests.items,
+      goals: goals.items,
+      routines: routines.items,
       notes: notes.trim(),
     })
     if (result.error) {
@@ -66,7 +148,12 @@ export function EditChildModal({ child, onClose, onSave, nounSingular = 'child' 
         name: name.trim(),
         dateOfBirth: dateOfBirth || null,
         avatarColor,
-        contextLabels,
+        contextLabels: labels.items,
+        supportNeeds: support.items,
+        strengths: strengths.items,
+        interests: interests.items,
+        goals: goals.items,
+        routines: routines.items,
         notes: notes.trim(),
       })
     }
@@ -82,9 +169,9 @@ export function EditChildModal({ child, onClose, onSave, nounSingular = 'child' 
 
       {/* Modal */}
       <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
-        <div className="bg-white rounded-card-lg shadow-floating border border-border/50 w-full max-w-md max-h-[90vh] overflow-y-auto">
+        <div className="bg-white rounded-card-lg shadow-floating border border-border/50 w-full max-w-lg max-h-[90vh] overflow-y-auto">
           {/* Header */}
-          <div className="flex items-center justify-between px-6 py-4 border-b border-border">
+          <div className="flex items-center justify-between px-6 py-4 border-b border-border sticky top-0 bg-white z-10">
             <h2 className="font-display text-display-sm font-semibold text-ink">Edit profile</h2>
             <button
               onClick={onClose}
@@ -103,7 +190,7 @@ export function EditChildModal({ child, onClose, onSave, nounSingular = 'child' 
               </div>
             )}
 
-            {/* Name */}
+            {/* ── Basic info ──────────────────────────────────── */}
             <div>
               <label htmlFor="edit-child-name" className="block text-body-sm font-medium text-ink mb-1.5">
                 First name <span className="text-danger">*</span>
@@ -120,7 +207,6 @@ export function EditChildModal({ child, onClose, onSave, nounSingular = 'child' 
               />
             </div>
 
-            {/* Date of birth */}
             <div>
               <label htmlFor="edit-child-dob" className="block text-body-sm font-medium text-ink mb-1.5">
                 Date of birth <span className="text-body-xs text-ink-tertiary font-normal">(optional)</span>
@@ -136,7 +222,6 @@ export function EditChildModal({ child, onClose, onSave, nounSingular = 'child' 
               />
             </div>
 
-            {/* Avatar color */}
             <div>
               <p className="text-body-sm font-medium text-ink mb-2">Avatar colour</p>
               <div className="flex gap-3">
@@ -158,53 +243,88 @@ export function EditChildModal({ child, onClose, onSave, nounSingular = 'child' 
               </div>
             </div>
 
-            {/* Context labels */}
-            <div>
-              <label className="block text-body-sm font-medium text-ink mb-1">
-                Context labels <span className="text-body-xs text-ink-tertiary font-normal">(optional — e.g. ADHD, sensory processing)</span>
-              </label>
-              <p className="text-body-xs text-ink-tertiary mb-2">These are freeform tags you choose, not medical records.</p>
-              <div className="flex gap-2">
-                <input
-                  type="text"
-                  value={labelInput}
-                  onChange={e => setLabelInput(e.target.value)}
-                  onKeyDown={e => { if (e.key === 'Enter') { e.preventDefault(); addLabel() } }}
-                  placeholder="Type a label and press Enter"
-                  className="flex-1 px-4 py-2 bg-surface border border-border rounded-card text-body-sm text-ink placeholder:text-ink-tertiary shadow-input focus:outline-none focus:shadow-input-focus focus:border-sage-400"
-                  style={{ transitionProperty: 'border-color, box-shadow', transitionDuration: '150ms' }}
+            {/* ── Context / profile detail fields ─────────────── */}
+            <div className="pt-1 border-t border-border/60">
+              <p className="text-body-xs font-semibold text-ink-tertiary uppercase tracking-wider mb-4">Profile Details</p>
+
+              <div className="space-y-5">
+                <ArrayField
+                  id="edit-labels"
+                  label="Context labels"
+                  hint="Freeform tags you choose — not medical records."
+                  items={labels.items}
+                  inputValue={labels.input}
+                  onInputChange={labels.setInput}
+                  onAdd={labels.add}
+                  onRemove={labels.remove}
+                  placeholder="e.g. ADHD, sensory processing"
+                  chipClass="bg-sage-50 text-sage-700 border border-sage-200"
                 />
-                <button
-                  type="button"
-                  onClick={addLabel}
-                  className="p-2 rounded-card bg-sage-100 text-sage-700 hover:bg-sage-200 focus-ring"
-                  style={{ transitionProperty: 'background-color', transitionDuration: '150ms' }}
-                  aria-label="Add label"
-                >
-                  <Plus size={16} strokeWidth={2} />
-                </button>
+
+                <ArrayField
+                  id="edit-support"
+                  label="Support needs"
+                  items={support.items}
+                  inputValue={support.input}
+                  onInputChange={support.setInput}
+                  onAdd={support.add}
+                  onRemove={support.remove}
+                  placeholder="e.g. Transitions, social cues"
+                  chipClass="bg-sage-50 text-sage-700 border border-sage-200"
+                />
+
+                <ArrayField
+                  id="edit-strengths"
+                  label="Strengths"
+                  items={strengths.items}
+                  inputValue={strengths.input}
+                  onInputChange={strengths.setInput}
+                  onAdd={strengths.add}
+                  onRemove={strengths.remove}
+                  placeholder="e.g. Creative, strong memory"
+                  chipClass="bg-dblue-50 text-dblue-700 border border-dblue-200"
+                />
+
+                <ArrayField
+                  id="edit-interests"
+                  label="Interests"
+                  items={interests.items}
+                  inputValue={interests.input}
+                  onInputChange={interests.setInput}
+                  onAdd={interests.add}
+                  onRemove={interests.remove}
+                  placeholder="e.g. Dinosaurs, trains, drawing"
+                  chipClass="bg-dblue-50 text-dblue-700 border border-dblue-200"
+                />
+
+                <ArrayField
+                  id="edit-goals"
+                  label="Goals & focus areas"
+                  items={goals.items}
+                  inputValue={goals.input}
+                  onInputChange={goals.setInput}
+                  onAdd={goals.add}
+                  onRemove={goals.remove}
+                  placeholder="e.g. Improve peer interaction"
+                  chipClass="bg-sand-100 text-sand-600 border border-sand-200"
+                />
+
+                <ArrayField
+                  id="edit-routines"
+                  label="Routines"
+                  items={routines.items}
+                  inputValue={routines.input}
+                  onInputChange={routines.setInput}
+                  onAdd={routines.add}
+                  onRemove={routines.remove}
+                  placeholder="e.g. Morning visual schedule"
+                  chipClass="bg-sand-100 text-sand-600 border border-sand-200"
+                />
               </div>
-              {contextLabels.length > 0 && (
-                <div className="flex flex-wrap gap-1.5 mt-2.5">
-                  {contextLabels.map(label => (
-                    <span key={label} className="flex items-center gap-1 px-2.5 py-0.5 bg-sage-50 text-sage-700 border border-sage-200 rounded-pill text-body-xs font-medium">
-                      {label}
-                      <button
-                        type="button"
-                        onClick={() => removeLabel(label)}
-                        className="text-sage-400 hover:text-sage-700 ml-0.5"
-                        aria-label={`Remove ${label}`}
-                      >
-                        <Trash2 size={10} strokeWidth={2} />
-                      </button>
-                    </span>
-                  ))}
-                </div>
-              )}
             </div>
 
-            {/* Notes */}
-            <div>
+            {/* ── Notes ───────────────────────────────────────── */}
+            <div className="pt-1 border-t border-border/60">
               <label htmlFor="edit-child-notes" className="block text-body-sm font-medium text-ink mb-1.5">
                 Notes <span className="text-body-xs text-ink-tertiary font-normal">(optional)</span>
               </label>
@@ -219,7 +339,7 @@ export function EditChildModal({ child, onClose, onSave, nounSingular = 'child' 
               />
             </div>
 
-            {/* Actions */}
+            {/* ── Actions ─────────────────────────────────────── */}
             <div className="flex items-center justify-end gap-3 pt-2">
               <button
                 type="button"

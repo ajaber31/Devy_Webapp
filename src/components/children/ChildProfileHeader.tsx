@@ -1,5 +1,5 @@
 import Link from 'next/link'
-import { MessageCircle, ArrowRight } from 'lucide-react'
+import { MessageCircle, ArrowRight, Trash2 } from 'lucide-react'
 import { ageFromDob } from '@/lib/utils'
 import type { Child } from '@/lib/types'
 
@@ -18,9 +18,10 @@ const labelBgMap: Record<string, string> = {
 interface ChildProfileHeaderProps {
   child: Child
   onEdit?: () => void
+  onDelete?: () => void
 }
 
-export function ChildProfileHeader({ child, onEdit }: ChildProfileHeaderProps) {
+export function ChildProfileHeader({ child, onEdit, onDelete }: ChildProfileHeaderProps) {
   const avatarClass = avatarBgMap[child.avatarColor] ?? avatarBgMap.sage
   const labelClass = labelBgMap[child.avatarColor] ?? labelBgMap.sage
   const initial = child.name.charAt(0)
@@ -60,6 +61,17 @@ export function ChildProfileHeader({ child, onEdit }: ChildProfileHeaderProps) {
 
         {/* Actions */}
         <div className="flex items-center gap-2 flex-shrink-0">
+          {onDelete && (
+            <button
+              onClick={onDelete}
+              className="p-2 rounded-card text-ink-tertiary hover:text-danger hover:bg-danger/5 border border-transparent hover:border-danger/20 focus-ring"
+              style={{ transitionProperty: 'color, background-color, border-color', transitionDuration: '150ms' }}
+              aria-label="Delete profile"
+              title="Delete profile"
+            >
+              <Trash2 size={15} strokeWidth={1.75} />
+            </button>
+          )}
           {onEdit && (
             <button
               onClick={onEdit}

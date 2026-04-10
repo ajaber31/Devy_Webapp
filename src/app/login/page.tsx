@@ -13,7 +13,6 @@ export default function LoginPage() {
   const [showPassword, setShowPassword] = useState(false)
   const [email, setEmail] = useState('')
   const [password, setPassword] = useState('')
-  const [remember, setRemember] = useState(false)
   const [error, setError] = useState<string | null>(null)
   const [isPending, setIsPending] = useState(false)
 
@@ -110,25 +109,6 @@ export default function LoginPage() {
                   {showPassword ? <EyeOff size={16} /> : <Eye size={16} />}
                 </button>
               </div>
-            </div>
-
-            <div className="flex items-center gap-2.5">
-              <button
-                type="button"
-                role="checkbox"
-                aria-checked={remember}
-                onClick={() => setRemember(!remember)}
-                className={`w-4 h-4 rounded flex-shrink-0 border flex items-center justify-center transition-colors duration-150 focus-ring ${
-                  remember ? 'bg-sage-500 border-sage-500' : 'bg-white border-border hover:border-sage-400'
-                }`}
-              >
-                {remember && (
-                  <svg className="w-2.5 h-2.5 text-white" viewBox="0 0 10 10" fill="none">
-                    <path d="M1.5 5.5L4 8L8.5 2" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/>
-                  </svg>
-                )}
-              </button>
-              <span className="text-body-sm text-ink-secondary">Remember me for 30 days</span>
             </div>
 
             <button

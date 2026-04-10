@@ -33,8 +33,8 @@ export function AiTrustSection() {
           />
           <PolicyRow
             title="Source grounding policy"
-            description="All substantive responses are grounded in Devy's clinician-curated knowledge base or PubMed peer-reviewed research. Devy never answers clinical questions from general AI knowledge."
-            legal="Required — PIPEDA Principle 4.6 (Accuracy) for health-adjacent information systems"
+            description="Substantive responses are grounded in Devy's clinician-curated knowledge base or PubMed peer-reviewed research whenever possible. When no specific KB or PubMed context is found, Devy draws on GPT-4o's extensive clinical training — and makes this distinction transparent to the user."
+            legal="Required — PIPEDA Principle 4.6 (Accuracy) and Principle 4.3 (Openness) for health-adjacent information systems"
           />
         </div>
       </div>

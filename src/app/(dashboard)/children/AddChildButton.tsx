@@ -1,15 +1,18 @@
 'use client'
 
 import { useState } from 'react'
+import { useRouter } from 'next/navigation'
 import { Plus } from 'lucide-react'
 import { AddChildModal } from '@/components/children/AddChildModal'
 
 interface AddChildButtonProps {
   label?: string
+  modalTitle?: string
 }
 
-export function AddChildButton({ label = 'Add Child' }: AddChildButtonProps) {
+export function AddChildButton({ label = 'Add Child', modalTitle }: AddChildButtonProps) {
   const [open, setOpen] = useState(false)
+  const router = useRouter()
 
   return (
     <>
@@ -22,7 +25,13 @@ export function AddChildButton({ label = 'Add Child' }: AddChildButtonProps) {
         {label}
       </button>
 
-      {open && <AddChildModal onClose={() => setOpen(false)} />}
+      {open && (
+        <AddChildModal
+          onClose={() => setOpen(false)}
+          onSaved={() => router.refresh()}
+          title={modalTitle}
+        />
+      )}
     </>
   )
 }

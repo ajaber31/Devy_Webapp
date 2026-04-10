@@ -4,7 +4,8 @@ import { useState } from 'react'
 import { ConversationSidebar } from '@/components/chat/ConversationSidebar'
 import { ChatArea } from '@/components/chat/ChatArea'
 import { ProfileSelector } from '@/components/chat/ProfileSelector'
-import { getMessages, renameConversation, deleteConversation } from '@/lib/actions/conversations'
+import { MobileConversationsDrawer } from '@/components/chat/MobileConversationsDrawer'
+import { getMessages, renameConversation, deleteConversation, pinConversation } from '@/lib/actions/conversations'
 import type { Child, Conversation, Message } from '@/lib/types'
 
 interface ChatPageClientProps {
@@ -38,6 +39,7 @@ export function ChatPageClient({
   const [activeId, setActiveId] = useState<string | null>(initialActiveId)
   const [messages, setMessages] = useState<Message[]>(initialMessages)
   const [isLoadingMessages, setIsLoadingMessages] = useState(false)
+  const [mobileDrawerOpen, setMobileDrawerOpen] = useState(false)
 
   // Profile selector visibility — shown initially when no conversations,
   // or when the user explicitly clicks "New Conversation"
@@ -114,6 +116,11 @@ export function ChatPageClient({
     renameConversation(id, title).catch(console.error)
   }
 
+  const handlePin = (id: string, isPinned: boolean) => {
+    setConversations(prev => prev.map(c => c.id === id ? { ...c, isPinned } : c))
+    pinConversation(id, isPinned).catch(console.error)
+  }
+
   const handleDelete = (id: string) => {
     setConversations(prev => prev.filter(c => c.id !== id))
     if (activeId === id) {
@@ -125,7 +132,7 @@ export function ChatPageClient({
 
   return (
     <div className="flex h-full overflow-hidden">
-      {/* Conversation sidebar */}
+      {/* Desktop conversation sidebar */}
       <div className="hidden md:flex">
         <ConversationSidebar
           conversations={conversations}
@@ -133,9 +140,23 @@ export function ChatPageClient({
           onSelect={handleSelect}
           onNewConversation={handleNewConversation}
           onRename={handleRename}
+          onPin={handlePin}
           onDelete={handleDelete}
         />
       </div>
+
+      {/* Mobile conversations drawer (slide-over from left) */}
+      <MobileConversationsDrawer
+        open={mobileDrawerOpen}
+        onClose={() => setMobileDrawerOpen(false)}
+        conversations={conversations}
+        activeId={activeId}
+        onSelect={handleSelect}
+        onNewConversation={handleNewConversation}
+        onRename={handleRename}
+        onPin={handlePin}
+        onDelete={handleDelete}
+      />
 
       {/* Main area: profile selector OR chat */}
       {selectorOpen ? (
@@ -157,6 +178,7 @@ export function ChatPageClient({
           childName={effectiveChildName}
           onConversationCreated={handleConversationCreated}
           onMessageSent={handleMessageSent}
+          onShowConversations={() => setMobileDrawerOpen(true)}
         />
       )}
     </div>

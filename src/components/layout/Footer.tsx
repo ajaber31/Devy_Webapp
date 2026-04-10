@@ -3,20 +3,15 @@ import { DevyLogo } from '@/components/shared/DevyLogo'
 
 const footerLinks = {
   Product: [
-    { label: 'How It Works', href: '#how-it-works' },
-    { label: 'Who It\'s For', href: '#who-its-for' },
-    { label: 'Trust & Safety', href: '#trust' },
+    { label: 'How It Works', href: '/#how-it-works' },
+    { label: 'Who It\'s For', href: '/#who-its-for' },
+    { label: 'Trust & Safety', href: '/#trust' },
     { label: 'Get Started', href: '/signup' },
   ],
-  Support: [
-    { label: 'Documentation', href: '#' },
-    { label: 'Help Center', href: '#' },
-    { label: 'Contact Us', href: '#' },
-  ],
   Legal: [
-    { label: 'Privacy Policy', href: '#' },
-    { label: 'Terms of Service', href: '#' },
-    { label: 'HIPAA Notice', href: '#' },
+    { label: 'Privacy Policy', href: '#', comingSoon: true },
+    { label: 'Terms of Service', href: '#', comingSoon: true },
+    { label: 'PIPEDA Notice', href: '#', comingSoon: true },
   ],
 }
 
@@ -24,7 +19,7 @@ export function Footer() {
   return (
     <footer className="bg-surface border-t border-border">
       <div className="max-w-6xl mx-auto px-6 pt-16 pb-10">
-        <div className="grid grid-cols-1 md:grid-cols-5 gap-12 mb-12">
+        <div className="grid grid-cols-1 md:grid-cols-4 gap-12 mb-12">
           <div className="md:col-span-2">
             <DevyLogo size="md" className="mb-4" />
             <p className="text-body-sm text-ink-secondary leading-relaxed max-w-xs">
@@ -37,7 +32,7 @@ export function Footer() {
               </span>
               <span className="inline-flex items-center gap-1.5 px-3 py-1.5 bg-dblue-100 text-dblue-700 text-body-xs font-medium rounded-pill">
                 <svg className="w-3 h-3" viewBox="0 0 12 12" fill="none"><rect x="1" y="2" width="10" height="8" rx="1.5" stroke="currentColor" strokeWidth="1.2"/><path d="M4 5.5H8M4 7.5H6.5" stroke="currentColor" strokeWidth="1.2" strokeLinecap="round"/></svg>
-                Source-cited
+                Research-grounded
               </span>
             </div>
           </div>
@@ -48,12 +43,19 @@ export function Footer() {
               <ul className="space-y-3">
                 {links.map((link) => (
                   <li key={link.label}>
-                    <Link
-                      href={link.href}
-                      className="text-body-sm text-ink-secondary hover:text-ink transition-colors duration-150"
-                    >
-                      {link.label}
-                    </Link>
+                    {'comingSoon' in link && link.comingSoon ? (
+                      <span className="flex items-center gap-2 text-body-sm text-ink-tertiary cursor-default select-none">
+                        {link.label}
+                        <span className="text-[0.6rem] font-medium px-1.5 py-0.5 bg-raised rounded border border-border text-ink-tertiary uppercase tracking-wide">Soon</span>
+                      </span>
+                    ) : (
+                      <Link
+                        href={link.href}
+                        className="text-body-sm text-ink-secondary hover:text-ink transition-colors duration-150"
+                      >
+                        {link.label}
+                      </Link>
+                    )}
                   </li>
                 ))}
               </ul>

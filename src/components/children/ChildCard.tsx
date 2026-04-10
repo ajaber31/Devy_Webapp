@@ -1,7 +1,7 @@
 'use client'
 
 import Link from 'next/link'
-import { MessageCircle, ArrowRight, Clock } from 'lucide-react'
+import { MessageCircle, ArrowRight } from 'lucide-react'
 import { ageFromDob } from '@/lib/utils'
 import type { Child } from '@/lib/types'
 
@@ -111,14 +111,6 @@ export function ChildCard({ child }: ChildCardProps) {
         >
           <MessageCircle size={12} strokeWidth={2} />
           Ask Devy
-        </Link>
-        <Link
-          href={`/chat?childId=${child.id}&childName=${encodeURIComponent(child.name)}`}
-          className="p-2 rounded-card text-ink-tertiary hover:text-ink hover:bg-raised border border-transparent hover:border-border focus-ring"
-          style={{ transitionProperty: 'color, background-color, border-color', transitionDuration: '150ms' }}
-          title="View conversations"
-        >
-          <Clock size={14} strokeWidth={1.75} />
         </Link>
       </div>
     </div>

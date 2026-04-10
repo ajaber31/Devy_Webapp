@@ -1,7 +1,7 @@
 'use client'
 
 import { useState, useRef } from 'react'
-import { Search, Plus, Pin, MessageCircle, User, MoreHorizontal, Pencil, Trash2 } from 'lucide-react'
+import { Search, Plus, Pin, PinOff, MessageCircle, User, MoreHorizontal, Pencil, Trash2 } from 'lucide-react'
 import { formatDate, truncate, cn } from '@/lib/utils'
 import type { Conversation } from '@/lib/types'
 
@@ -11,7 +11,12 @@ interface ConversationSidebarProps {
   onSelect: (id: string) => void
   onNewConversation: () => void
   onRename?: (id: string, title: string) => void
+  onPin?: (id: string, isPinned: boolean) => void
   onDelete?: (id: string) => void
+  /** Hide the built-in header (title + new button) — used inside mobile drawer */
+  hideHeader?: boolean
+  /** Extra classes applied to the root aside element */
+  className?: string
 }
 
 export function ConversationSidebar({
@@ -20,7 +25,10 @@ export function ConversationSidebar({
   onSelect,
   onNewConversation,
   onRename,
+  onPin,
   onDelete,
+  hideHeader = false,
+  className = '',
 }: ConversationSidebarProps) {
   const [query, setQuery] = useState('')
 
@@ -33,19 +41,21 @@ export function ConversationSidebar({
   const recents = filtered.filter(c => !c.isPinned)
 
   return (
-    <aside className="w-72 flex-shrink-0 flex flex-col border-r border-border bg-surface h-full">
+    <aside className={cn('w-72 flex-shrink-0 flex flex-col border-r border-border bg-surface h-full', className)}>
       {/* Header */}
-      <div className="px-4 pt-4 pb-3 flex items-center justify-between flex-shrink-0">
-        <h2 className="font-display text-[1.05rem] font-semibold text-ink">Conversations</h2>
-        <button
-          onClick={onNewConversation}
-          className="w-7 h-7 rounded-full bg-sage-500 text-white flex items-center justify-center hover:bg-sage-600 active:scale-95 focus-ring"
-          style={{ transitionProperty: 'background-color, transform', transitionDuration: '150ms' }}
-          aria-label="New conversation"
-        >
-          <Plus size={14} strokeWidth={2.5} />
-        </button>
-      </div>
+      {!hideHeader && (
+        <div className="px-4 pt-4 pb-3 flex items-center justify-between flex-shrink-0">
+          <h2 className="font-display text-[1.05rem] font-semibold text-ink">Conversations</h2>
+          <button
+            onClick={onNewConversation}
+            className="w-7 h-7 rounded-full bg-sage-500 text-white flex items-center justify-center hover:bg-sage-600 active:scale-95 focus-ring"
+            style={{ transitionProperty: 'background-color, transform', transitionDuration: '150ms' }}
+            aria-label="New conversation"
+          >
+            <Plus size={14} strokeWidth={2.5} />
+          </button>
+        </div>
+      )}
 
       {/* Search */}
       <div className="px-3 pb-3 flex-shrink-0">
@@ -76,6 +86,7 @@ export function ConversationSidebar({
                 active={activeId === c.id}
                 onSelect={onSelect}
                 onRename={onRename}
+                onPin={onPin}
                 onDelete={onDelete}
               />
             ))}
@@ -93,6 +104,7 @@ export function ConversationSidebar({
                 active={activeId === c.id}
                 onSelect={onSelect}
                 onRename={onRename}
+                onPin={onPin}
                 onDelete={onDelete}
               />
             ))}
@@ -125,16 +137,19 @@ function ConvoItem({
   active,
   onSelect,
   onRename,
+  onPin,
   onDelete,
 }: {
   convo: Conversation
   active: boolean
   onSelect: (id: string) => void
   onRename?: (id: string, title: string) => void
+  onPin?: (id: string, isPinned: boolean) => void
   onDelete?: (id: string) => void
 }) {
   const [menuOpen, setMenuOpen] = useState(false)
   const [renaming, setRenaming] = useState(false)
+  const [confirming, setConfirming] = useState(false)
   const [renameValue, setRenameValue] = useState(convo.title)
   const inputRef = useRef<HTMLInputElement>(null)
 
@@ -225,24 +240,56 @@ function ConvoItem({
       {/* Dropdown */}
       {menuOpen && (
         <>
-          <div className="fixed inset-0 z-10" onClick={() => setMenuOpen(false)} />
-          <div className="absolute right-0 top-full mt-0.5 bg-white rounded-card shadow-floating border border-border py-1 z-20 min-w-[130px]">
-            <button
-              onClick={startRename}
-              className="w-full flex items-center gap-2 px-3 py-2 text-body-sm text-ink-secondary hover:bg-raised hover:text-ink"
-              style={{ transitionProperty: 'background-color, color', transitionDuration: '150ms' }}
-            >
-              <Pencil size={13} />
-              Rename
-            </button>
-            <button
-              onClick={() => { setMenuOpen(false); onDelete?.(convo.id) }}
-              className="w-full flex items-center gap-2 px-3 py-2 text-body-sm text-danger hover:bg-raised"
-              style={{ transitionProperty: 'background-color', transitionDuration: '150ms' }}
-            >
-              <Trash2 size={13} />
-              Delete
-            </button>
+          <div className="fixed inset-0 z-10" onClick={() => { setMenuOpen(false); setConfirming(false) }} />
+          <div className="absolute right-0 top-full mt-0.5 bg-white rounded-card shadow-floating border border-border py-1 z-20 min-w-[150px]">
+            {confirming ? (
+              <div className="px-3 py-2">
+                <p className="text-body-xs text-ink font-medium mb-2">Delete this conversation?</p>
+                <div className="flex gap-2">
+                  <button
+                    onClick={() => { setMenuOpen(false); setConfirming(false); onDelete?.(convo.id) }}
+                    className="flex-1 px-2 py-1 text-body-xs font-medium bg-danger text-white rounded-card hover:bg-danger/90"
+                    style={{ transitionProperty: 'background-color', transitionDuration: '150ms' }}
+                  >
+                    Delete
+                  </button>
+                  <button
+                    onClick={() => setConfirming(false)}
+                    className="flex-1 px-2 py-1 text-body-xs font-medium bg-raised text-ink rounded-card hover:bg-border/60"
+                    style={{ transitionProperty: 'background-color', transitionDuration: '150ms' }}
+                  >
+                    Cancel
+                  </button>
+                </div>
+              </div>
+            ) : (
+              <>
+                <button
+                  onClick={startRename}
+                  className="w-full flex items-center gap-2 px-3 py-2 text-body-sm text-ink-secondary hover:bg-raised hover:text-ink"
+                  style={{ transitionProperty: 'background-color, color', transitionDuration: '150ms' }}
+                >
+                  <Pencil size={13} />
+                  Rename
+                </button>
+                <button
+                  onClick={() => { setMenuOpen(false); onPin?.(convo.id, !convo.isPinned) }}
+                  className="w-full flex items-center gap-2 px-3 py-2 text-body-sm text-ink-secondary hover:bg-raised hover:text-ink"
+                  style={{ transitionProperty: 'background-color, color', transitionDuration: '150ms' }}
+                >
+                  {convo.isPinned ? <PinOff size={13} /> : <Pin size={13} />}
+                  {convo.isPinned ? 'Unpin' : 'Pin'}
+                </button>
+                <button
+                  onClick={() => setConfirming(true)}
+                  className="w-full flex items-center gap-2 px-3 py-2 text-body-sm text-danger hover:bg-raised"
+                  style={{ transitionProperty: 'background-color', transitionDuration: '150ms' }}
+                >
+                  <Trash2 size={13} />
+                  Delete
+                </button>
+              </>
+            )}
           </div>
         </>
       )}

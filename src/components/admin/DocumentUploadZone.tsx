@@ -1,7 +1,7 @@
 'use client'
 
 import { useState } from 'react'
-import { Upload, X, FileText, Loader2 } from 'lucide-react'
+import { Upload, X, FileText, Loader2, AlertCircle } from 'lucide-react'
 import { cn, formatFileSize } from '@/lib/utils'
 import { createClient } from '@/lib/supabase/client'
 import { createDocumentRecord } from '@/lib/actions/documents'
@@ -25,6 +25,11 @@ interface UploadItem {
   error?: string
 }
 
+interface Rejection {
+  name: string
+  reason: string
+}
+
 interface DocumentUploadZoneProps {
   onSuccess?: () => void
 }
@@ -33,19 +38,28 @@ export function DocumentUploadZone({ onSuccess }: DocumentUploadZoneProps) {
   const [dragging, setDragging] = useState(false)
   const [queue, setQueue] = useState<UploadItem[]>([])
   const [uploading, setUploading] = useState(false)
+  const [rejections, setRejections] = useState<Rejection[]>([])
 
   const addFiles = (files: FileList | null) => {
     if (!files) return
     const newItems: UploadItem[] = []
+    const newRejections: Rejection[] = []
 
     Array.from(files).forEach(f => {
       const ext = getFileExt(f.name)
-      if (!ext) return // silently skip unsupported types
-      if (f.size > MAX_BYTES) return // silently skip oversized files
+      if (!ext) {
+        newRejections.push({ name: f.name, reason: 'File type not supported. Use PDF, DOCX, or TXT.' })
+        return
+      }
+      if (f.size > MAX_BYTES) {
+        newRejections.push({ name: f.name, reason: `File exceeds the 25 MB limit (${(f.size / 1024 / 1024).toFixed(1)} MB).` })
+        return
+      }
       newItems.push({ file: f, id: crypto.randomUUID(), uploading: false })
     })
 
-    setQueue(prev => [...prev, ...newItems])
+    if (newItems.length > 0) setQueue(prev => [...prev, ...newItems])
+    if (newRejections.length > 0) setRejections(prev => [...prev, ...newRejections])
   }
 
   const removeFromQueue = (id: string) => {
@@ -157,6 +171,34 @@ export function DocumentUploadZone({ onSuccess }: DocumentUploadZoneProps) {
           Browse files
         </span>
       </label>
+
+      {/* Rejected files */}
+      {rejections.length > 0 && (
+        <div className="mt-4 space-y-2">
+          <div className="flex items-center justify-between">
+            <p className="text-body-xs font-medium text-danger flex items-center gap-1.5">
+              <AlertCircle size={12} strokeWidth={2} />
+              {rejections.length} file{rejections.length > 1 ? 's' : ''} could not be added
+            </p>
+            <button
+              onClick={() => setRejections([])}
+              className="text-body-xs text-ink-tertiary hover:text-ink"
+              style={{ transitionProperty: 'color', transitionDuration: '150ms' }}
+            >
+              Dismiss
+            </button>
+          </div>
+          {rejections.map((r, i) => (
+            <div key={i} className="flex items-start gap-3 px-3 py-2.5 bg-danger/5 border border-danger/20 rounded-card">
+              <AlertCircle size={13} className="text-danger flex-shrink-0 mt-0.5" strokeWidth={2} />
+              <div className="flex-1 min-w-0">
+                <p className="text-body-xs font-medium text-ink truncate">{r.name}</p>
+                <p className="text-body-xs text-danger">{r.reason}</p>
+              </div>
+            </div>
+          ))}
+        </div>
+      )}
 
       {/* Queued files */}
       {queue.length > 0 && (

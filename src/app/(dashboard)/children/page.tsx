@@ -19,7 +19,7 @@ export default async function ChildrenPage() {
           title={terms.possessive}
           description={`Profiles you're actively supporting. Start a conversation or explore each ${terms.nounSingular.toLowerCase()}'s profile.`}
         />
-        <AddChildButton label={terms.addLabel} />
+        <AddChildButton label={terms.addLabel} modalTitle={`Add a ${terms.nounSingular.toLowerCase()} profile`} />
       </div>
 
       {children.length === 0 ? (
@@ -28,7 +28,7 @@ export default async function ChildrenPage() {
             icon={<Users2 size={28} strokeWidth={1.5} />}
             title={terms.emptyTitle}
             description={terms.emptyDescription}
-            action={<AddChildButton label={terms.addLabel} />}
+            action={<AddChildButton label={terms.addLabel} modalTitle={`Add a ${terms.nounSingular.toLowerCase()} profile`} />}
           />
         </AnimateIn>
       ) : (

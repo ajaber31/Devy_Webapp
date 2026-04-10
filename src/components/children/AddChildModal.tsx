@@ -13,9 +13,11 @@ const AVATAR_COLORS = [
 
 interface AddChildModalProps {
   onClose: () => void
+  onSaved?: () => void
+  title?: string
 }
 
-export function AddChildModal({ onClose }: AddChildModalProps) {
+export function AddChildModal({ onClose, onSaved, title = 'Add a child profile' }: AddChildModalProps) {
   const [name, setName] = useState('')
   const [dateOfBirth, setDateOfBirth] = useState('')
   const [avatarColor, setAvatarColor] = useState<'sage' | 'dblue' | 'sand'>('sage')
@@ -56,6 +58,7 @@ export function AddChildModal({ onClose }: AddChildModalProps) {
       setError(result.error)
       setIsPending(false)
     } else {
+      onSaved?.()
       onClose()
     }
   }
@@ -73,7 +76,7 @@ export function AddChildModal({ onClose }: AddChildModalProps) {
         <div className="bg-white rounded-card-lg shadow-floating border border-border/50 w-full max-w-md max-h-[90vh] overflow-y-auto">
           {/* Header */}
           <div className="flex items-center justify-between px-6 py-4 border-b border-border">
-            <h2 className="font-display text-display-sm font-semibold text-ink">Add a child profile</h2>
+            <h2 className="font-display text-display-sm font-semibold text-ink">{title}</h2>
             <button
               onClick={onClose}
               className="p-1.5 rounded-md text-ink-tertiary hover:text-ink hover:bg-raised focus-ring"

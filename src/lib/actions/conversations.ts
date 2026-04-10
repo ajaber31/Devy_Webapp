@@ -5,6 +5,15 @@ import { createClient } from '@/lib/supabase/server'
 import type { Conversation, Message, Source } from '@/lib/types'
 import type { Json } from '@/lib/supabase/database.types'
 
+/** Supabase may return joined children as an object OR an array depending on FK resolution. */
+function extractChildName(children: unknown): string | undefined {
+  if (!children) return undefined
+  if (Array.isArray(children)) {
+    return (children[0] as { name?: string } | undefined)?.name ?? undefined
+  }
+  return (children as { name?: string })?.name ?? undefined
+}
+
 export async function getConversations(): Promise<Conversation[]> {
   const supabase = createClient()
   const { data: { user } } = await supabase.auth.getUser()
@@ -27,7 +36,7 @@ export async function getConversations(): Promise<Conversation[]> {
     isPinned: row.is_pinned,
     tags: row.tags ?? [],
     childId: row.child_id ?? undefined,
-    childName: (row.children as { name: string } | null)?.name ?? undefined,
+    childName: extractChildName(row.children),
   }))
 }
 
@@ -54,7 +63,7 @@ export async function getConversationsForChild(childId: string): Promise<Convers
     isPinned: row.is_pinned,
     tags: row.tags ?? [],
     childId: row.child_id ?? undefined,
-    childName: (row.children as { name: string } | null)?.name ?? undefined,
+    childName: extractChildName(row.children),
   }))
 }
 
@@ -88,6 +97,7 @@ export async function getConversationCount(): Promise<number> {
 export async function createConversation(input: {
   title?: string
   childId?: string
+  childName?: string
 }): Promise<{ data?: Conversation; error?: string }> {
   const supabase = createClient()
   const { data: { user } } = await supabase.auth.getUser()
@@ -118,6 +128,7 @@ export async function createConversation(input: {
       isPinned: data.is_pinned,
       tags: data.tags ?? [],
       childId: data.child_id ?? undefined,
+      childName: input.childName,
     },
   }
 }
@@ -198,6 +209,20 @@ export async function renameConversation(id: string, title: string): Promise<{ e
   const { error } = await supabase
     .from('conversations')
     .update({ title: trimmed })
+    .eq('id', id)
+    .eq('user_id', user.id)
+
+  return error ? { error: error.message } : {}
+}
+
+export async function pinConversation(id: string, isPinned: boolean): Promise<{ error?: string }> {
+  const supabase = createClient()
+  const { data: { user } } = await supabase.auth.getUser()
+  if (!user) return { error: 'Not authenticated' }
+
+  const { error } = await supabase
+    .from('conversations')
+    .update({ is_pinned: isPinned })
     .eq('id', id)
     .eq('user_id', user.id)
 

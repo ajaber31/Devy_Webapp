@@ -1,7 +1,7 @@
 'use client'
 
 import { useRef, useEffect, useState } from 'react'
-import { SendHorizonal, Paperclip } from 'lucide-react'
+import { SendHorizonal } from 'lucide-react'
 import { cn } from '@/lib/utils'
 
 interface ChatInputProps {
@@ -59,16 +59,6 @@ export function ChatInput({ value, onChange, onSend, disabled }: ChatInputProps)
       <div className="max-w-3xl mx-auto">
         <div className="flex items-end gap-2 bg-white border border-border rounded-card shadow-card focus-within:border-sage-400 focus-within:shadow-input-focus"
           style={{ transitionProperty: 'border-color, box-shadow', transitionDuration: '150ms' }}>
-          {/* Attach button */}
-          <button
-            type="button"
-            className="flex-shrink-0 ml-3 mb-2.5 p-1.5 rounded text-ink-tertiary hover:text-ink-secondary focus-ring"
-            style={{ transitionProperty: 'color', transitionDuration: '150ms' }}
-            aria-label="Attach file"
-          >
-            <Paperclip size={16} strokeWidth={1.75} />
-          </button>
-
           {/* Textarea */}
           <textarea
             ref={ref}
@@ -77,7 +67,7 @@ export function ChatInput({ value, onChange, onSend, disabled }: ChatInputProps)
             onKeyDown={handleKeyDown}
             placeholder="Ask about a child's needs, strategies, or resources…"
             rows={1}
-            className="flex-1 resize-none bg-transparent py-2.5 text-body-sm text-ink placeholder:text-ink-tertiary focus:outline-none leading-relaxed"
+            className="flex-1 resize-none bg-transparent py-2.5 pl-3 text-body-sm text-ink placeholder:text-ink-tertiary focus:outline-none leading-relaxed"
             style={{ minHeight: '40px', maxHeight: '160px' }}
             disabled={disabled}
           />
@@ -104,7 +94,7 @@ export function ChatInput({ value, onChange, onSend, disabled }: ChatInputProps)
           </button>
         </div>
         <p className="text-center text-body-xs text-ink-tertiary mt-2">
-          ⌘ Enter to send · Answers cite their sources
+          Ctrl / ⌘ Enter to send · Answers cite their sources
         </p>
       </div>
     </div>

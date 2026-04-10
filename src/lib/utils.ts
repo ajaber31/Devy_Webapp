@@ -14,11 +14,11 @@ export function formatDate(dateStr: string): string {
   if (days === 0) return 'Today'
   if (days === 1) return 'Yesterday'
   if (days < 7) return `${days} days ago`
-  return date.toLocaleDateString('en-US', { month: 'short', day: 'numeric' })
+  return date.toLocaleDateString('en-CA', { month: 'short', day: 'numeric' })
 }
 
 export function formatDateFull(dateStr: string): string {
-  return new Date(dateStr).toLocaleDateString('en-US', {
+  return new Date(dateStr).toLocaleDateString('en-CA', {
     month: 'long', day: 'numeric', year: 'numeric'
   })
 }

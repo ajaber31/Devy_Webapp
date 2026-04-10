@@ -1,22 +1,5 @@
-import { Lock, FileCheck, AlertCircle } from 'lucide-react'
+import { Lock, FileCheck, AlertCircle, ShieldCheck, FlaskConical, BookOpen } from 'lucide-react'
 import { AnimateIn } from '@/components/shared/AnimateIn'
-
-const testimonials = [
-  {
-    quote: "Every answer is grounded in real clinical evidence — either from Devy's knowledge base or peer-reviewed research. That kind of reliability changes everything. I can actually reference what Devy surfaces with my colleagues.",
-    author: 'Maya T.',
-    role: 'Occupational Therapist',
-    initials: 'MT',
-    color: 'bg-sage-200 text-sage-800',
-  },
-  {
-    quote: "I can ask Devy a question at midnight when I'm worried about my son, and I know the answer is based on real clinical material — not something an AI invented. That peace of mind is genuinely invaluable.",
-    author: 'James O.',
-    role: 'Parent',
-    initials: 'JO',
-    color: 'bg-dblue-200 text-dblue-800',
-  },
-]
 
 const trustPoints = [
   {
@@ -83,40 +66,39 @@ export function TrustSection() {
           })}
         </div>
 
-        {/* Testimonials */}
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mb-16">
-          {testimonials.map((t, i) => (
-            <AnimateIn key={t.author} delay={i * 120}>
-              <div className="bg-white rounded-card-lg p-7 shadow-card border border-border/50 h-full flex flex-col">
-                <div className="text-sand-500 text-3xl font-display leading-none mb-4" aria-hidden="true">&ldquo;</div>
-                <blockquote className="text-body-base text-ink leading-relaxed mb-5 italic font-display flex-1">
-                  {t.quote}
-                </blockquote>
-                <div className="flex items-center gap-3">
-                  <div className={`w-9 h-9 rounded-full ${t.color} flex items-center justify-center font-semibold text-body-xs flex-shrink-0`}>
-                    {t.initials}
+        {/* Design principles */}
+        <AnimateIn>
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+            {[
+              {
+                icon: ShieldCheck,
+                title: 'No diagnosis, ever',
+                body: 'Devy will never suggest, imply, or state a clinical diagnosis. Questions that require a diagnosis are always redirected to a qualified professional — no exceptions.',
+              },
+              {
+                icon: FlaskConical,
+                title: 'Built with clinical oversight',
+                body: "Devy's knowledge base is curated by clinicians and continuously augmented with peer-reviewed PubMed research. Every response traces back to real, vetted material.",
+              },
+              {
+                icon: BookOpen,
+                title: 'Transparent about its limits',
+                body: "When a question goes beyond what Devy knows with confidence, it says so. Intellectual honesty is built into the system — not bolted on as a disclaimer.",
+              },
+            ].map((item, i) => {
+              const Icon = item.icon
+              return (
+                <div key={item.title} className="bg-white rounded-card-lg p-6 shadow-card border border-border/50 flex flex-col gap-4">
+                  <div className="w-10 h-10 rounded-card bg-sage-100 text-sage-600 flex items-center justify-center flex-shrink-0">
+                    <Icon size={18} strokeWidth={1.75} />
                   </div>
                   <div>
-                    <p className="text-body-sm font-semibold text-ink">{t.author}</p>
-                    <p className="text-body-xs text-ink-tertiary">{t.role}</p>
+                    <h4 className="font-display text-display-sm font-semibold text-ink mb-1.5">{item.title}</h4>
+                    <p className="text-body-sm text-ink-secondary leading-relaxed">{item.body}</p>
                   </div>
                 </div>
-              </div>
-            </AnimateIn>
-          ))}
-        </div>
-
-        {/* Org trust marks */}
-        <AnimateIn>
-          <div className="text-center">
-            <p className="text-body-xs text-ink-tertiary uppercase tracking-wider mb-6">Used by clinicians and educators at</p>
-            <div className="flex items-center justify-center gap-8 flex-wrap opacity-50 grayscale">
-              {['BrightPath Therapy', 'Sunrise School District', 'Cedar Valley SES', 'Family First Support'].map((org) => (
-                <div key={org} className="px-4 py-2 bg-raised rounded-md">
-                  <span className="text-body-xs font-semibold text-ink-secondary">{org}</span>
-                </div>
-              ))}
-            </div>
+              )
+            })}
           </div>
         </AnimateIn>
       </div>

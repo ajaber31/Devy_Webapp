@@ -1,10 +1,12 @@
 'use client'
 
 import { useState } from 'react'
+import { useRouter } from 'next/navigation'
 import Link from 'next/link'
-import { Clock, Target, Star, Heart, Calendar, MessageCircle, FileText, ChevronLeft } from 'lucide-react'
+import { Clock, Target, Star, Heart, Calendar, MessageCircle, FileText, ChevronLeft, AlertCircle } from 'lucide-react'
 import { ChildProfileHeader } from '@/components/children/ChildProfileHeader'
 import { EditChildModal } from '@/components/children/EditChildModal'
+import { deleteChild } from '@/lib/actions/children'
 import { formatDate, ageFromDob } from '@/lib/utils'
 import type { Child, Conversation } from '@/lib/types'
 import type { RoleTerminology } from '@/lib/role-terminology'
@@ -18,6 +20,22 @@ interface ChildProfileClientProps {
 export function ChildProfileClient({ child: initialChild, conversations, terms }: ChildProfileClientProps) {
   const [child, setChild] = useState(initialChild)
   const [editOpen, setEditOpen] = useState(false)
+  const [deleteConfirm, setDeleteConfirm] = useState(false)
+  const [isDeleting, setIsDeleting] = useState(false)
+  const [deleteError, setDeleteError] = useState<string | null>(null)
+  const router = useRouter()
+
+  const handleDelete = async () => {
+    setIsDeleting(true)
+    setDeleteError(null)
+    const result = await deleteChild(child.id)
+    if (result.error) {
+      setDeleteError(result.error)
+      setIsDeleting(false)
+    } else {
+      router.push('/children')
+    }
+  }
 
   const age = ageFromDob(child.dateOfBirth)
 
@@ -51,7 +69,37 @@ export function ChildProfileClient({ child: initialChild, conversations, terms }
       </Link>
 
       {/* Profile header */}
-      <ChildProfileHeader child={child} onEdit={() => setEditOpen(true)} />
+      <ChildProfileHeader child={child} onEdit={() => setEditOpen(true)} onDelete={() => setDeleteConfirm(true)} />
+
+      {/* Delete confirmation banner */}
+      {deleteConfirm && (
+        <div className="bg-white rounded-card-lg shadow-card border border-danger/30 px-5 py-4 flex items-start gap-3">
+          <AlertCircle size={16} className="text-danger flex-shrink-0 mt-0.5" strokeWidth={2} />
+          <div className="flex-1 min-w-0">
+            <p className="text-body-sm font-medium text-ink mb-0.5">Delete {child.name}&apos;s profile?</p>
+            <p className="text-body-xs text-ink-secondary mb-3">This will permanently remove the profile and all associated data. Conversations linked to this profile will not be deleted.</p>
+            {deleteError && <p className="text-body-xs text-danger mb-2">{deleteError}</p>}
+            <div className="flex items-center gap-2">
+              <button
+                onClick={handleDelete}
+                disabled={isDeleting}
+                className="px-4 py-1.5 bg-danger text-white text-body-xs font-medium rounded-card hover:bg-danger/90 focus-ring disabled:opacity-60"
+                style={{ transitionProperty: 'background-color', transitionDuration: '150ms' }}
+              >
+                {isDeleting ? 'Deleting…' : 'Yes, delete'}
+              </button>
+              <button
+                onClick={() => { setDeleteConfirm(false); setDeleteError(null) }}
+                disabled={isDeleting}
+                className="px-4 py-1.5 bg-raised text-ink-secondary text-body-xs font-medium rounded-card hover:bg-border/60 focus-ring"
+                style={{ transitionProperty: 'background-color', transitionDuration: '150ms' }}
+              >
+                Cancel
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
 
       {/* Two-column layout */}
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
@@ -88,7 +136,7 @@ export function ChildProfileClient({ child: initialChild, conversations, terms }
               <ul className="space-y-2">
                 {child.goals.map((goal, i) => (
                   <li key={i} className="flex items-start gap-3">
-                    <div className="w-5 h-5 rounded border-2 border-sage-300 flex-shrink-0 mt-0.5" />
+                    <span className="w-5 h-5 rounded-full bg-sage-100 text-sage-600 flex items-center justify-center text-body-xs font-bold flex-shrink-0 mt-0.5">{i + 1}</span>
                     <span className="text-body-sm text-ink leading-snug">{goal}</span>
                   </li>
                 ))}

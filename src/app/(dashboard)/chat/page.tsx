@@ -1,6 +1,6 @@
 import { Suspense } from 'react'
 import { getConversations, getMessages } from '@/lib/actions/conversations'
-import { getChildren } from '@/lib/actions/children'
+import { getChildren, getChild } from '@/lib/actions/children'
 import { getProfile } from '@/lib/actions/profile'
 import { getRoleTerminology } from '@/lib/role-terminology'
 import { ChatPageClient } from './ChatPageClient'
@@ -28,6 +28,20 @@ export default async function ChatPage({
 
   const initialMessages = activeId ? await getMessages(activeId) : []
 
+  // Resolve child context: URL param > active conversation data > DB lookup fallback.
+  // This ensures the banner and sidebar tag appear correctly when navigating back
+  // to /chat without URL params (e.g. from dashboard → chat).
+  const activeConvo = activeId ? conversations.find(c => c.id === activeId) : undefined
+  let resolvedChildId   = searchParams.childId   ?? activeConvo?.childId
+  let resolvedChildName = searchParams.childName  ?? activeConvo?.childName
+
+  // Fallback: if we have a childId but still no name (JOIN didn't return it),
+  // do a targeted DB lookup so the banner always shows the right name.
+  if (resolvedChildId && !resolvedChildName) {
+    const child = await getChild(resolvedChildId)
+    resolvedChildName = child?.name ?? undefined
+  }
+
   return (
     <Suspense fallback={
       <div className="flex h-full items-center justify-center text-body-sm text-ink-tertiary">
@@ -38,8 +52,8 @@ export default async function ChatPage({
         initialConversations={conversations}
         initialActiveId={activeId}
         initialMessages={initialMessages}
-        childId={searchParams.childId}
-        childName={searchParams.childName}
+        childId={resolvedChildId}
+        childName={resolvedChildName}
         showSelector={showSelector}
         children={children}
         nounSingular={terms.nounSingular}
