@@ -1,5 +1,6 @@
 'use client'
 
+import ReactMarkdown from 'react-markdown'
 import { AlertCircle } from 'lucide-react'
 import { ResearchBadge } from './ResearchBadge'
 import type { Message } from '@/lib/types'
@@ -22,37 +23,6 @@ export function MessageBubble({ message, isStreaming = false }: MessageBubblePro
     )
   }
 
-  // Format assistant content — handle **bold**
-  const formatContent = (text: string) => {
-    const lines = text.split('\n')
-    return lines.map((line, i) => {
-      if (!line.trim()) return <div key={i} className="h-2" />
-
-      // Bold text with **
-      const parts = line.split(/(\*\*[^*]+\*\*)/)
-      const formatted = parts.map((part, j) => {
-        if (part.startsWith('**') && part.endsWith('**')) {
-          return <strong key={j} className="font-semibold text-ink">{part.slice(2, -2)}</strong>
-        }
-        return part
-      })
-
-      // List items
-      if (line.startsWith('- ') || line.match(/^\d+\. /)) {
-        return (
-          <div key={i} className="flex gap-2 mb-1">
-            <span className="text-sage-500 flex-shrink-0 mt-0.5">
-              {line.startsWith('- ') ? '·' : line.match(/^(\d+)\./)?.[1] + '.'}
-            </span>
-            <span>{formatted.slice(line.startsWith('- ') ? 1 : 1)}</span>
-          </div>
-        )
-      }
-
-      return <p key={i} className="mb-2 last:mb-0">{formatted}</p>
-    })
-  }
-
   return (
     <div className="flex justify-start animate-fade-up">
       <div className="max-w-[80%] space-y-2.5">
@@ -70,8 +40,38 @@ export function MessageBubble({ message, isStreaming = false }: MessageBubblePro
               ))}
             </div>
           ) : (
-            <div className="space-y-0.5">
-              {formatContent(message.content)}
+            <div className="prose-devy">
+              <ReactMarkdown
+                components={{
+                  h1: ({ children }) => <h1 className="font-display text-display-sm font-bold text-ink mt-3 mb-1.5 first:mt-0">{children}</h1>,
+                  h2: ({ children }) => <h2 className="font-display text-[0.95rem] font-bold text-ink mt-3 mb-1.5 first:mt-0">{children}</h2>,
+                  h3: ({ children }) => <h3 className="font-display text-[0.9rem] font-semibold text-ink mt-2.5 mb-1 first:mt-0">{children}</h3>,
+                  p: ({ children }) => <p className="mb-2 last:mb-0 leading-relaxed">{children}</p>,
+                  strong: ({ children }) => <strong className="font-semibold text-ink">{children}</strong>,
+                  em: ({ children }) => <em className="italic text-ink-secondary">{children}</em>,
+                  ul: ({ children }) => <ul className="mb-2 last:mb-0 space-y-1">{children}</ul>,
+                  ol: ({ children }) => <ol className="mb-2 last:mb-0 space-y-1 list-none">{children}</ol>,
+                  li: ({ children }) => (
+                    <li className="flex items-start gap-2">
+                      <span className="text-sage-500 flex-shrink-0 mt-[0.2em] font-bold select-none text-[0.6rem]">●</span>
+                      <span className="flex-1">{children}</span>
+                    </li>
+                  ),
+                  hr: () => <hr className="my-3 border-border/60" />,
+                  code: ({ children }) => (
+                    <code className="px-1.5 py-0.5 bg-raised rounded text-body-xs font-mono text-ink border border-border/50">
+                      {children}
+                    </code>
+                  ),
+                  blockquote: ({ children }) => (
+                    <blockquote className="border-l-2 border-sage-300 pl-3 my-2 text-ink-secondary italic">
+                      {children}
+                    </blockquote>
+                  ),
+                }}
+              >
+                {message.content}
+              </ReactMarkdown>
               {/* Blinking cursor while tokens are arriving */}
               {isStreaming && (
                 <span
