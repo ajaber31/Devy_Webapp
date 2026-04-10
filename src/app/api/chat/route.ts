@@ -15,6 +15,8 @@ import {
 } from '@/lib/ai/prompt-builder'
 import { searchPubMed, buildPubMedContextBlock, pubMedSourcesToSources } from '@/lib/ai/pubmed'
 import { ingestPubMedSources } from '@/lib/ai/pubmed-ingest'
+import { chatRequestSchema } from '@/lib/validation/schemas'
+import { checkRateLimit, CHAT_LIMIT } from '@/lib/rate-limit'
 import type { Child, Source } from '@/lib/types'
 import type { Database } from '@/lib/supabase/database.types'
 
@@ -130,7 +132,8 @@ function streamSSE(
       } catch (err) {
         const msg = err instanceof Error ? err.message : String(err)
         console.error('[/api/chat] OpenAI stream error:', msg)
-        send({ type: 'error', message: msg })
+        // Do not expose internal error details to the client.
+        send({ type: 'error', message: 'An error occurred. Please try again.' })
       } finally {
         controller.close()
       }
@@ -168,25 +171,37 @@ export async function POST(request: NextRequest) {
   const { data: { user } } = await supabase.auth.getUser()
   if (!user) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
 
-  // ── Parse body ─────────────────────────────────────────────────────────────
-  let body: {
-    message: string
-    conversationId: string | null
-    childId?: string
-    childName?: string
+  // ── Rate limiting ──────────────────────────────────────────────────────────
+  const rl = checkRateLimit(`chat:${user.id}`, CHAT_LIMIT)
+  if (!rl.allowed) {
+    return NextResponse.json(
+      { error: 'Too many requests. Please wait a moment before sending another message.' },
+      {
+        status: 429,
+        headers: {
+          'Retry-After': String(Math.ceil((rl.resetAtMs - Date.now()) / 1000)),
+          'X-RateLimit-Limit': String(CHAT_LIMIT.maxRequests),
+          'X-RateLimit-Remaining': '0',
+        },
+      },
+    )
   }
 
+  // ── Parse + validate body ──────────────────────────────────────────────────
+  let rawBody: unknown
   try {
-    body = await request.json()
+    rawBody = await request.json()
   } catch {
     return NextResponse.json({ error: 'Invalid request body' }, { status: 400 })
   }
 
-  const { message, conversationId, childId, childName } = body
-
-  if (!message?.trim()) {
-    return NextResponse.json({ error: 'Message is required' }, { status: 400 })
+  const parsed = chatRequestSchema.safeParse(rawBody)
+  if (!parsed.success) {
+    const first = parsed.error.issues[0]
+    return NextResponse.json({ error: first?.message ?? 'Invalid input' }, { status: 400 })
   }
+
+  const { message, conversationId, childId, childName } = parsed.data
 
   // ── Fetch user role + child profile in parallel ────────────────────────────
   const [profileResult, childResult] = await Promise.all([

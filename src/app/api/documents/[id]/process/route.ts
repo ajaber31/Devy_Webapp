@@ -6,6 +6,7 @@ import { getDocumentSignedUrl } from '@/lib/supabase/storage'
 import { extractText } from '@/lib/document-processing/parser'
 import { chunkText } from '@/lib/document-processing/chunker'
 import { generateEmbeddings } from '@/lib/document-processing/embedder'
+import { checkRateLimit, PROCESS_LIMIT } from '@/lib/rate-limit'
 import type { Database } from '@/lib/supabase/database.types'
 
 // Allow up to 5 minutes on Vercel Pro — ignored locally
@@ -63,6 +64,18 @@ export async function POST(
 
   if (profile?.role !== 'admin') {
     return NextResponse.json({ error: 'Forbidden' }, { status: 403 })
+  }
+
+  // Rate limit: max 5 processing jobs per admin per minute (expensive pipeline)
+  const rl = checkRateLimit(`process:${user.id}`, PROCESS_LIMIT)
+  if (!rl.allowed) {
+    return NextResponse.json(
+      { error: 'Too many processing requests. Please wait before retrying.' },
+      {
+        status: 429,
+        headers: { 'Retry-After': String(Math.ceil((rl.resetAtMs - Date.now()) / 1000)) },
+      },
+    )
   }
 
   // --- Fetch the document record ---

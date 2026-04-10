@@ -3,7 +3,12 @@ import type { NextRequest } from 'next/server'
 import { createClient } from '@/lib/supabase/middleware'
 
 // Paths that don't require authentication
-const PUBLIC_PATHS = new Set(['/', '/login', '/signup', '/forgot-password'])
+const PUBLIC_PATHS = new Set(['/', '/login', '/signup', '/forgot-password', '/privacy'])
+
+// Authenticated-but-ungated paths (user is logged in but may not have consented yet)
+// The consent gate is enforced in the dashboard layout, not middleware, to keep
+// middleware lightweight. /consent must remain accessible to authenticated users.
+const CONSENT_PATHS = new Set(['/consent'])
 
 export async function middleware(request: NextRequest) {
   const response = NextResponse.next({ request })
@@ -15,8 +20,11 @@ export async function middleware(request: NextRequest) {
 
   const { pathname } = request.nextUrl
 
-  // Skip auth for public paths and auth callback
-  const isPublic = PUBLIC_PATHS.has(pathname) || pathname.startsWith('/auth/')
+  // Skip auth for public paths, auth callback, and consent/privacy pages
+  const isPublic =
+    PUBLIC_PATHS.has(pathname) ||
+    pathname.startsWith('/auth/') ||
+    CONSENT_PATHS.has(pathname)
 
   // Redirect unauthenticated users away from protected routes
   if (!user && !isPublic) {

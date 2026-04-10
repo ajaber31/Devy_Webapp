@@ -2,9 +2,14 @@ import { redirect } from 'next/navigation'
 import { PageHeader } from '@/components/shared/PageHeader'
 import { SettingsTabs } from './SettingsTabs'
 import { getProfile } from '@/lib/actions/profile'
+import { getPrivacyAuditLog } from '@/lib/actions/privacy'
 
 export default async function SettingsPage() {
-  const profile = await getProfile()
+  const [profile, auditLog] = await Promise.all([
+    getProfile(),
+    getPrivacyAuditLog(),
+  ])
+
   if (!profile) redirect('/login')
 
   return (
@@ -13,7 +18,7 @@ export default async function SettingsPage() {
         title="Settings"
         description="Manage your profile, preferences, and trust settings."
       />
-      <SettingsTabs profile={profile} />
+      <SettingsTabs profile={profile} auditLog={auditLog} />
     </div>
   )
 }

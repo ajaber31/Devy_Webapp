@@ -1,6 +1,11 @@
 import type { Metadata } from 'next'
 import { inter, lora } from '@/styles/fonts'
+import { validateEnv } from '@/lib/env'
 import './globals.css'
+
+// Fail fast on startup if any required environment variable is missing.
+// This surfaces misconfiguration immediately rather than at runtime.
+validateEnv()
 
 export const metadata: Metadata = {
   title: 'Devy — AI Support for Special Needs Families',

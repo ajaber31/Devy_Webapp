@@ -2,6 +2,7 @@
 
 import { revalidatePath } from 'next/cache'
 import { createClient } from '@/lib/supabase/server'
+import { updateProfileSchema } from '@/lib/validation/schemas'
 import type { Profile } from '@/lib/types'
 
 export async function getProfile(): Promise<Profile | null> {
@@ -34,21 +35,17 @@ export async function getProfile(): Promise<Profile | null> {
       .select('*')
       .single()
 
-    // Even if DB upsert failed, return a minimal in-memory profile so the
-    // layout does not redirect to /login while the user IS authenticated.
-    // This prevents the middleware ↔ layout redirect loop.
-    const fallbackName = name
-    const fallbackRole = safeRole
-
     if (!created) {
       return {
         id: user.id,
-        name: fallbackName,
+        name,
         email: user.email ?? '',
-        role: fallbackRole,
+        role: safeRole,
         status: 'active',
         avatarUrl: undefined,
         createdAt: new Date().toISOString(),
+        consentVersion: null,
+        consentAcceptedAt: null,
       }
     }
 
@@ -60,6 +57,8 @@ export async function getProfile(): Promise<Profile | null> {
       status: created.status,
       avatarUrl: created.avatar_url ?? undefined,
       createdAt: created.created_at,
+      consentVersion: created.consent_version ?? null,
+      consentAcceptedAt: created.consent_accepted_at ?? null,
     }
   }
 
@@ -71,20 +70,27 @@ export async function getProfile(): Promise<Profile | null> {
     status: data.status,
     avatarUrl: data.avatar_url ?? undefined,
     createdAt: data.created_at,
+    consentVersion: data.consent_version ?? null,
+    consentAcceptedAt: data.consent_accepted_at ?? null,
   }
 }
 
 export async function updateProfile(updates: { name?: string }) {
+  const parsed = updateProfileSchema.safeParse(updates)
+  if (!parsed.success) {
+    return { error: parsed.error.issues[0]?.message ?? 'Invalid input' }
+  }
+
   const supabase = createClient()
   const { data: { user } } = await supabase.auth.getUser()
   if (!user) return { error: 'Not authenticated' }
 
   const { error } = await supabase
     .from('profiles')
-    .update(updates)
+    .update(parsed.data)
     .eq('id', user.id)
 
-  if (error) return { error: error.message }
+  if (error) return { error: 'Failed to update profile' }
 
   revalidatePath('/settings')
   revalidatePath('/dashboard')

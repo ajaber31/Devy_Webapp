@@ -4,9 +4,15 @@ import { MobileSidebar } from '@/components/layout/MobileSidebar'
 import { PageTransition } from '@/components/shared/PageTransition'
 import { getProfile } from '@/lib/actions/profile'
 import { initials } from '@/lib/utils'
+import { CURRENT_CONSENT_VERSION } from '@/lib/types'
 
 export default async function DashboardLayout({ children }: { children: React.ReactNode }) {
   const profile = await getProfile()
+
+  // Consent gate: redirect to /consent if user has not accepted the current policy version
+  if (profile && (profile.consentVersion !== CURRENT_CONSENT_VERSION || !profile.consentAcceptedAt)) {
+    redirect('/consent')
+  }
 
   if (!profile) {
     redirect('/login')

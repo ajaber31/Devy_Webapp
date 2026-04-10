@@ -1,24 +1,54 @@
 'use server'
 
-import { createClient } from '@supabase/supabase-js'
+import { createClient as createServiceClient } from '@supabase/supabase-js'
 import { revalidatePath } from 'next/cache'
+import { createClient } from '@/lib/supabase/server'
+import { updateUserRoleSchema, updateUserStatusSchema } from '@/lib/validation/schemas'
 import type { Database } from '@/lib/supabase/database.types'
 import type { User, UserRole, UserStatus } from '@/lib/types'
 
-/** Service-role client — bypasses RLS, gives access to auth.admin API. */
+// ─── Authorization guard ──────────────────────────────────────────────────────
+
+/**
+ * Verifies the current session user is an admin.
+ * Must be called at the start of every admin server action.
+ * Returns an error string if not authorized, null if OK.
+ */
+async function requireAdmin(): Promise<{ error: string } | null> {
+  const supabase = createClient()
+  const { data: { user } } = await supabase.auth.getUser()
+  if (!user) return { error: 'Not authenticated' }
+
+  const { data: profile } = await supabase
+    .from('profiles')
+    .select('role')
+    .eq('id', user.id)
+    .single()
+
+  if (profile?.role !== 'admin') return { error: 'Forbidden' }
+  return null
+}
+
+// ─── Service client (bypasses RLS) ───────────────────────────────────────────
+
+/** Only used after requireAdmin() confirms the caller is an admin. */
 function serviceClient() {
-  return createClient<Database>(
+  return createServiceClient<Database>(
     process.env.NEXT_PUBLIC_SUPABASE_URL!,
     process.env.SUPABASE_SERVICE_ROLE_KEY!,
     { auth: { persistSession: false } },
   )
 }
 
-/** Fetches all platform users by joining auth.users (for email/dates) with profiles (for role/status/name). */
+// ─── Actions ──────────────────────────────────────────────────────────────────
+
+/** Fetches all platform users. Admin-only. */
 export async function getUsers(): Promise<User[]> {
+  const authErr = await requireAdmin()
+  if (authErr) return []
+
   const supabase = serviceClient()
 
-  // Fetch up to 1000 auth users and all profiles in parallel
   const [authResult, profilesResult] = await Promise.all([
     supabase.auth.admin.listUsers({ perPage: 1000 }),
     supabase.from('profiles').select('id, name, role, status'),
@@ -42,26 +72,46 @@ export async function getUsers(): Promise<User[]> {
   })
 }
 
-/** Suspend or reactivate a user by updating their profile status. */
+/** Suspend or reactivate a user. Admin-only. */
 export async function updateUserStatus(
   id: string,
   status: UserStatus,
 ): Promise<{ error?: string }> {
+  const authErr = await requireAdmin()
+  if (authErr) return authErr
+
+  const parsed = updateUserStatusSchema.safeParse({ id, status })
+  if (!parsed.success) return { error: 'Invalid input' }
+
   const supabase = serviceClient()
-  const { error } = await supabase.from('profiles').update({ status }).eq('id', id)
-  if (error) return { error: error.message }
+  const { error } = await supabase
+    .from('profiles')
+    .update({ status: parsed.data.status })
+    .eq('id', parsed.data.id)
+
+  if (error) return { error: 'Update failed' }
   revalidatePath('/admin/users')
   return {}
 }
 
-/** Change a user's role. */
+/** Change a user's role. Admin-only. */
 export async function updateUserRole(
   id: string,
   role: UserRole,
 ): Promise<{ error?: string }> {
+  const authErr = await requireAdmin()
+  if (authErr) return authErr
+
+  const parsed = updateUserRoleSchema.safeParse({ id, role })
+  if (!parsed.success) return { error: 'Invalid input' }
+
   const supabase = serviceClient()
-  const { error } = await supabase.from('profiles').update({ role }).eq('id', id)
-  if (error) return { error: error.message }
+  const { error } = await supabase
+    .from('profiles')
+    .update({ role: parsed.data.role })
+    .eq('id', parsed.data.id)
+
+  if (error) return { error: 'Update failed' }
   revalidatePath('/admin/users')
   return {}
 }

@@ -10,6 +10,8 @@ export interface Database {
           role: 'parent' | 'caregiver' | 'clinician' | 'teacher' | 'other' | 'admin'
           status: 'active' | 'invited' | 'suspended'
           avatar_url: string | null
+          consent_version: string | null
+          consent_accepted_at: string | null
           created_at: string
           updated_at: string
         }
@@ -19,6 +21,8 @@ export interface Database {
           role?: 'parent' | 'caregiver' | 'clinician' | 'teacher' | 'other' | 'admin'
           status?: 'active' | 'invited' | 'suspended'
           avatar_url?: string | null
+          consent_version?: string | null
+          consent_accepted_at?: string | null
           created_at?: string
           updated_at?: string
         }
@@ -28,6 +32,8 @@ export interface Database {
           role?: 'parent' | 'caregiver' | 'clinician' | 'teacher' | 'other' | 'admin'
           status?: 'active' | 'invited' | 'suspended'
           avatar_url?: string | null
+          consent_version?: string | null
+          consent_accepted_at?: string | null
           updated_at?: string
         }
         Relationships: []
@@ -248,6 +254,84 @@ export interface Database {
             columns: ['document_id']
             isOneToOne: false
             referencedRelation: 'documents'
+            referencedColumns: ['id']
+          }
+        ]
+      }
+      privacy_audit_log: {
+        Row: {
+          id: string
+          user_id: string | null
+          event_type: 'consent_accepted' | 'consent_version_bump' | 'data_export_requested' | 'data_deletion_requested' | 'account_deleted'
+          event_data: Json
+          created_at: string
+        }
+        Insert: {
+          id?: string
+          user_id?: string | null
+          event_type: 'consent_accepted' | 'consent_version_bump' | 'data_export_requested' | 'data_deletion_requested' | 'account_deleted'
+          event_data?: Json
+          created_at?: string
+        }
+        Update: {
+          event_data?: Json
+        }
+        Relationships: [
+          {
+            foreignKeyName: 'privacy_audit_log_user_id_fkey'
+            columns: ['user_id']
+            isOneToOne: false
+            referencedRelation: 'profiles'
+            referencedColumns: ['id']
+          }
+        ]
+      }
+      incident_log: {
+        Row: {
+          id: string
+          reported_by: string | null
+          severity: 'low' | 'medium' | 'high' | 'critical'
+          title: string
+          description: string
+          affected_users_count: number | null
+          data_types_affected: string[]
+          status: 'open' | 'investigating' | 'resolved' | 'reported_to_opc' | 'reported_to_ipc'
+          resolution: string | null
+          reported_to_authority_at: string | null
+          created_at: string
+          updated_at: string
+        }
+        Insert: {
+          id?: string
+          reported_by?: string | null
+          severity: 'low' | 'medium' | 'high' | 'critical'
+          title: string
+          description: string
+          affected_users_count?: number | null
+          data_types_affected?: string[]
+          status?: 'open' | 'investigating' | 'resolved' | 'reported_to_opc' | 'reported_to_ipc'
+          resolution?: string | null
+          reported_to_authority_at?: string | null
+          created_at?: string
+          updated_at?: string
+        }
+        Update: {
+          severity?: 'low' | 'medium' | 'high' | 'critical'
+          title?: string
+          description?: string
+          affected_users_count?: number | null
+          data_types_affected?: string[]
+          status?: 'open' | 'investigating' | 'resolved' | 'reported_to_opc' | 'reported_to_ipc'
+          resolution?: string | null
+          reported_to_authority_at?: string | null
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: 'incident_log_reported_by_fkey'
+            columns: ['reported_by']
+            isOneToOne: false
+            referencedRelation: 'profiles'
             referencedColumns: ['id']
           }
         ]

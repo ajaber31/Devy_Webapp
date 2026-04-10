@@ -2,6 +2,7 @@
 
 import { revalidatePath } from 'next/cache'
 import { createClient } from '@/lib/supabase/server'
+import { createChildSchema, updateChildSchema } from '@/lib/validation/schemas'
 import type { Child } from '@/lib/types'
 
 function toChild(row: Record<string, unknown>): Child {
@@ -66,7 +67,7 @@ export async function getChild(id: string): Promise<Child | null> {
 
 export async function createChild(input: {
   name: string
-  dateOfBirth?: string
+  dateOfBirth?: string | null
   avatarColor?: 'sage' | 'dblue' | 'sand'
   contextLabels?: string[]
   supportNeeds?: string[]
@@ -76,29 +77,35 @@ export async function createChild(input: {
   goals?: string[]
   notes?: string
 }): Promise<{ data?: Child; error?: string }> {
+  const parsed = createChildSchema.safeParse(input)
+  if (!parsed.success) {
+    return { error: parsed.error.issues[0]?.message ?? 'Invalid input' }
+  }
+
   const supabase = createClient()
   const { data: { user } } = await supabase.auth.getUser()
   if (!user) return { error: 'Not authenticated' }
 
+  const v = parsed.data
   const { data, error } = await supabase
     .from('children')
     .insert({
       user_id: user.id,
-      name: input.name,
-      date_of_birth: input.dateOfBirth ?? null,
-      avatar_color: input.avatarColor ?? 'sage',
-      context_labels: input.contextLabels ?? [],
-      support_needs: input.supportNeeds ?? [],
-      strengths: input.strengths ?? [],
-      interests: input.interests ?? [],
-      routines: input.routines ?? [],
-      goals: input.goals ?? [],
-      notes: input.notes ?? '',
+      name: v.name,
+      date_of_birth: v.dateOfBirth ?? null,
+      avatar_color: v.avatarColor ?? 'sage',
+      context_labels: v.contextLabels ?? [],
+      support_needs: v.supportNeeds ?? [],
+      strengths: v.strengths ?? [],
+      interests: v.interests ?? [],
+      routines: v.routines ?? [],
+      goals: v.goals ?? [],
+      notes: v.notes ?? '',
     })
     .select()
     .single()
 
-  if (error) return { error: error.message }
+  if (error) return { error: 'Failed to create profile' }
 
   revalidatePath('/children')
   return { data: toChild(data as Record<string, unknown>) }
@@ -119,28 +126,37 @@ export async function updateChild(
     notes: string
   }>
 ): Promise<{ data?: Child; error?: string }> {
-  const supabase = createClient()
+  const parsed = updateChildSchema.safeParse(updates)
+  if (!parsed.success) {
+    return { error: parsed.error.issues[0]?.message ?? 'Invalid input' }
+  }
 
+  const supabase = createClient()
+  const { data: { user } } = await supabase.auth.getUser()
+  if (!user) return { error: 'Not authenticated' }
+
+  const v = parsed.data
   const dbUpdates: Record<string, unknown> = {}
-  if (updates.name !== undefined)          dbUpdates.name = updates.name
-  if (updates.dateOfBirth !== undefined)   dbUpdates.date_of_birth = updates.dateOfBirth
-  if (updates.avatarColor !== undefined)   dbUpdates.avatar_color = updates.avatarColor
-  if (updates.contextLabels !== undefined) dbUpdates.context_labels = updates.contextLabels
-  if (updates.supportNeeds !== undefined)  dbUpdates.support_needs = updates.supportNeeds
-  if (updates.strengths !== undefined)     dbUpdates.strengths = updates.strengths
-  if (updates.interests !== undefined)     dbUpdates.interests = updates.interests
-  if (updates.routines !== undefined)      dbUpdates.routines = updates.routines
-  if (updates.goals !== undefined)         dbUpdates.goals = updates.goals
-  if (updates.notes !== undefined)         dbUpdates.notes = updates.notes
+  if (v.name !== undefined)          dbUpdates.name = v.name
+  if (v.dateOfBirth !== undefined)   dbUpdates.date_of_birth = v.dateOfBirth
+  if (v.avatarColor !== undefined)   dbUpdates.avatar_color = v.avatarColor
+  if (v.contextLabels !== undefined) dbUpdates.context_labels = v.contextLabels
+  if (v.supportNeeds !== undefined)  dbUpdates.support_needs = v.supportNeeds
+  if (v.strengths !== undefined)     dbUpdates.strengths = v.strengths
+  if (v.interests !== undefined)     dbUpdates.interests = v.interests
+  if (v.routines !== undefined)      dbUpdates.routines = v.routines
+  if (v.goals !== undefined)         dbUpdates.goals = v.goals
+  if (v.notes !== undefined)         dbUpdates.notes = v.notes
 
   const { data, error } = await supabase
     .from('children')
     .update(dbUpdates)
     .eq('id', id)
+    .eq('user_id', user.id) // ownership enforcement — defense in depth beyond RLS
     .select()
     .single()
 
-  if (error) return { error: error.message }
+  if (error) return { error: 'Failed to update profile' }
 
   revalidatePath('/children')
   revalidatePath(`/children/${id}`)
@@ -149,8 +165,16 @@ export async function updateChild(
 
 export async function deleteChild(id: string): Promise<{ error?: string }> {
   const supabase = createClient()
-  const { error } = await supabase.from('children').delete().eq('id', id)
-  if (error) return { error: error.message }
+  const { data: { user } } = await supabase.auth.getUser()
+  if (!user) return { error: 'Not authenticated' }
+
+  const { error } = await supabase
+    .from('children')
+    .delete()
+    .eq('id', id)
+    .eq('user_id', user.id) // ownership enforcement — defense in depth beyond RLS
+
+  if (error) return { error: 'Failed to delete profile' }
   revalidatePath('/children')
   return {}
 }

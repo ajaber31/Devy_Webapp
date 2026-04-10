@@ -3,6 +3,7 @@
 import { revalidatePath } from 'next/cache'
 import { createClient } from '@/lib/supabase/server'
 import { deleteDocumentFile } from '@/lib/supabase/storage'
+import { createDocumentSchema, updateDocumentTagsSchema } from '@/lib/validation/schemas'
 import type { Document, DocumentStatus } from '@/lib/types'
 
 function mapRow(row: {
@@ -77,27 +78,33 @@ export async function createDocumentRecord(input: {
   fileSizeBytes: number
   tags?: string[]
 }): Promise<{ data?: Document; error?: string }> {
+  const parsed = createDocumentSchema.safeParse(input)
+  if (!parsed.success) {
+    const first = parsed.error.issues[0]
+    return { error: first?.message ?? 'Invalid input' }
+  }
+
   const supabase = await createClient()
+  const { data: { user } } = await supabase.auth.getUser()
+  if (!user) return { error: 'Not authenticated' }
 
-  const { data: user } = await supabase.auth.getUser()
-  if (!user.user) return { error: 'Not authenticated' }
-
+  const v = parsed.data
   const { data, error } = await supabase
     .from('documents')
     .insert({
-      title: input.title,
-      original_filename: input.originalFilename,
-      file_type: input.fileType,
-      storage_path: input.storagePath,
-      file_size_bytes: input.fileSizeBytes,
-      uploaded_by: user.user.id,
-      tags: input.tags ?? [],
+      title: v.title,
+      original_filename: v.originalFilename,
+      file_type: v.fileType,
+      storage_path: v.storagePath,
+      file_size_bytes: v.fileSizeBytes,
+      uploaded_by: user.id,
+      tags: v.tags ?? [],
       status: 'uploaded',
     })
     .select()
     .single()
 
-  if (error) return { error: error.message }
+  if (error) return { error: 'Failed to create document record' }
 
   revalidatePath('/admin/documents')
   return { data: mapRow(data) }
@@ -109,24 +116,21 @@ export async function createDocumentRecord(input: {
 export async function deleteDocument(id: string): Promise<{ error?: string }> {
   const supabase = await createClient()
 
-  // Fetch storage path first
   const { data: doc, error: fetchError } = await supabase
     .from('documents')
     .select('storage_path')
     .eq('id', id)
     .single()
 
-  if (fetchError) return { error: fetchError.message }
+  if (fetchError) return { error: 'Document not found' }
 
-  // Delete the DB record (cascades to chunks)
   const { error: deleteError } = await supabase
     .from('documents')
     .delete()
     .eq('id', id)
 
-  if (deleteError) return { error: deleteError.message }
+  if (deleteError) return { error: 'Failed to delete document' }
 
-  // Delete the storage file (best-effort — don't fail if already gone)
   if (doc?.storage_path) {
     await deleteDocumentFile(doc.storage_path)
   }
@@ -135,16 +139,12 @@ export async function deleteDocument(id: string): Promise<{ error?: string }> {
   return {}
 }
 
-/** Resets a document back to 'uploaded' status so it can be re-processed.
- *  Clears existing chunks and any previous error message.
- */
+/** Resets a document back to 'uploaded' status so it can be re-processed. */
 export async function reprocessDocument(id: string): Promise<{ error?: string }> {
   const supabase = await createClient()
 
-  // Delete existing chunks
   await supabase.from('document_chunks').delete().eq('document_id', id)
 
-  // Reset status
   const { error } = await supabase
     .from('documents')
     .update({
@@ -155,7 +155,7 @@ export async function reprocessDocument(id: string): Promise<{ error?: string }>
     })
     .eq('id', id)
 
-  if (error) return { error: error.message }
+  if (error) return { error: 'Failed to reset document' }
 
   revalidatePath('/admin/documents')
   return {}
@@ -166,14 +166,19 @@ export async function updateDocumentTags(
   id: string,
   tags: string[],
 ): Promise<{ error?: string }> {
+  const parsed = updateDocumentTagsSchema.safeParse({ id, tags })
+  if (!parsed.success) {
+    return { error: parsed.error.issues[0]?.message ?? 'Invalid input' }
+  }
+
   const supabase = await createClient()
 
   const { error } = await supabase
     .from('documents')
-    .update({ tags })
-    .eq('id', id)
+    .update({ tags: parsed.data.tags })
+    .eq('id', parsed.data.id)
 
-  if (error) return { error: error.message }
+  if (error) return { error: 'Failed to update tags' }
 
   revalidatePath('/admin/documents')
   return {}

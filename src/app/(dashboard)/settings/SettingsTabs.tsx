@@ -4,6 +4,7 @@ import { useState } from 'react'
 import { ProfileSection } from '@/components/settings/ProfileSection'
 import { AppearanceSection } from '@/components/settings/AppearanceSection'
 import { AiTrustSection } from '@/components/settings/AiTrustSection'
+import { PrivacyDataSection } from '@/components/settings/PrivacyDataSection'
 import { cn } from '@/lib/utils'
 import type { Profile } from '@/lib/types'
 
@@ -11,13 +12,22 @@ const TABS = [
   { id: 'profile',    label: 'Profile' },
   { id: 'appearance', label: 'Appearance' },
   { id: 'ai-trust',   label: 'AI & Trust' },
+  { id: 'privacy',    label: 'Privacy & Data' },
 ]
+
+interface AuditEntry {
+  id: string
+  event_type: string
+  event_data: Record<string, unknown>
+  created_at: string
+}
 
 interface SettingsTabsProps {
   profile: Profile
+  auditLog: AuditEntry[]
 }
 
-export function SettingsTabs({ profile }: SettingsTabsProps) {
+export function SettingsTabs({ profile, auditLog }: SettingsTabsProps) {
   const [activeTab, setActiveTab] = useState('profile')
 
   return (
@@ -44,6 +54,7 @@ export function SettingsTabs({ profile }: SettingsTabsProps) {
         {activeTab === 'profile'    && <ProfileSection profile={profile} />}
         {activeTab === 'appearance' && <AppearanceSection />}
         {activeTab === 'ai-trust'   && <AiTrustSection />}
+        {activeTab === 'privacy'    && <PrivacyDataSection profile={profile} auditLog={auditLog} />}
       </div>
     </>
   )

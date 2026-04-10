@@ -2,6 +2,12 @@
 
 import { redirect } from 'next/navigation'
 import { createClient } from '@/lib/supabase/server'
+import {
+  signInSchema,
+  signUpSchema,
+  forgotPasswordSchema,
+  updatePasswordSchema,
+} from '@/lib/validation/schemas'
 
 function mapAccountTypeToRole(accountType: string): string {
   switch (accountType) {
@@ -14,19 +20,22 @@ function mapAccountTypeToRole(accountType: string): string {
 }
 
 export async function signIn(formData: { email: string; password: string }) {
-  const supabase = createClient()
+  const parsed = signInSchema.safeParse(formData)
+  if (!parsed.success) {
+    return { error: 'Invalid email or password format' }
+  }
 
+  const supabase = createClient()
   const { error } = await supabase.auth.signInWithPassword({
-    email: formData.email,
-    password: formData.password,
+    email: parsed.data.email,
+    password: parsed.data.password,
   })
 
   if (error) {
-    return { error: error.message }
+    // Return a generic message — never leak whether email exists.
+    return { error: 'Invalid email or password' }
   }
 
-  // Return success — client handles navigation via useRouter
-  // (redirect() inside a Server Action called from a client event handler is unreliable)
   return { ok: true }
 }
 
@@ -36,20 +45,27 @@ export async function signUp(formData: {
   password: string
   accountType: string
 }) {
+  const parsed = signUpSchema.safeParse(formData)
+  if (!parsed.success) {
+    const first = parsed.error.issues[0]
+    return { error: first?.message ?? 'Invalid input' }
+  }
+
   const supabase = createClient()
-  const role = mapAccountTypeToRole(formData.accountType)
+  const role = mapAccountTypeToRole(parsed.data.accountType)
 
   const { error } = await supabase.auth.signUp({
-    email: formData.email,
-    password: formData.password,
+    email: parsed.data.email,
+    password: parsed.data.password,
     options: {
-      data: { name: formData.name, role },
+      data: { name: parsed.data.name, role },
       emailRedirectTo: `${process.env.NEXT_PUBLIC_SITE_URL}/auth/callback`,
     },
   })
 
   if (error) {
-    return { error: error.message }
+    // Generic message — do not expose whether the email is already registered.
+    return { error: 'Could not create account. Please try again.' }
   }
 
   return {
@@ -65,15 +81,27 @@ export async function signOut() {
 }
 
 export async function forgotPassword(email: string): Promise<{ error?: string }> {
+  const parsed = forgotPasswordSchema.safeParse({ email })
+  if (!parsed.success) {
+    // Return success to avoid email enumeration even on bad input.
+    return {}
+  }
+
   const supabase = createClient()
-  const { error } = await supabase.auth.resetPasswordForEmail(email, {
+  // Always return success to prevent email enumeration.
+  await supabase.auth.resetPasswordForEmail(parsed.data.email, {
     redirectTo: `${process.env.NEXT_PUBLIC_SITE_URL}/auth/callback?next=/reset-password`,
   })
-  return error ? { error: error.message } : {}
+  return {}
 }
 
 export async function updatePassword(newPassword: string): Promise<{ error?: string }> {
+  const parsed = updatePasswordSchema.safeParse(newPassword)
+  if (!parsed.success) {
+    return { error: parsed.error.issues[0]?.message ?? 'Invalid password' }
+  }
+
   const supabase = createClient()
-  const { error } = await supabase.auth.updateUser({ password: newPassword })
-  return error ? { error: error.message } : {}
+  const { error } = await supabase.auth.updateUser({ password: parsed.data })
+  return error ? { error: 'Failed to update password' } : {}
 }

@@ -13,7 +13,15 @@ export interface Profile {
   status: UserStatus
   avatarUrl?: string
   createdAt: string
+  /** Version string of the privacy policy accepted (e.g. "2026-04"). null = not yet consented. */
+  consentVersion: string | null
+  /** UTC timestamp when the user accepted the current privacy policy. */
+  consentAcceptedAt: string | null
 }
+
+/** Current live version of the privacy policy. Bump this string whenever the
+ *  policy changes materially — all users will be prompted to re-consent. */
+export const CURRENT_CONSENT_VERSION = '2026-04'
 
 /** Used for admin user management listing */
 export interface User {

@@ -51,7 +51,9 @@
       "Bash(node -e \"console.log\\(require\\('./node_modules/@supabase/ssr/package.json'\\).version\\)\")",
       "Bash(rm -rf .next)",
       "Bash(taskkill /F /IM node.exe)",
-      "Bash(taskkill //F //IM node.exe)"
+      "Bash(taskkill //F //IM node.exe)",
+      "mcp__claude_ai_Supabase__list_tables",
+      "mcp__claude_ai_Supabase__get_advisors"
     ]
   }
 }

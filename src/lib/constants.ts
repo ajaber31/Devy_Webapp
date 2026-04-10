@@ -1,4 +1,4 @@
-import { LayoutDashboard, MessageCircle, Users, Settings, Library } from 'lucide-react'
+import { LayoutDashboard, MessageCircle, Users, Settings, Library, ShieldAlert } from 'lucide-react'
 
 export const DASHBOARD_NAV_ITEMS = [
   { label: 'Dashboard',     href: '/dashboard', icon: LayoutDashboard },
@@ -8,11 +8,12 @@ export const DASHBOARD_NAV_ITEMS = [
 ]
 
 export const ADMIN_NAV_ITEMS = [
-  { label: 'Admin Dashboard',       href: '/dashboard',       icon: LayoutDashboard },
-  { label: 'Conversations',         href: '/chat',            icon: MessageCircle },
-  { label: 'Global Knowledge Base', href: '/admin/documents', icon: Library },
-  { label: 'Platform Users',        href: '/admin/users',     icon: Users },
-  { label: 'Platform Settings',     href: '/settings',        icon: Settings },
+  { label: 'Admin Dashboard',       href: '/dashboard',         icon: LayoutDashboard },
+  { label: 'Conversations',         href: '/chat',              icon: MessageCircle },
+  { label: 'Global Knowledge Base', href: '/admin/documents',   icon: Library },
+  { label: 'Platform Users',        href: '/admin/users',       icon: Users },
+  { label: 'Incident Log',          href: '/admin/incidents',   icon: ShieldAlert },
+  { label: 'Platform Settings',     href: '/settings',          icon: Settings },
 ]
 
 export const ACCOUNT_TYPE_OPTIONS = [
