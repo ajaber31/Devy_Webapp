@@ -8,11 +8,16 @@
 
 const SUPABASE_HOST = 'sitzizsdkcfywflbcwar.supabase.co'
 
+// unsafe-eval is only needed in Next.js dev mode (HMR). Remove it in production.
+// unsafe-inline for scripts is unavoidable without a nonce-based CSP — a future
+// hardening step. unsafe-inline for styles is required by Tailwind JIT.
+const scriptSrc = process.env.NODE_ENV === 'production'
+  ? "script-src 'self' 'unsafe-inline'"
+  : "script-src 'self' 'unsafe-inline' 'unsafe-eval'"
+
 const cspDirectives = [
   "default-src 'self'",
-  // Next.js hydration requires unsafe-inline and unsafe-eval in development.
-  // For production you can tighten this with nonces.
-  "script-src 'self' 'unsafe-inline' 'unsafe-eval'",
+  scriptSrc,
   "style-src 'self' 'unsafe-inline'",
   `img-src 'self' data: blob: https://placehold.co https://${SUPABASE_HOST}`,
   "font-src 'self'",
@@ -34,8 +39,13 @@ async function securityHeaders() {
         { key: 'X-Frame-Options', value: 'DENY' },
         // Prevent MIME sniffing.
         { key: 'X-Content-Type-Options', value: 'nosniff' },
-        // Enforce HTTPS for 1 year (enable once you have a real TLS cert).
-        // { key: 'Strict-Transport-Security', value: 'max-age=31536000; includeSubDomains' },
+        // Enforce HTTPS for 1 year.
+        // IMPORTANT: Only active in production. Enabling on localhost will lock
+        // your browser into HTTPS for a year. Vercel sets this automatically
+        // on *.vercel.app domains, but set it explicitly for your custom domain.
+        ...(process.env.NODE_ENV === 'production'
+          ? [{ key: 'Strict-Transport-Security', value: 'max-age=31536000; includeSubDomains; preload' }]
+          : []),
         // Limit referrer exposure.
         { key: 'Referrer-Policy', value: 'strict-origin-when-cross-origin' },
         // Disable browser features not used by this app.
@@ -51,8 +61,7 @@ async function securityHeaders() {
 
 const nextConfig = {
   eslint: {
-    // Lint errors reported but don't fail the build — run `npm run lint` locally
-    ignoreDuringBuilds: true,
+    ignoreDuringBuilds: false,
   },
   headers: securityHeaders,
   images: {

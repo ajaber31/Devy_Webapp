@@ -67,7 +67,7 @@ export async function POST(
   }
 
   // Rate limit: max 5 processing jobs per admin per minute (expensive pipeline)
-  const rl = checkRateLimit(`process:${user.id}`, PROCESS_LIMIT)
+  const rl = await checkRateLimit(`process:${user.id}`, PROCESS_LIMIT)
   if (!rl.allowed) {
     return NextResponse.json(
       { error: 'Too many processing requests. Please wait before retrying.' },

@@ -298,10 +298,31 @@ export async function POST(request: NextRequest) {
       process.env.STRIPE_WEBHOOK_SECRET,
     )
   } catch (err) {
+    // Log internally but do not expose SDK error details to the caller
     const msg = err instanceof Error ? err.message : String(err)
     console.error('[webhook] Signature verification failed:', msg)
-    return NextResponse.json({ error: `Webhook signature error: ${msg}` }, { status: 400 })
+    return NextResponse.json({ error: 'Invalid webhook signature' }, { status: 400 })
   }
+
+  // ── Idempotency: skip already-processed events ───────────────────────────
+  // Stripe retries webhooks for up to 3 days. Without this check, retries
+  // would re-send billing emails and re-run subscription logic.
+  const supabase = getSupabaseAdmin()
+  const { data: alreadyProcessed } = await supabase
+    .from('processed_webhook_events')
+    .select('event_id')
+    .eq('event_id', event.id)
+    .maybeSingle()
+
+  if (alreadyProcessed) {
+    return NextResponse.json({ received: true, skipped: 'duplicate' })
+  }
+
+  // Record the event ID before processing — if we crash mid-way on a retry
+  // the event will be skipped, which is safer than double-processing.
+  await supabase
+    .from('processed_webhook_events')
+    .insert({ event_id: event.id })
 
   try {
     switch (event.type) {

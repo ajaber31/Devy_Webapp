@@ -1,6 +1,32 @@
 import type { RetrievedChunk } from '@/lib/document-processing/retrieval'
 import type { Child, Source, UserRole } from '@/lib/types'
 
+// ─── Prompt-injection scrubber ────────────────────────────────────────────────
+// Child profile fields are injected verbatim into the system prompt.
+// Strip patterns that could override role/instruction boundaries.
+// This is defence-in-depth: Zod schemas constrain length upstream, but cannot
+// prevent semantic injection.
+const INJECTION_PATTERNS = [
+  /\bsystem\s*:/gi,
+  /\buser\s*:/gi,
+  /\bassistant\s*:/gi,
+  /###\s*(system|user|assistant|instruction|prompt)/gi,
+  /<\|.*?\|>/g,          // <|im_start|> / <|im_end|> style tokens
+  /\[\[.*?\]\]/g,        // [[escape]] style tokens
+  /---(instruction|system|override)---/gi,
+  /ignore\s+(all\s+)?(previous|above|prior)\s+instructions?/gi,
+  /you\s+are\s+now\s+/gi,
+  /disregard\s+(your|all)\s+(previous\s+)?(instructions?|rules?|guidelines?)/gi,
+]
+
+function sanitizeProfileField(value: string): string {
+  let clean = value
+  for (const pattern of INJECTION_PATTERNS) {
+    clean = clean.replace(pattern, '[…]')
+  }
+  return clean
+}
+
 // ─── Age Helper ───────────────────────────────────────────────────────────────
 
 function ageInYears(dob: string): number {
@@ -117,19 +143,19 @@ export function buildSystemPrompt(
     parts.push(header)
 
     if (child.contextLabels.length > 0)
-      parts.push(`**Context / background:** ${child.contextLabels.join(', ')}`)
+      parts.push(`**Context / background:** ${child.contextLabels.map(sanitizeProfileField).join(', ')}`)
     if (child.supportNeeds.length > 0)
-      parts.push(`**Support needs:** ${child.supportNeeds.join('; ')}`)
+      parts.push(`**Support needs:** ${child.supportNeeds.map(sanitizeProfileField).join('; ')}`)
     if (child.strengths.length > 0)
-      parts.push(`**Strengths:** ${child.strengths.join('; ')}`)
+      parts.push(`**Strengths:** ${child.strengths.map(sanitizeProfileField).join('; ')}`)
     if (child.interests.length > 0)
-      parts.push(`**Interests:** ${child.interests.join(', ')}`)
+      parts.push(`**Interests:** ${child.interests.map(sanitizeProfileField).join(', ')}`)
     if (child.routines.length > 0)
-      parts.push(`**Routines / structure:** ${child.routines.join('; ')}`)
+      parts.push(`**Routines / structure:** ${child.routines.map(sanitizeProfileField).join('; ')}`)
     if (child.goals.length > 0)
       parts.push(`**Current goals:** ${child.goals.join('; ')}`)
     if (child.notes?.trim())
-      parts.push(`**Additional notes:** ${child.notes.trim()}`)
+      parts.push(`**Additional notes:** ${sanitizeProfileField(child.notes.trim())}`)
 
     parts.push(
       `Personalise your responses to be directly relevant to ${child.name}'s specific context, strengths, and needs. Reference profile details naturally where it adds value.`

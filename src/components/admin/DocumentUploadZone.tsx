@@ -17,6 +17,33 @@ function getFileExt(filename: string): 'pdf' | 'docx' | 'txt' | null {
   return null
 }
 
+/**
+ * Verify a file's magic bytes match the declared extension.
+ * Prevents extension-spoofing (e.g. a .exe renamed to .pdf).
+ *
+ * PDF  → starts with %PDF (25 50 44 46)
+ * DOCX → starts with PK ZIP header (50 4B 03 04) — DOCX is a ZIP archive
+ * TXT  → first 512 bytes contain no null bytes (binary signal)
+ */
+async function verifyMagicBytes(file: File, ext: 'pdf' | 'docx' | 'txt'): Promise<boolean> {
+  const slice = await file.slice(0, 512).arrayBuffer()
+  const bytes = new Uint8Array(slice)
+
+  if (ext === 'pdf') {
+    return bytes[0] === 0x25 && bytes[1] === 0x50 && bytes[2] === 0x44 && bytes[3] === 0x46
+  }
+  if (ext === 'docx') {
+    // DOCX (and .doc) are ZIP containers — PK signature
+    return bytes[0] === 0x50 && bytes[1] === 0x4B &&
+      (bytes[2] === 0x03 || bytes[2] === 0x05 || bytes[2] === 0x07)
+  }
+  if (ext === 'txt') {
+    // Plain text should not contain null bytes in the first 512 bytes
+    return !bytes.slice(0, 512).some(b => b === 0x00)
+  }
+  return false
+}
+
 interface UploadItem {
   file: File
   id: string
@@ -39,23 +66,29 @@ export function DocumentUploadZone({ onSuccess }: DocumentUploadZoneProps) {
   const [uploading, setUploading] = useState(false)
   const [rejections, setRejections] = useState<Rejection[]>([])
 
-  const addFiles = (files: FileList | null) => {
+  const addFiles = async (files: FileList | null) => {
     if (!files) return
     const newItems: UploadItem[] = []
     const newRejections: Rejection[] = []
 
-    Array.from(files).forEach(f => {
+    for (const f of Array.from(files)) {
       const ext = getFileExt(f.name)
       if (!ext) {
         newRejections.push({ name: f.name, reason: 'File type not supported. Use PDF, DOCX, or TXT.' })
-        return
+        continue
       }
       if (f.size > MAX_BYTES) {
         newRejections.push({ name: f.name, reason: `File exceeds the 25 MB limit (${(f.size / 1024 / 1024).toFixed(1)} MB).` })
-        return
+        continue
+      }
+      // Verify magic bytes to catch extension-spoofed files
+      const magicOk = await verifyMagicBytes(f, ext)
+      if (!magicOk) {
+        newRejections.push({ name: f.name, reason: `File content does not match its extension (.${ext}). Please use a genuine ${ext.toUpperCase()} file.` })
+        continue
       }
       newItems.push({ file: f, id: crypto.randomUUID(), uploading: false })
-    })
+    }
 
     if (newItems.length > 0) setQueue(prev => [...prev, ...newItems])
     if (newRejections.length > 0) setRejections(prev => [...prev, ...newRejections])

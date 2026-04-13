@@ -62,12 +62,24 @@ export async function requestDataExport(): Promise<{ data?: string; error?: stri
   const { data: { user } } = await supabase.auth.getUser()
   if (!user) return { error: 'Not authenticated' }
 
-  const [profileRes, childrenRes, conversationsRes, messagesRes] = await Promise.all([
+  // Fetch conversations first so we can scope messages to user-owned conversations.
+  // Without this scope, message export relies solely on RLS — a misconfigured
+  // policy could expose another user's messages.
+  const [profileRes, childrenRes, conversationsRes] = await Promise.all([
     supabase.from('profiles').select('id, name, role, status, created_at, consent_version, consent_accepted_at').eq('id', user.id).single(),
     supabase.from('children').select('*').eq('user_id', user.id),
     supabase.from('conversations').select('id, title, preview, created_at, updated_at, child_id').eq('user_id', user.id),
-    supabase.from('messages').select('id, conversation_id, role, content, created_at').limit(500),
   ])
+
+  const ownedConversationIds = (conversationsRes.data ?? []).map(c => c.id)
+
+  const messagesRes = ownedConversationIds.length > 0
+    ? await supabase
+        .from('messages')
+        .select('id, conversation_id, role, content, created_at')
+        .in('conversation_id', ownedConversationIds)
+        .limit(500)
+    : { data: [] }
 
   const exportPayload = {
     exported_at: new Date().toISOString(),
@@ -106,9 +118,12 @@ export async function deleteAccount(): Promise<{ error?: string }> {
   const db = serviceClient()
 
   // 1. Write audit log BEFORE deletion (log survives with user_id set to NULL by ON DELETE SET NULL)
+  // Hash the email with SHA-256 — base64 is reversible, a hash is not.
+  const { createHash } = await import('crypto')
+  const emailHash = createHash('sha256').update(user.email ?? '').digest('hex')
   await writeAuditLog(user.id, 'account_deleted', {
     deleted_at: new Date().toISOString(),
-    email_hash: Buffer.from(user.email ?? '').toString('base64'),
+    email_hash: emailHash,
   })
 
   // 2. Delete children, conversations, messages via RLS cascade — user deletes their own

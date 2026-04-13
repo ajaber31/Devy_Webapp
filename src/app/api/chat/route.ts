@@ -173,7 +173,7 @@ export async function POST(request: NextRequest) {
   if (!user) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
 
   // ── Rate limiting ──────────────────────────────────────────────────────────
-  const rl = checkRateLimit(`chat:${user.id}`, CHAT_LIMIT)
+  const rl = await checkRateLimit(`chat:${user.id}`, CHAT_LIMIT)
   if (!rl.allowed) {
     return NextResponse.json(
       { error: 'Too many requests. Please wait a moment before sending another message.' },
@@ -203,6 +203,11 @@ export async function POST(request: NextRequest) {
       const todayCount = (usageCount as number | null) ?? 0
 
       if (todayCount >= planLimits.questionsPerDay) {
+        // Compute seconds until next UTC midnight for the Retry-After header
+        const now = new Date()
+        const midnight = new Date(Date.UTC(now.getUTCFullYear(), now.getUTCMonth(), now.getUTCDate() + 1))
+        const retryAfterSecs = Math.ceil((midnight.getTime() - now.getTime()) / 1000)
+
         return NextResponse.json(
           {
             error: `You've used all ${planLimits.questionsPerDay} questions for today. Your limit resets at midnight UTC.`,
@@ -211,7 +216,10 @@ export async function POST(request: NextRequest) {
             current: todayCount,
             planId: subData?.plan_id ?? 'free',
           },
-          { status: 429 },
+          {
+            status: 429,
+            headers: { 'Retry-After': String(retryAfterSecs) },
+          },
         )
       }
 
@@ -258,17 +266,29 @@ export async function POST(request: NextRequest) {
   let history: { role: 'user' | 'assistant'; content: string }[] = []
 
   if (conversationId) {
-    const { data } = await supabase
-      .from('messages')
-      .select('role, content')
-      .eq('conversation_id', conversationId)
-      .order('created_at', { ascending: false })
-      .limit(HISTORY_LIMIT)
+    // Verify the conversation belongs to this user before loading its messages.
+    // RLS also enforces this, but we add an explicit ownership check here as
+    // defence-in-depth so that a misconfigured RLS policy cannot leak history.
+    const { data: convo } = await supabase
+      .from('conversations')
+      .select('id')
+      .eq('id', conversationId)
+      .eq('user_id', user.id)
+      .single()
 
-    if (data) {
-      history = data
-        .reverse()
-        .map(m => ({ role: m.role as 'user' | 'assistant', content: m.content }))
+    if (convo) {
+      const { data } = await supabase
+        .from('messages')
+        .select('role, content')
+        .eq('conversation_id', conversationId)
+        .order('created_at', { ascending: false })
+        .limit(HISTORY_LIMIT)
+
+      if (data) {
+        history = data
+          .reverse()
+          .map(m => ({ role: m.role as 'user' | 'assistant', content: m.content }))
+      }
     }
   }
 

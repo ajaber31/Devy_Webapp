@@ -6,6 +6,24 @@ import { deleteDocumentFile } from '@/lib/supabase/storage'
 import { createDocumentSchema, updateDocumentTagsSchema } from '@/lib/validation/schemas'
 import type { Document, DocumentStatus } from '@/lib/types'
 
+/**
+ * Verifies the caller is an authenticated admin.
+ * Returns an error string if not authorized, null if OK.
+ * All document write/delete actions must call this — defence-in-depth beyond RLS.
+ */
+async function requireAdmin(): Promise<{ error: string } | null> {
+  const supabase = createClient()
+  const { data: { user } } = await supabase.auth.getUser()
+  if (!user) return { error: 'Not authenticated' }
+  const { data: profile } = await supabase
+    .from('profiles')
+    .select('role')
+    .eq('id', user.id)
+    .single()
+  if (profile?.role !== 'admin') return { error: 'Forbidden' }
+  return null
+}
+
 function mapRow(row: {
   id: string
   title: string
@@ -78,6 +96,9 @@ export async function createDocumentRecord(input: {
   fileSizeBytes: number
   tags?: string[]
 }): Promise<{ data?: Document; error?: string }> {
+  const authErr = await requireAdmin()
+  if (authErr) return authErr
+
   const parsed = createDocumentSchema.safeParse(input)
   if (!parsed.success) {
     const first = parsed.error.issues[0]
@@ -114,6 +135,9 @@ export async function createDocumentRecord(input: {
  *  Chunks are deleted automatically via ON DELETE CASCADE.
  */
 export async function deleteDocument(id: string): Promise<{ error?: string }> {
+  const authErr = await requireAdmin()
+  if (authErr) return authErr
+
   const supabase = await createClient()
 
   const { data: doc, error: fetchError } = await supabase
@@ -141,6 +165,9 @@ export async function deleteDocument(id: string): Promise<{ error?: string }> {
 
 /** Resets a document back to 'uploaded' status so it can be re-processed. */
 export async function reprocessDocument(id: string): Promise<{ error?: string }> {
+  const authErr = await requireAdmin()
+  if (authErr) return authErr
+
   const supabase = await createClient()
 
   await supabase.from('document_chunks').delete().eq('document_id', id)
@@ -166,6 +193,9 @@ export async function updateDocumentTags(
   id: string,
   tags: string[],
 ): Promise<{ error?: string }> {
+  const authErr = await requireAdmin()
+  if (authErr) return authErr
+
   const parsed = updateDocumentTagsSchema.safeParse({ id, tags })
   if (!parsed.success) {
     return { error: parsed.error.issues[0]?.message ?? 'Invalid input' }

@@ -8,6 +8,7 @@ import {
   forgotPasswordSchema,
   updatePasswordSchema,
 } from '@/lib/validation/schemas'
+import { checkRateLimit, AUTH_LIMIT } from '@/lib/rate-limit'
 
 function mapAccountTypeToRole(accountType: string): string {
   switch (accountType) {
@@ -19,10 +20,26 @@ function mapAccountTypeToRole(accountType: string): string {
   }
 }
 
+/**
+ * Rate-limit key for auth actions.
+ * Uses the lowercased email as the key so the limit is per-account, not per-IP.
+ * When Upstash is configured this is distributed across all serverless instances.
+ */
+function authRateLimitKey(email: string): string {
+  return `auth:${email.toLowerCase()}`
+}
+
 export async function signIn(formData: { email: string; password: string }) {
   const parsed = signInSchema.safeParse(formData)
   if (!parsed.success) {
     return { error: 'Invalid email or password format' }
+  }
+
+  // Rate limit: 10 sign-in attempts per email per minute.
+  // Mitigates brute-force even when Supabase's own Auth throttle kicks in later.
+  const rl = await checkRateLimit(authRateLimitKey(parsed.data.email), AUTH_LIMIT)
+  if (!rl.allowed) {
+    return { error: 'Too many sign-in attempts. Please wait a minute and try again.' }
   }
 
   const supabase = createClient()
@@ -49,6 +66,12 @@ export async function signUp(formData: {
   if (!parsed.success) {
     const first = parsed.error.issues[0]
     return { error: first?.message ?? 'Invalid input' }
+  }
+
+  // Rate limit: 10 sign-up attempts per email per minute.
+  const rl = await checkRateLimit(authRateLimitKey(parsed.data.email), AUTH_LIMIT)
+  if (!rl.allowed) {
+    return { error: 'Too many requests. Please wait a minute and try again.' }
   }
 
   const supabase = createClient()
@@ -84,6 +107,14 @@ export async function forgotPassword(email: string): Promise<{ error?: string }>
   const parsed = forgotPasswordSchema.safeParse({ email })
   if (!parsed.success) {
     // Return success to avoid email enumeration even on bad input.
+    return {}
+  }
+
+  // Rate limit: cap password-reset requests per email to prevent email flooding.
+  const rl = await checkRateLimit(authRateLimitKey(parsed.data.email), AUTH_LIMIT)
+  if (!rl.allowed) {
+    // Return success (not an error) to preserve email-enumeration protection —
+    // but the reset email simply won't be sent.
     return {}
   }
 

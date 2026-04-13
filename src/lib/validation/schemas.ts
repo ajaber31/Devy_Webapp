@@ -114,7 +114,12 @@ export const createDocumentSchema = z.object({
     // Prevent path traversal characters in filenames.
     .refine(v => !/[/\\<>:"|?*\x00-\x1f]/.test(v), 'Invalid filename'),
   fileType: z.enum(['pdf', 'docx', 'txt']),
-  storagePath: z.string().min(1).max(500),
+  storagePath: z
+    .string()
+    .min(1)
+    .max(500)
+    // Prevent path traversal — no ../ sequences or null bytes
+    .refine(v => !/(\.\.[\\/]|[\x00])/.test(v), 'Invalid storage path'),
   fileSizeBytes: z
     .number()
     .int()

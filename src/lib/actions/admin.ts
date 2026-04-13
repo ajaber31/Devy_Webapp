@@ -204,12 +204,21 @@ export async function getUsers(): Promise<User[]> {
 
   const supabase = serviceClient()
 
-  const [authResult, profilesResult] = await Promise.all([
-    supabase.auth.admin.listUsers({ perPage: 1000 }),
+  // Paginate to handle deployments with more than 1000 users.
+  const allAuthUsers: (typeof authResult.data.users)[number][] = []
+  let page = 1
+  let authResult: Awaited<ReturnType<typeof supabase.auth.admin.listUsers>>
+  do {
+    authResult = await supabase.auth.admin.listUsers({ page, perPage: 1000 })
+    allAuthUsers.push(...(authResult.data?.users ?? []))
+    page++
+  } while ((authResult.data?.users?.length ?? 0) === 1000)
+
+  const [profilesResult] = await Promise.all([
     supabase.from('profiles').select('id, name, role, status'),
   ])
 
-  const authUsers = authResult.data?.users ?? []
+  const authUsers = allAuthUsers
   const profiles = profilesResult.data ?? []
   const profileMap = Object.fromEntries(profiles.map(p => [p.id, p]))
 
