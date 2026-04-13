@@ -1,7 +1,13 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { createClient } from '@supabase/supabase-js'
 import { getStripe } from '@/lib/stripe/client'
-import { getPlanIdFromPriceId } from '@/lib/stripe/plans'
+import { getPlanIdFromPriceId, PLANS } from '@/lib/stripe/plans'
+import { getResend, FROM_EMAIL } from '@/lib/email/client'
+import {
+  subscriptionConfirmedEmail,
+  paymentFailedEmail,
+  subscriptionCanceledEmail,
+} from '@/lib/email/templates'
 import type Stripe from 'stripe'
 
 // Must run in Node.js — Stripe webhook verification uses Node crypto
@@ -14,6 +20,35 @@ function getSupabaseAdmin() {
     process.env.NEXT_PUBLIC_SUPABASE_URL!,
     process.env.SUPABASE_SERVICE_ROLE_KEY!,
   )
+}
+
+// ─── Email helper ─────────────────────────────────────────────────────────────
+
+/**
+ * Look up the user's email + display name from Supabase Auth + profiles,
+ * then fire-and-forget an email. Silently skips if Resend isn't configured.
+ */
+async function sendEmail(
+  userId: string,
+  subject: string,
+  html: string,
+): Promise<void> {
+  const resend = getResend()
+  if (!resend) return // RESEND_API_KEY not set — skip silently
+
+  const supabase = getSupabaseAdmin()
+  const { data: authUser } = await supabase.auth.admin.getUserById(userId)
+  const email = authUser?.user?.email
+  if (!email) return
+
+  await resend.emails.send({
+    from: FROM_EMAIL,
+    to: email,
+    subject,
+    html,
+  }).catch((err: unknown) => {
+    console.error('[webhook] Email send failed:', err)
+  })
 }
 
 // ─── Helpers ─────────────────────────────────────────────────────────────────
@@ -97,6 +132,16 @@ async function handleSubscriptionDeleted(subscription: Stripe.Subscription) {
   }
 
   const supabase = getSupabaseAdmin()
+  const { data: profile } = await supabase
+    .from('profiles')
+    .select('name')
+    .eq('id', userId)
+    .single()
+
+  // Look up the plan name from the price that was active before deletion
+  const priceId = subscription.items.data[0]?.price.id ?? ''
+  const planId = getPlanIdFromPriceId(priceId)
+  const planName = PLANS[planId]?.name ?? 'paid'
 
   // Revert to free plan; keep the row so we retain the stripe_customer_id
   await supabase
@@ -116,6 +161,17 @@ async function handleSubscriptionDeleted(subscription: Stripe.Subscription) {
       },
       { onConflict: 'user_id' },
     )
+
+  // Fire-and-forget cancellation email
+  void sendEmail(
+    userId,
+    `Your ${planName} subscription has ended`,
+    subscriptionCanceledEmail({
+      name: profile?.name ?? 'there',
+      planName,
+      canceledAt: new Date().toISOString(),
+    }),
+  )
 }
 
 async function handleCheckoutSessionCompleted(session: Stripe.Checkout.Session) {
@@ -139,6 +195,29 @@ async function handleCheckoutSessionCompleted(session: Stripe.Checkout.Session) 
   }
 
   await upsertSubscription(subscription, userId)
+
+  // Send subscription confirmed email
+  const priceId = subscription.items.data[0]?.price.id ?? ''
+  const planId = getPlanIdFromPriceId(priceId)
+  const plan = PLANS[planId]
+  const { periodEnd } = getSubscriptionPeriod(subscription)
+
+  const { data: profile } = await getSupabaseAdmin()
+    .from('profiles')
+    .select('name')
+    .eq('id', userId)
+    .single()
+
+  void sendEmail(
+    userId,
+    `You're on ${plan?.name ?? 'Devy'} — subscription confirmed`,
+    subscriptionConfirmedEmail({
+      name: profile?.name ?? 'there',
+      planName: plan?.name ?? 'Paid',
+      priceCAD: plan?.priceCAD ?? 0,
+      periodEnd,
+    }),
+  )
 }
 
 async function handleInvoicePaymentSucceeded(invoice: Stripe.Invoice) {
@@ -174,6 +253,26 @@ async function handleInvoicePaymentFailed(invoice: Stripe.Invoice) {
     .from('subscriptions')
     .update({ status: 'past_due', updated_at: new Date().toISOString() })
     .eq('user_id', userId)
+
+  // Send payment failed email
+  const priceId = subscription.items.data[0]?.price.id ?? ''
+  const planId = getPlanIdFromPriceId(priceId)
+  const planName = PLANS[planId]?.name ?? 'paid'
+
+  const { data: profile } = await supabase
+    .from('profiles')
+    .select('name')
+    .eq('id', userId)
+    .single()
+
+  void sendEmail(
+    userId,
+    'Payment failed — action required',
+    paymentFailedEmail({
+      name: profile?.name ?? 'there',
+      planName,
+    }),
+  )
 }
 
 // ─── Route handler ────────────────────────────────────────────────────────────

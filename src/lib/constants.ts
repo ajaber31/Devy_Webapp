@@ -1,4 +1,4 @@
-import { LayoutDashboard, MessageCircle, Users, Settings, Library, ShieldAlert } from 'lucide-react'
+import { LayoutDashboard, MessageCircle, Users, Settings, Library, ShieldAlert, BarChart2 } from 'lucide-react'
 
 export const DASHBOARD_NAV_ITEMS = [
   { label: 'Dashboard',     href: '/dashboard', icon: LayoutDashboard },
@@ -12,6 +12,7 @@ export const ADMIN_NAV_ITEMS = [
   { label: 'Conversations',         href: '/chat',              icon: MessageCircle },
   { label: 'Global Knowledge Base', href: '/admin/documents',   icon: Library },
   { label: 'Platform Users',        href: '/admin/users',       icon: Users },
+  { label: 'Analytics',            href: '/admin/analytics',   icon: BarChart2 },
   { label: 'Incident Log',          href: '/admin/incidents',   icon: ShieldAlert },
   { label: 'Platform Settings',     href: '/settings',          icon: Settings },
 ]

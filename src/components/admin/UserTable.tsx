@@ -1,6 +1,7 @@
 'use client'
 
 import { useState } from 'react'
+import Link from 'next/link'
 import { MoreHorizontal, ShieldOff, ShieldCheck, ChevronRight } from 'lucide-react'
 import { StatusBadge } from './StatusBadge'
 import { formatDate, initials } from '@/lib/utils'
@@ -69,15 +70,18 @@ export function UserTable({ users, onStatusChange, onRoleChange }: UserTableProp
               >
                 {/* User */}
                 <td className="px-4 py-3.5">
-                  <div className="flex items-center gap-3">
+                  <Link
+                    href={`/admin/users/${user.id}`}
+                    className="flex items-center gap-3 group/user focus-ring rounded"
+                  >
                     <div className="w-9 h-9 rounded-full bg-sage-100 text-sage-700 flex items-center justify-center text-body-xs font-semibold flex-shrink-0">
                       {initials(user.name)}
                     </div>
                     <div className="min-w-0">
-                      <p className="text-body-sm font-medium text-ink truncate">{user.name}</p>
+                      <p className="text-body-sm font-medium text-ink truncate group-hover/user:text-sage-700" style={{ transitionProperty: 'color', transitionDuration: '150ms' }}>{user.name}</p>
                       <p className="text-body-xs text-ink-tertiary truncate">{user.email}</p>
                     </div>
-                  </div>
+                  </Link>
                 </td>
 
                 {/* Account Type */}

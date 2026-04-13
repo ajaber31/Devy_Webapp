@@ -4,21 +4,24 @@ import { RecentConversations } from '@/components/dashboard/RecentConversations'
 import { QuickActions } from '@/components/dashboard/QuickActions'
 import { PrivacyNotice } from '@/components/dashboard/PrivacyNotice'
 import { FirstRunBanner } from '@/components/dashboard/FirstRunBanner'
+import { PendingPlanBanner } from '@/components/dashboard/PendingPlanBanner'
 import { AnimateIn } from '@/components/shared/AnimateIn'
 import { getProfile } from '@/lib/actions/profile'
 import { getRoleTerminology } from '@/lib/role-terminology'
 import { getConversationCount, getConversations, getUserMessageCount } from '@/lib/actions/conversations'
 import { getChildrenCount } from '@/lib/actions/children'
 import { getReadyDocumentCount } from '@/lib/actions/documents'
+import { getBillingStatus } from '@/lib/actions/billing'
 
 export default async function DashboardPage() {
-  const [profile, conversationCount, childrenCount, messageCount, conversations, documentCount] = await Promise.all([
+  const [profile, conversationCount, childrenCount, messageCount, conversations, documentCount, billingStatus] = await Promise.all([
     getProfile(),
     getConversationCount(),
     getChildrenCount(),
     getUserMessageCount(),
     getConversations(),
     getReadyDocumentCount(),
+    getBillingStatus(),
   ])
 
   const firstName = profile?.name.split(' ')[0] ?? 'there'
@@ -66,6 +69,13 @@ export default async function DashboardPage() {
       <AnimateIn distance={16}>
         <WelcomeBanner firstName={firstName} nounPlural={terms.nounPlural} />
       </AnimateIn>
+
+      {/* Pending plan banner — shown after signup from pricing page */}
+      {billingStatus && (
+        <AnimateIn delay={60} distance={16}>
+          <PendingPlanBanner currentPlanId={billingStatus.planId} />
+        </AnimateIn>
+      )}
 
       {/* First-run onboarding — only for brand-new accounts */}
       {isFirstRun && (

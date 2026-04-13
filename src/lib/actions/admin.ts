@@ -7,6 +7,21 @@ import { updateUserRoleSchema, updateUserStatusSchema } from '@/lib/validation/s
 import type { Database } from '@/lib/supabase/database.types'
 import type { User, UserRole, UserStatus } from '@/lib/types'
 
+export interface AdminAnalytics {
+  // Subscription breakdown
+  planCounts: { free: number; standard: number; professional: number }
+  mrr: number // Monthly recurring revenue in CAD
+  // Engagement
+  totalConversations: number
+  totalMessages: number
+  questionsToday: number
+  totalUsers: number
+  // Knowledge base
+  documentsReady: number
+  totalChunks: number
+  documentsByType: { pdf: number; docx: number; txt: number }
+}
+
 // ─── Authorization guard ──────────────────────────────────────────────────────
 
 /**
@@ -41,6 +56,146 @@ function serviceClient() {
 }
 
 // ─── Actions ──────────────────────────────────────────────────────────────────
+
+/** Fetches platform-wide analytics. Admin-only. */
+export async function getAnalytics(): Promise<AdminAnalytics | null> {
+  const authErr = await requireAdmin()
+  if (authErr) return null
+
+  const supabase = serviceClient()
+
+  const [
+    subRows,
+    convResult,
+    msgResult,
+    usageTodayResult,
+    userCountResult,
+    docResult,
+  ] = await Promise.all([
+    supabase.from('subscriptions').select('plan_id'),
+    supabase.from('conversations').select('*', { count: 'exact', head: true }),
+    supabase.from('messages').select('*', { count: 'exact', head: true }),
+    supabase
+      .from('daily_usage_log')
+      .select('question_count')
+      .eq('usage_date', new Date().toISOString().split('T')[0]),
+    supabase.from('profiles').select('*', { count: 'exact', head: true }),
+    supabase.from('documents').select('status, file_type, chunk_count'),
+  ])
+
+  const plans = { free: 0, standard: 0, professional: 0 }
+  for (const row of subRows.data ?? []) {
+    const p = row.plan_id as keyof typeof plans
+    if (p in plans) plans[p]++
+  }
+
+  const questionsToday = (usageTodayResult.data ?? []).reduce(
+    (sum, r) => sum + (r.question_count ?? 0), 0
+  )
+
+  const docs = docResult.data ?? []
+  const documentsReady = docs.filter(d => d.status === 'ready').length
+  const totalChunks = docs.reduce((s, d) => s + (d.chunk_count ?? 0), 0)
+  const documentsByType = { pdf: 0, docx: 0, txt: 0 }
+  for (const d of docs) {
+    const t = d.file_type as keyof typeof documentsByType
+    if (t in documentsByType) documentsByType[t]++
+  }
+
+  return {
+    planCounts: plans,
+    mrr: plans.standard * 15 + plans.professional * 50,
+    totalConversations: convResult.count ?? 0,
+    totalMessages: msgResult.count ?? 0,
+    questionsToday,
+    totalUsers: userCountResult.count ?? 0,
+    documentsReady,
+    totalChunks,
+    documentsByType,
+  }
+}
+
+export interface AdminUserDetail {
+  user: User
+  children: {
+    id: string
+    name: string
+    dateOfBirth: string | null
+    avatarColor: 'sage' | 'dblue' | 'sand'
+    contextLabels: string[]
+    supportNeeds: string[]
+    createdAt: string
+  }[]
+  subscription: {
+    planId: string
+    status: string
+    stripeCustomerId: string | null
+    currentPeriodEnd: string | null
+    cancelAtPeriodEnd: boolean
+  } | null
+  stats: {
+    conversationCount: number
+    messageCount: number
+  }
+}
+
+/** Fetches full detail for a single user. Admin-only. */
+export async function getUserDetail(userId: string): Promise<AdminUserDetail | null> {
+  const authErr = await requireAdmin()
+  if (authErr) return null
+
+  const supabase = serviceClient()
+
+  const [authResult, profileResult, childrenResult, subResult, convResult, msgResult] = await Promise.all([
+    supabase.auth.admin.getUserById(userId),
+    supabase.from('profiles').select('id, name, role, status').eq('id', userId).single(),
+    supabase.from('children').select('id, name, date_of_birth, avatar_color, context_labels, support_needs, created_at').eq('user_id', userId).order('created_at'),
+    supabase.from('subscriptions').select('plan_id, status, stripe_customer_id, current_period_end, cancel_at_period_end').eq('user_id', userId).single(),
+    supabase.from('conversations').select('*', { count: 'exact', head: true }).eq('user_id', userId),
+    supabase.from('messages').select('conversation_id').eq('role', 'user').in(
+      'conversation_id',
+      (await supabase.from('conversations').select('id').eq('user_id', userId)).data?.map(c => c.id) ?? []
+    ),
+  ])
+
+  const au = authResult.data?.user
+  const p = profileResult.data
+  if (!au || !p) return null
+
+  return {
+    user: {
+      id: au.id,
+      name: p.name,
+      email: au.email ?? '',
+      role: p.role as UserRole,
+      status: p.status as UserStatus,
+      joinedAt: au.created_at,
+      lastActiveAt: au.last_sign_in_at ?? au.created_at,
+    },
+    children: (childrenResult.data ?? []).map(c => ({
+      id: c.id,
+      name: c.name,
+      dateOfBirth: c.date_of_birth,
+      avatarColor: c.avatar_color as 'sage' | 'dblue' | 'sand',
+      contextLabels: c.context_labels ?? [],
+      supportNeeds: c.support_needs ?? [],
+      createdAt: c.created_at,
+    })),
+    subscription: subResult.data
+      ? {
+          planId: subResult.data.plan_id,
+          status: subResult.data.status,
+          stripeCustomerId: subResult.data.stripe_customer_id,
+          currentPeriodEnd: subResult.data.current_period_end,
+          cancelAtPeriodEnd: subResult.data.cancel_at_period_end,
+        }
+      : null,
+    stats: {
+      conversationCount: convResult.count ?? 0,
+      messageCount: msgResult.data?.length ?? 0,
+    },
+  }
+}
 
 /** Fetches all platform users. Admin-only. */
 export async function getUsers(): Promise<User[]> {

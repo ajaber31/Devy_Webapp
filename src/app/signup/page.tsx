@@ -1,15 +1,34 @@
 'use client'
 
 import { useState } from 'react'
+import { useSearchParams } from 'next/navigation'
 import Link from 'next/link'
-import { Eye, EyeOff, ArrowRight, Check, AlertCircle, MailCheck } from 'lucide-react'
+import { Eye, EyeOff, ArrowRight, Check, AlertCircle, MailCheck, Zap, Crown } from 'lucide-react'
 import { DevyLogo } from '@/components/shared/DevyLogo'
 import { NoiseTexture } from '@/components/shared/NoiseTexture'
 import { ACCOUNT_TYPE_OPTIONS } from '@/lib/constants'
 import { cn } from '@/lib/utils'
 import { signUp } from '@/lib/actions/auth'
+import type { PlanId } from '@/lib/types'
 
-export default function SignupPage() {
+const PLAN_LABELS: Record<string, { name: string; price: string; icon: React.ReactNode }> = {
+  standard: {
+    name: 'Standard',
+    price: '$15 CAD/mo',
+    icon: <Zap size={13} className="text-dblue-500" strokeWidth={2} />,
+  },
+  professional: {
+    name: 'Professional',
+    price: '$50 CAD/mo',
+    icon: <Crown size={13} className="text-sage-600" strokeWidth={2} />,
+  },
+}
+
+function SignupPageInner() {
+  const searchParams = useSearchParams()
+  const planParam = searchParams.get('plan') as PlanId | null
+  const selectedPlan = planParam && planParam in PLAN_LABELS ? planParam : null
+
   const [showPassword, setShowPassword] = useState(false)
   const [accountType, setAccountType] = useState<string>('')
   const [form, setForm] = useState({ name: '', email: '', password: '', confirm: '' })
@@ -31,6 +50,12 @@ export default function SignupPage() {
     }
 
     setIsPending(true)
+
+    // Store intended plan so dashboard can prompt checkout after email confirmation
+    if (selectedPlan) {
+      try { localStorage.setItem('devy_pending_plan', selectedPlan) } catch { /* ignore */ }
+    }
+
     const result = await signUp({
       name: form.name,
       email: form.email,
@@ -71,6 +96,23 @@ export default function SignupPage() {
             <p className="text-body-sm text-ink-secondary">Start getting grounded, trusted support today.</p>
           </div>
 
+          {/* Plan context banner — shown when coming from pricing page */}
+          {selectedPlan && PLAN_LABELS[selectedPlan] && (
+            <div className="flex items-center gap-3 px-4 py-3 bg-sage-50 border border-sage-200 rounded-card mb-5">
+              <div className="w-7 h-7 rounded-full bg-white border border-sage-200 flex items-center justify-center shrink-0">
+                {PLAN_LABELS[selectedPlan].icon}
+              </div>
+              <div className="flex-1 min-w-0">
+                <p className="text-body-xs font-semibold text-sage-800">
+                  {PLAN_LABELS[selectedPlan].name} plan — {PLAN_LABELS[selectedPlan].price}
+                </p>
+                <p className="text-body-xs text-sage-600">
+                  Create your account, then complete your upgrade from the dashboard.
+                </p>
+              </div>
+            </div>
+          )}
+
           {successMessage ? (
             <div className="flex flex-col items-center text-center gap-4 py-4">
               <div className="w-14 h-14 rounded-full bg-sage-100 flex items-center justify-center">
@@ -79,6 +121,11 @@ export default function SignupPage() {
               <div>
                 <h2 className="font-display text-display-sm font-semibold text-ink mb-1.5">Check your email</h2>
                 <p className="text-body-sm text-ink-secondary">{successMessage}</p>
+                {selectedPlan && PLAN_LABELS[selectedPlan] && (
+                  <p className="text-body-xs text-ink-tertiary mt-2">
+                    After confirming your email and signing in, you&apos;ll be prompted to complete your {PLAN_LABELS[selectedPlan].name} upgrade.
+                  </p>
+                )}
               </div>
               <Link
                 href="/login"
@@ -228,5 +275,15 @@ export default function SignupPage() {
         </p>
       </div>
     </div>
+  )
+}
+
+import { Suspense } from 'react'
+
+export default function SignupPage() {
+  return (
+    <Suspense>
+      <SignupPageInner />
+    </Suspense>
   )
 }
