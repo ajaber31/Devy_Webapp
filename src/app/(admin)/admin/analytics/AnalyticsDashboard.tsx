@@ -1,6 +1,6 @@
 import {
   Users, MessageCircle, DollarSign, Zap, Crown,
-  FileText, Layers, HelpCircle, TrendingUp,
+  Layers, HelpCircle, TrendingUp,
 } from 'lucide-react'
 import { cn } from '@/lib/utils'
 import type { AdminAnalytics } from '@/lib/actions/admin'

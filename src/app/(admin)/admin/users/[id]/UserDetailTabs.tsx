@@ -168,7 +168,7 @@ function ClientsTab({ detail }: { detail: AdminUserDetail }) {
           <Users size={20} className="text-ink-tertiary" strokeWidth={1.5} />
         </div>
         <p className="text-body-sm font-medium text-ink mb-1">No {nounPlural} yet</p>
-        <p className="text-body-xs text-ink-tertiary">This user hasn't added any {noun} profiles.</p>
+        <p className="text-body-xs text-ink-tertiary">This user hasn&apos;t added any {noun} profiles.</p>
       </div>
     )
   }
@@ -342,7 +342,6 @@ export function UserDetailTabs({ detail }: { detail: AdminUserDetail }) {
   }
 
   const clientCount = localDetail.children.length
-  const noun = ['clinician', 'teacher'].includes(localDetail.user.role) ? 'clients' : 'children'
 
   return (
     <div>

@@ -1,7 +1,6 @@
 'use client'
 
 import { useState } from 'react'
-import { useRouter } from 'next/navigation'
 import Link from 'next/link'
 import { Eye, EyeOff, ArrowRight, AlertCircle } from 'lucide-react'
 import { DevyLogo } from '@/components/shared/DevyLogo'
@@ -9,7 +8,6 @@ import { NoiseTexture } from '@/components/shared/NoiseTexture'
 import { signIn } from '@/lib/actions/auth'
 
 export default function LoginPage() {
-  const router = useRouter()
   const [showPassword, setShowPassword] = useState(false)
   const [email, setEmail] = useState('')
   const [password, setPassword] = useState('')

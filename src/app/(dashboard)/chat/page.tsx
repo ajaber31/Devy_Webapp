@@ -32,7 +32,7 @@ export default async function ChatPage({
   // This ensures the banner and sidebar tag appear correctly when navigating back
   // to /chat without URL params (e.g. from dashboard → chat).
   const activeConvo = activeId ? conversations.find(c => c.id === activeId) : undefined
-  let resolvedChildId   = searchParams.childId   ?? activeConvo?.childId
+  const resolvedChildId   = searchParams.childId   ?? activeConvo?.childId
   let resolvedChildName = searchParams.childName  ?? activeConvo?.childName
 
   // Fallback: if we have a childId but still no name (JOIN didn't return it),
@@ -55,7 +55,7 @@ export default async function ChatPage({
         childId={resolvedChildId}
         childName={resolvedChildName}
         showSelector={showSelector}
-        children={children}
+        profiles={children}
         nounSingular={terms.nounSingular}
         nounPlural={terms.nounPlural}
         addLabel={terms.addLabel}

@@ -80,7 +80,7 @@ export default async function DashboardPage() {
       {/* First-run onboarding — only for brand-new accounts */}
       {isFirstRun && (
         <AnimateIn delay={80} distance={16}>
-          <FirstRunBanner addLabel={terms.addLabel} nounSingular={terms.nounSingular} />
+          <FirstRunBanner />
         </AnimateIn>
       )}
 

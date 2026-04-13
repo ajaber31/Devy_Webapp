@@ -17,7 +17,7 @@ interface ChatPageClientProps {
   childName?: string
   // Profile selector shown initially (no conversations exist yet)
   showSelector: boolean
-  children: Child[]
+  profiles: Child[]
   nounSingular: string
   nounPlural: string
   addLabel: string
@@ -30,7 +30,7 @@ export function ChatPageClient({
   childId: urlChildId,
   childName: urlChildName,
   showSelector: initialShowSelector,
-  children,
+  profiles,
   nounSingular,
   nounPlural,
   addLabel,
@@ -161,7 +161,7 @@ export function ChatPageClient({
       {/* Main area: profile selector OR chat */}
       {selectorOpen ? (
         <ProfileSelector
-          children={children}
+          profiles={profiles}
           nounSingular={nounSingular}
           nounPlural={nounPlural}
           addLabel={addLabel}

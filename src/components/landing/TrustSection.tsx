@@ -85,7 +85,7 @@ export function TrustSection() {
                 title: 'Transparent about its limits',
                 body: "When a question goes beyond what Devy knows with confidence, it says so. Intellectual honesty is built into the system — not bolted on as a disclaimer.",
               },
-            ].map((item, i) => {
+            ].map((item) => {
               const Icon = item.icon
               return (
                 <div key={item.title} className="bg-white rounded-card-lg p-6 shadow-card border border-border/50 flex flex-col gap-4">

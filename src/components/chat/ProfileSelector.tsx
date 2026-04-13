@@ -6,7 +6,7 @@ import { ageFromDob } from '@/lib/utils'
 import type { Child } from '@/lib/types'
 
 interface ProfileSelectorProps {
-  children: Child[]
+  profiles: Child[]
   nounSingular: string
   nounPlural: string
   addLabel: string
@@ -23,7 +23,7 @@ const avatarBgMap: Record<string, string> = {
 }
 
 export function ProfileSelector({
-  children,
+  profiles,
   nounSingular,
   nounPlural,
   addLabel,
@@ -49,9 +49,9 @@ export function ProfileSelector({
         </div>
 
         {/* Profile list */}
-        {children.length > 0 ? (
+        {profiles.length > 0 ? (
           <div className="space-y-2">
-            {children.map(child => {
+            {profiles.map(child => {
               const avatarClass = avatarBgMap[child.avatarColor] ?? avatarBgMap.sage
               const age = ageFromDob(child.dateOfBirth)
               const shownLabels = child.contextLabels.slice(0, 3)

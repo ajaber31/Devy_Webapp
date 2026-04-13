@@ -1,11 +1,6 @@
 import Link from 'next/link'
 import { ArrowRight, UserPlus, MessageCircle, Sparkles } from 'lucide-react'
 
-interface FirstRunBannerProps {
-  addLabel: string
-  nounSingular: string
-}
-
 const steps = [
   {
     icon: UserPlus,
@@ -33,7 +28,7 @@ const steps = [
   },
 ]
 
-export function FirstRunBanner({ addLabel, nounSingular }: FirstRunBannerProps) {
+export function FirstRunBanner() {
   return (
     <div className="bg-white rounded-card-lg shadow-card border border-border/50 overflow-hidden">
       <div className="px-6 py-5 border-b border-border flex items-center justify-between">

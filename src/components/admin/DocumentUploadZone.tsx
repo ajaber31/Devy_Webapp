@@ -6,7 +6,6 @@ import { cn, formatFileSize } from '@/lib/utils'
 import { createClient } from '@/lib/supabase/client'
 import { createDocumentRecord } from '@/lib/actions/documents'
 
-const ALLOWED_TYPES = ['application/pdf', 'application/vnd.openxmlformats-officedocument.wordprocessingml.document', 'text/plain']
 const ALLOWED_EXTS = ['pdf', 'docx', 'txt']
 const MAX_BYTES = 25 * 1024 * 1024 // 25 MB
 

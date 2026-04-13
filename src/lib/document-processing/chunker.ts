@@ -91,8 +91,7 @@ export function chunkText(text: string, options: ChunkOptions = {}): TextChunk[]
 
     // Step back by overlap for the next chunk
     if (paraIdx < paragraphs.length && overlapChars > 0) {
-      const overlapText = chunkContent.slice(-overlapChars)
-      // Find how many paragraphs back we need to go to get the overlap text
+      // Find how many paragraphs back we need to go to get the overlap amount
       let backChars = 0
       let backIdx = paraIdx - 1
       while (backIdx >= 0 && backChars < overlapChars) {
