@@ -1,4 +1,35 @@
 export type UserRole = 'parent' | 'caregiver' | 'clinician' | 'teacher' | 'other' | 'admin'
+
+// ─── Billing types ────────────────────────────────────────────────────────────
+
+export type PlanId = 'free' | 'standard' | 'professional'
+
+export type SubscriptionStatus =
+  | 'active'
+  | 'trialing'
+  | 'past_due'
+  | 'canceled'
+  | 'incomplete'
+  | 'paused'
+
+/** Full billing state for the authenticated user. Fetched server-side via getBillingStatus(). */
+export interface BillingStatus {
+  planId: PlanId
+  status: SubscriptionStatus
+  stripeCustomerId: string | null
+  stripeSubscriptionId: string | null
+  /** ISO timestamp of when the current billing period ends. */
+  currentPeriodEnd: string | null
+  cancelAtPeriodEnd: boolean
+  /** Number of questions asked today (UTC day). */
+  questionsToday: number
+  /** Maximum questions per day for the current plan. -1 = unlimited. */
+  questionLimit: number
+  /** Number of child profiles the user currently has. */
+  childCount: number
+  /** Maximum child profiles for the current plan. -1 = unlimited. */
+  childLimit: number
+}
 export type UserStatus = 'active' | 'invited' | 'suspended'
 export type DocumentStatus = 'uploaded' | 'parsing' | 'chunking' | 'embedding' | 'ready' | 'failed'
 export type MessageRole = 'user' | 'assistant'

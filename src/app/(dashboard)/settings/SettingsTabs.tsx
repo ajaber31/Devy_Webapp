@@ -1,18 +1,21 @@
 'use client'
 
 import { useState } from 'react'
+import { useSearchParams } from 'next/navigation'
 import { ProfileSection } from '@/components/settings/ProfileSection'
 import { AppearanceSection } from '@/components/settings/AppearanceSection'
 import { AiTrustSection } from '@/components/settings/AiTrustSection'
 import { PrivacyDataSection } from '@/components/settings/PrivacyDataSection'
+import { BillingSection } from '@/components/settings/BillingSection'
 import { cn } from '@/lib/utils'
-import type { Profile } from '@/lib/types'
+import type { Profile, BillingStatus } from '@/lib/types'
 
 const TABS = [
   { id: 'profile',    label: 'Profile' },
   { id: 'appearance', label: 'Appearance' },
   { id: 'ai-trust',   label: 'AI & Trust' },
   { id: 'privacy',    label: 'Privacy & Data' },
+  { id: 'billing',    label: 'Billing' },
 ]
 
 interface AuditEntry {
@@ -25,10 +28,16 @@ interface AuditEntry {
 interface SettingsTabsProps {
   profile: Profile
   auditLog: AuditEntry[]
+  billingStatus: BillingStatus | null
 }
 
-export function SettingsTabs({ profile, auditLog }: SettingsTabsProps) {
-  const [activeTab, setActiveTab] = useState('profile')
+export function SettingsTabs({ profile, auditLog, billingStatus }: SettingsTabsProps) {
+  const searchParams = useSearchParams()
+  // Allow deep-linking to billing tab via ?tab=billing (e.g. after Stripe redirect)
+  const initialTab = TABS.some(t => t.id === searchParams.get('tab'))
+    ? (searchParams.get('tab') ?? 'profile')
+    : 'profile'
+  const [activeTab, setActiveTab] = useState(initialTab)
 
   return (
     <>
@@ -55,6 +64,14 @@ export function SettingsTabs({ profile, auditLog }: SettingsTabsProps) {
         {activeTab === 'appearance' && <AppearanceSection />}
         {activeTab === 'ai-trust'   && <AiTrustSection />}
         {activeTab === 'privacy'    && <PrivacyDataSection profile={profile} auditLog={auditLog} />}
+        {activeTab === 'billing'    && billingStatus && (
+          <BillingSection billingStatus={billingStatus} />
+        )}
+        {activeTab === 'billing'    && !billingStatus && (
+          <div className="text-body-sm text-ink-tertiary p-6">
+            Unable to load billing information. Please refresh the page.
+          </div>
+        )}
       </div>
     </>
   )

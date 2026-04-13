@@ -4,6 +4,7 @@ import { HeroSection } from '@/components/landing/HeroSection'
 import { HowItWorksSection } from '@/components/landing/HowItWorksSection'
 import { WhoItIsForSection } from '@/components/landing/WhoItIsForSection'
 import { WhyUseItSection } from '@/components/landing/WhyUseItSection'
+import { PricingSection } from '@/components/landing/PricingSection'
 import { TrustSection } from '@/components/landing/TrustSection'
 import { CtaSection } from '@/components/landing/CtaSection'
 
@@ -16,6 +17,7 @@ export default function LandingPage() {
         <HowItWorksSection />
         <WhoItIsForSection />
         <WhyUseItSection />
+        <PricingSection />
         <TrustSection />
         <CtaSection />
       </main>

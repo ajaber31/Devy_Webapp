@@ -53,7 +53,21 @@
       "Bash(taskkill /F /IM node.exe)",
       "Bash(taskkill //F //IM node.exe)",
       "mcp__claude_ai_Supabase__list_tables",
-      "mcp__claude_ai_Supabase__get_advisors"
+      "mcp__claude_ai_Supabase__get_advisors",
+      "Bash(node -e \"const Stripe = require\\('stripe'\\); const s = new Stripe\\('sk_test_x'\\); console.log\\(s.getApiField\\('version'\\)\\)\")",
+      "Bash(node -e \"const Stripe = require\\('stripe'\\); const s = new Stripe\\('sk_test_x'\\); const sub = {}; console.log\\(Object.keys\\(require\\('stripe'\\).default\\)\\)\")",
+      "Bash(xargs grep:*)",
+      "mcp__claude_ai_Stripe__get_stripe_account_info",
+      "mcp__claude_ai_Stripe__create_product",
+      "mcp__claude_ai_Stripe__create_price",
+      "Bash(stripe --version)",
+      "Bash(winget install:*)",
+      "Bash(export PATH=\"$PATH:/c/Users/AdelJ/AppData/Local/Microsoft/WinGet/Links:/c/Users/AdelJ/AppData/Local/Programs/stripe\")",
+      "Read(//c/Users/AdelJ/**)",
+      "Bash(/c/Users/AdelJ/AppData/Local/Microsoft/WinGet/Packages/Stripe.StripeCli_Microsoft.Winget.Source_8wekyb3d8bbwe/stripe.exe --version)",
+      "Bash(/c/Users/AdelJ/AppData/Local/Microsoft/WinGet/Packages/Stripe.StripeCli_Microsoft.Winget.Source_8wekyb3d8bbwe/stripe.exe listen:*)",
+      "mcp__claude_ai_Supabase__list_migrations",
+      "Bash(git check-ignore:*)"
     ]
   }
 }

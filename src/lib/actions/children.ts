@@ -3,6 +3,7 @@
 import { revalidatePath } from 'next/cache'
 import { createClient } from '@/lib/supabase/server'
 import { createChildSchema, updateChildSchema } from '@/lib/validation/schemas'
+import { checkChildProfileLimit } from '@/lib/billing/enforcement'
 import type { Child } from '@/lib/types'
 
 function toChild(row: Record<string, unknown>): Child {
@@ -76,7 +77,7 @@ export async function createChild(input: {
   routines?: string[]
   goals?: string[]
   notes?: string
-}): Promise<{ data?: Child; error?: string }> {
+}): Promise<{ data?: Child; error?: string; code?: string; planId?: string }> {
   const parsed = createChildSchema.safeParse(input)
   if (!parsed.success) {
     return { error: parsed.error.issues[0]?.message ?? 'Invalid input' }
@@ -85,6 +86,18 @@ export async function createChild(input: {
   const supabase = createClient()
   const { data: { user } } = await supabase.auth.getUser()
   if (!user) return { error: 'Not authenticated' }
+
+  // ── Plan enforcement: check child profile limit ────────────────────────────
+  const limitCheck = await checkChildProfileLimit(user.id)
+  if (!limitCheck.allowed) {
+    return {
+      error: limitCheck.limit === 0
+        ? 'Child profiles require a paid plan. Upgrade to Standard or Professional to get started.'
+        : `You've reached the ${limitCheck.limit}-profile limit on your current plan. Upgrade to add more.`,
+      code: 'PROFILE_LIMIT_REACHED',
+      planId: limitCheck.planId,
+    }
+  }
 
   const v = parsed.data
   const { data, error } = await supabase

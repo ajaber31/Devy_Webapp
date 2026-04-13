@@ -17,6 +17,7 @@ import { searchPubMed, buildPubMedContextBlock, pubMedSourcesToSources } from '@
 import { ingestPubMedSources } from '@/lib/ai/pubmed-ingest'
 import { chatRequestSchema } from '@/lib/validation/schemas'
 import { checkRateLimit, CHAT_LIMIT } from '@/lib/rate-limit'
+import { getPlanLimits } from '@/lib/stripe/plans'
 import type { Child, Source } from '@/lib/types'
 import type { Database } from '@/lib/supabase/database.types'
 
@@ -185,6 +186,38 @@ export async function POST(request: NextRequest) {
         },
       },
     )
+  }
+
+  // ── Daily question limit ───────────────────────────────────────────────────
+  {
+    const { data: subData } = await supabase
+      .from('subscriptions')
+      .select('plan_id')
+      .eq('user_id', user.id)
+      .single()
+
+    const planLimits = getPlanLimits(subData?.plan_id ?? 'free')
+
+    if (planLimits.questionsPerDay !== Infinity) {
+      const { data: usageCount } = await supabase.rpc('get_daily_usage', { p_user_id: user.id })
+      const todayCount = (usageCount as number | null) ?? 0
+
+      if (todayCount >= planLimits.questionsPerDay) {
+        return NextResponse.json(
+          {
+            error: `You've used all ${planLimits.questionsPerDay} questions for today. Your limit resets at midnight UTC.`,
+            code: 'DAILY_LIMIT_REACHED',
+            limit: planLimits.questionsPerDay,
+            current: todayCount,
+            planId: subData?.plan_id ?? 'free',
+          },
+          { status: 429 },
+        )
+      }
+
+      // Atomically increment before streaming — counts even if stream fails
+      await supabase.rpc('increment_daily_usage', { p_user_id: user.id })
+    }
   }
 
   // ── Parse + validate body ──────────────────────────────────────────────────

@@ -286,6 +286,85 @@ export interface Database {
           }
         ]
       }
+      subscriptions: {
+        Row: {
+          id: string
+          user_id: string
+          stripe_customer_id: string | null
+          stripe_subscription_id: string | null
+          stripe_price_id: string | null
+          plan_id: 'free' | 'standard' | 'professional'
+          status: 'active' | 'trialing' | 'past_due' | 'canceled' | 'incomplete' | 'paused'
+          current_period_start: string | null
+          current_period_end: string | null
+          cancel_at_period_end: boolean
+          canceled_at: string | null
+          created_at: string
+          updated_at: string
+        }
+        Insert: {
+          id?: string
+          user_id: string
+          stripe_customer_id?: string | null
+          stripe_subscription_id?: string | null
+          stripe_price_id?: string | null
+          plan_id?: 'free' | 'standard' | 'professional'
+          status?: 'active' | 'trialing' | 'past_due' | 'canceled' | 'incomplete' | 'paused'
+          current_period_start?: string | null
+          current_period_end?: string | null
+          cancel_at_period_end?: boolean
+          canceled_at?: string | null
+          created_at?: string
+          updated_at?: string
+        }
+        Update: {
+          stripe_customer_id?: string | null
+          stripe_subscription_id?: string | null
+          stripe_price_id?: string | null
+          plan_id?: 'free' | 'standard' | 'professional'
+          status?: 'active' | 'trialing' | 'past_due' | 'canceled' | 'incomplete' | 'paused'
+          current_period_start?: string | null
+          current_period_end?: string | null
+          cancel_at_period_end?: boolean
+          canceled_at?: string | null
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: 'subscriptions_user_id_fkey'
+            columns: ['user_id']
+            isOneToOne: true
+            referencedRelation: 'profiles'
+            referencedColumns: ['id']
+          }
+        ]
+      }
+      daily_usage_log: {
+        Row: {
+          id: string
+          user_id: string
+          usage_date: string
+          question_count: number
+        }
+        Insert: {
+          id?: string
+          user_id: string
+          usage_date?: string
+          question_count?: number
+        }
+        Update: {
+          question_count?: number
+        }
+        Relationships: [
+          {
+            foreignKeyName: 'daily_usage_log_user_id_fkey'
+            columns: ['user_id']
+            isOneToOne: false
+            referencedRelation: 'profiles'
+            referencedColumns: ['id']
+          }
+        ]
+      }
       incident_log: {
         Row: {
           id: string
@@ -356,6 +435,18 @@ export interface Database {
           document_title: string
           original_filename: string
         }[]
+      }
+      get_daily_usage: {
+        Args: { p_user_id: string }
+        Returns: number
+      }
+      increment_daily_usage: {
+        Args: { p_user_id: string }
+        Returns: number
+      }
+      get_user_role: {
+        Args: Record<string, never>
+        Returns: string
       }
     }
     Enums: Record<string, never>

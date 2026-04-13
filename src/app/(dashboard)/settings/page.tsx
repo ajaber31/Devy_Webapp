@@ -3,11 +3,13 @@ import { PageHeader } from '@/components/shared/PageHeader'
 import { SettingsTabs } from './SettingsTabs'
 import { getProfile } from '@/lib/actions/profile'
 import { getPrivacyAuditLog } from '@/lib/actions/privacy'
+import { getBillingStatus } from '@/lib/actions/billing'
 
 export default async function SettingsPage() {
-  const [profile, auditLog] = await Promise.all([
+  const [profile, auditLog, billingStatus] = await Promise.all([
     getProfile(),
     getPrivacyAuditLog(),
+    getBillingStatus(),
   ])
 
   if (!profile) redirect('/login')
@@ -18,7 +20,7 @@ export default async function SettingsPage() {
         title="Settings"
         description="Manage your profile, preferences, and trust settings."
       />
-      <SettingsTabs profile={profile} auditLog={auditLog} />
+      <SettingsTabs profile={profile} auditLog={auditLog} billingStatus={billingStatus} />
     </div>
   )
 }
