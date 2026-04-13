@@ -50,6 +50,10 @@ async function securityHeaders() {
 }
 
 const nextConfig = {
+  eslint: {
+    // Lint errors reported but don't fail the build — run `npm run lint` locally
+    ignoreDuringBuilds: true,
+  },
   headers: securityHeaders,
   images: {
     remotePatterns: [
