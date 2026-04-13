@@ -9,9 +9,9 @@ const footerLinks = {
     { label: 'Get Started', href: '/signup' },
   ],
   Legal: [
-    { label: 'Privacy Policy', href: '#', comingSoon: true },
-    { label: 'Terms of Service', href: '#', comingSoon: true },
-    { label: 'PIPEDA Notice', href: '#', comingSoon: true },
+    { label: 'Privacy Policy', href: '/privacy' },
+    { label: 'Terms of Service', href: '/terms' },
+    { label: 'Refund Policy', href: '/refund' },
   ],
 }
 

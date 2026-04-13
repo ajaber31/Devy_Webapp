@@ -1,6 +1,8 @@
 import Link from 'next/link'
-import { ShieldCheck, Leaf, ArrowLeft } from 'lucide-react'
+import { ShieldCheck } from 'lucide-react'
 import { CURRENT_CONSENT_VERSION } from '@/lib/types'
+import { Navbar } from '@/components/layout/Navbar'
+import { Footer } from '@/components/layout/Footer'
 
 export const metadata = {
   title: 'Privacy Policy — Devy',
@@ -46,32 +48,13 @@ const TOC = [
 
 export default function PrivacyPage() {
   return (
-    <div className="min-h-screen bg-canvas">
+    <>
+      <Navbar />
+      <div className="min-h-screen bg-canvas">
       {/* Top accent */}
       <div className="h-1 bg-gradient-to-r from-sage-400 via-sage-500 to-dblue-500" />
 
-      {/* Nav */}
-      <header className="sticky top-0 z-20 bg-canvas/90 backdrop-blur border-b border-border/60">
-        <div className="max-w-5xl mx-auto px-6 h-14 flex items-center justify-between">
-          <Link href="/" className="flex items-center gap-2 group focus-ring rounded">
-            <div className="w-7 h-7 rounded-md bg-sage-500 flex items-center justify-center shadow-sm">
-              <Leaf size={14} className="text-white" strokeWidth={2} />
-            </div>
-            <span className="font-display font-bold text-ink">Devy</span>
-          </Link>
-          <div className="flex items-center gap-4">
-            <Link
-              href="/dashboard"
-              className="flex items-center gap-1.5 text-body-xs text-ink-secondary hover:text-ink font-medium focus-ring rounded px-1 transition-colors"
-            >
-              <ArrowLeft size={13} strokeWidth={2} />
-              Back to app
-            </Link>
-          </div>
-        </div>
-      </header>
-
-      <div className="max-w-5xl mx-auto px-6 py-12 lg:py-16">
+      <div className="max-w-5xl mx-auto px-6 pt-24 pb-16 lg:pt-28 lg:pb-20">
         <div className="lg:grid lg:grid-cols-[260px_1fr] lg:gap-16">
 
           {/* Sidebar TOC — desktop sticky */}
@@ -325,14 +308,13 @@ export default function PrivacyPage() {
               </div>
             </Section>
 
-            {/* Footer nav */}
-            <div className="pt-8 border-t border-border flex items-center justify-between">
-              <Link
-                href="/consent"
-                className="text-body-xs text-ink-secondary hover:text-ink focus-ring rounded px-1 transition-colors"
-              >
-                ← Back to consent
-              </Link>
+            {/* Bottom nav */}
+            <div className="pt-8 border-t border-border flex items-center justify-between flex-wrap gap-3">
+              <div className="flex items-center gap-4 text-body-xs text-ink-tertiary">
+                <Link href="/terms" className="hover:text-ink-secondary transition-colors duration-150">Terms of Service</Link>
+                <span>·</span>
+                <Link href="/refund" className="hover:text-ink-secondary transition-colors duration-150">Refund Policy</Link>
+              </div>
               <p className="text-body-xs text-ink-tertiary">
                 Policy version <span className="font-mono">{CURRENT_CONSENT_VERSION}</span>
               </p>
@@ -340,6 +322,8 @@ export default function PrivacyPage() {
           </main>
         </div>
       </div>
-    </div>
+      </div>
+      <Footer />
+    </>
   )
 }
