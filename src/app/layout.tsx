@@ -8,7 +8,7 @@ import './globals.css'
 validateEnv()
 
 export const metadata: Metadata = {
-  title: 'Devy — AI Support for Special Needs Families',
+  title: 'Devy — AI Support for Neurodevelopment',
   description: 'Evidence-based guidance for parents, caregivers, teachers, and clinicians supporting children with special needs.',
 }
 
