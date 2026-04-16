@@ -4,21 +4,26 @@ import { SettingsTabs } from './SettingsTabs'
 import { getProfile } from '@/lib/actions/profile'
 import { getPrivacyAuditLog } from '@/lib/actions/privacy'
 import { getBillingStatus } from '@/lib/actions/billing'
+import { getLang } from '@/lib/i18n/server'
+import { getT } from '@/lib/i18n'
 
 export default async function SettingsPage() {
-  const [profile, auditLog, billingStatus] = await Promise.all([
+  const [profile, auditLog, billingStatus, lang] = await Promise.all([
     getProfile(),
     getPrivacyAuditLog(),
     getBillingStatus(),
+    getLang(),
   ])
 
   if (!profile) redirect('/login')
 
+  const t = getT(lang)
+
   return (
     <div className="p-6 max-w-4xl mx-auto">
       <PageHeader
-        title="Settings"
-        description="Manage your profile, preferences, and trust settings."
+        title={t.settings.title}
+        description={t.settings.description}
       />
       <SettingsTabs profile={profile} auditLog={auditLog} billingStatus={billingStatus} />
     </div>

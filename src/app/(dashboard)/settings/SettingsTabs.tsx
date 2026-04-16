@@ -7,16 +7,9 @@ import { AppearanceSection } from '@/components/settings/AppearanceSection'
 import { AiTrustSection } from '@/components/settings/AiTrustSection'
 import { PrivacyDataSection } from '@/components/settings/PrivacyDataSection'
 import { BillingSection } from '@/components/settings/BillingSection'
+import { useLanguage } from '@/components/shared/LanguageProvider'
 import { cn } from '@/lib/utils'
 import type { Profile, BillingStatus } from '@/lib/types'
-
-const TABS = [
-  { id: 'profile',    label: 'Profile' },
-  { id: 'appearance', label: 'Appearance' },
-  { id: 'ai-trust',   label: 'AI & Trust' },
-  { id: 'privacy',    label: 'Privacy & Data' },
-  { id: 'billing',    label: 'Billing' },
-]
 
 interface AuditEntry {
   id: string
@@ -33,8 +26,18 @@ interface SettingsTabsProps {
 
 export function SettingsTabs({ profile, auditLog, billingStatus }: SettingsTabsProps) {
   const searchParams = useSearchParams()
+  const { t } = useLanguage()
+
+  const TABS = [
+    { id: 'profile',    label: t.settings.tabs.profile },
+    { id: 'appearance', label: t.settings.tabs.appearance },
+    { id: 'ai-trust',   label: t.settings.tabs.aiTrust },
+    { id: 'privacy',    label: t.settings.tabs.privacyData },
+    { id: 'billing',    label: t.settings.tabs.billing },
+  ]
+
   // Allow deep-linking to billing tab via ?tab=billing (e.g. after Stripe redirect)
-  const initialTab = TABS.some(t => t.id === searchParams.get('tab'))
+  const initialTab = TABS.some(tab => tab.id === searchParams.get('tab'))
     ? (searchParams.get('tab') ?? 'profile')
     : 'profile'
   const [activeTab, setActiveTab] = useState(initialTab)

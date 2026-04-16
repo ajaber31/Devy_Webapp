@@ -3,36 +3,37 @@ import { StatCard } from '@/components/dashboard/StatCard'
 import { RecentConversations } from '@/components/dashboard/RecentConversations'
 import { QuickActions } from '@/components/dashboard/QuickActions'
 import { PrivacyNotice } from '@/components/dashboard/PrivacyNotice'
-import { FirstRunBanner } from '@/components/dashboard/FirstRunBanner'
 import { PendingPlanBanner } from '@/components/dashboard/PendingPlanBanner'
 import { AnimateIn } from '@/components/shared/AnimateIn'
 import { getProfile } from '@/lib/actions/profile'
 import { getRoleTerminology } from '@/lib/role-terminology'
 import { getConversationCount, getConversations, getUserMessageCount } from '@/lib/actions/conversations'
 import { getChildrenCount } from '@/lib/actions/children'
-import { getReadyDocumentCount } from '@/lib/actions/documents'
 import { getBillingStatus } from '@/lib/actions/billing'
+import { getLang } from '@/lib/i18n/server'
+import { getT } from '@/lib/i18n'
 
 export default async function DashboardPage() {
-  const [profile, conversationCount, childrenCount, messageCount, conversations, documentCount, billingStatus] = await Promise.all([
+  const [profile, conversationCount, childrenCount, messageCount, conversations, billingStatus, lang] = await Promise.all([
     getProfile(),
     getConversationCount(),
     getChildrenCount(),
     getUserMessageCount(),
     getConversations(),
-    getReadyDocumentCount(),
     getBillingStatus(),
+    getLang(),
   ])
 
+  const t = getT(lang)
   const firstName = profile?.name.split(' ')[0] ?? 'there'
   const terms = getRoleTerminology(profile?.role ?? 'parent')
   const isFirstRun = conversationCount === 0 && childrenCount === 0
 
   const stats = [
     {
-      label: 'Conversations',
+      label: t.dashboard.conversations,
       value: String(conversationCount),
-      delta: 'All time',
+      delta: t.dashboard.allTime,
       deltaDirection: 'neutral' as const,
       icon: 'MessageCircle',
       color: 'sage' as const,
@@ -40,26 +41,18 @@ export default async function DashboardPage() {
     {
       label: terms.statLabel,
       value: String(childrenCount),
-      delta: 'In your account',
+      delta: t.dashboard.inYourAccount,
       deltaDirection: 'neutral' as const,
       icon: 'Users',
       color: 'dblue' as const,
     },
     {
-      label: 'Questions Asked',
+      label: t.dashboard.questionsAsked,
       value: String(messageCount),
-      delta: 'Across all chats',
+      delta: t.dashboard.acrossAllChats,
       deltaDirection: 'neutral' as const,
       icon: 'HelpCircle',
       color: 'sand' as const,
-    },
-    {
-      label: 'Knowledge Base Documents',
-      value: String(documentCount),
-      delta: 'Ready to query',
-      deltaDirection: 'neutral' as const,
-      icon: 'FileCheck',
-      color: 'neutral' as const,
     },
   ]
 
@@ -77,16 +70,9 @@ export default async function DashboardPage() {
         </AnimateIn>
       )}
 
-      {/* First-run onboarding — only for brand-new accounts */}
-      {isFirstRun && (
-        <AnimateIn delay={80} distance={16}>
-          <FirstRunBanner />
-        </AnimateIn>
-      )}
-
       {/* Stats row */}
-      <AnimateIn delay={isFirstRun ? 160 : 80} distance={16}>
-        <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
+      <AnimateIn delay={80} distance={16}>
+        <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
           {stats.map((stat) => (
             <StatCard key={stat.label} {...stat} />
           ))}
@@ -94,7 +80,7 @@ export default async function DashboardPage() {
       </AnimateIn>
 
       {/* Main content grid */}
-      <AnimateIn delay={isFirstRun ? 220 : 140} distance={16}>
+      <AnimateIn delay={140} distance={16}>
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
           <div className="lg:col-span-2">
             <RecentConversations conversations={conversations.slice(0, 5)} />

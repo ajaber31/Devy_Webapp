@@ -1,6 +1,9 @@
+'use client'
+
 import Link from 'next/link'
 import { MessageCircle, Pin, ArrowRight, Clock } from 'lucide-react'
 import { formatDate, truncate } from '@/lib/utils'
+import { useLanguage } from '@/components/shared/LanguageProvider'
 import type { Conversation } from '@/lib/types'
 
 interface RecentConversationsProps {
@@ -8,21 +11,24 @@ interface RecentConversationsProps {
 }
 
 export function RecentConversations({ conversations }: RecentConversationsProps) {
+  const { t } = useLanguage()
+  const rc = t.dashboard.recentConversations
+
   if (conversations.length === 0) {
     return (
       <div className="bg-white rounded-card-lg shadow-card border border-border/50 overflow-hidden">
         <div className="px-5 py-4 border-b border-border flex items-center justify-between">
           <div className="flex items-center gap-2">
             <MessageCircle size={16} className="text-sage-500" strokeWidth={2} />
-            <h3 className="font-display text-[1.05rem] font-semibold text-ink">Recent conversations</h3>
+            <h3 className="font-display text-[1.05rem] font-semibold text-ink">{rc.title}</h3>
           </div>
           <Link href="/chat" className="text-body-xs text-sage-600 hover:text-sage-700 font-medium flex items-center gap-1"
             style={{ transitionProperty: 'color', transitionDuration: '150ms' }}>
-            Start one <ArrowRight size={12} strokeWidth={2.5} />
+            {rc.startOne} <ArrowRight size={12} strokeWidth={2.5} />
           </Link>
         </div>
         <div className="px-5 py-10 text-center">
-          <p className="text-body-sm text-ink-tertiary">No conversations yet. Start a new chat to get going.</p>
+          <p className="text-body-sm text-ink-tertiary">{rc.empty}</p>
         </div>
       </div>
     )
@@ -33,11 +39,11 @@ export function RecentConversations({ conversations }: RecentConversationsProps)
       <div className="px-5 py-4 border-b border-border flex items-center justify-between">
         <div className="flex items-center gap-2">
           <MessageCircle size={16} className="text-sage-500" strokeWidth={2} />
-          <h3 className="font-display text-[1.05rem] font-semibold text-ink">Recent conversations</h3>
+          <h3 className="font-display text-[1.05rem] font-semibold text-ink">{rc.title}</h3>
         </div>
         <Link href="/chat" className="text-body-xs text-sage-600 hover:text-sage-700 font-medium flex items-center gap-1"
           style={{ transitionProperty: 'color', transitionDuration: '150ms' }}>
-          View all <ArrowRight size={12} strokeWidth={2.5} />
+          {rc.viewAll} <ArrowRight size={12} strokeWidth={2.5} />
         </Link>
       </div>
 
@@ -60,7 +66,7 @@ export function RecentConversations({ conversations }: RecentConversationsProps)
                 <div className="flex items-center gap-2 mb-0.5">
                   <p className="text-body-sm font-medium text-ink truncate">{convo.title}</p>
                   {convo.isPinned && (
-                    <span className="flex-shrink-0 px-1.5 py-0.5 bg-sage-100 text-sage-700 rounded text-[0.65rem] font-medium">Pinned</span>
+                    <span className="flex-shrink-0 px-1.5 py-0.5 bg-sage-100 text-sage-700 rounded text-[0.65rem] font-medium">{rc.pinned}</span>
                   )}
                 </div>
                 <p className="text-body-xs text-ink-tertiary truncate">{truncate(convo.preview || 'No messages yet', 70)}</p>
@@ -69,7 +75,7 @@ export function RecentConversations({ conversations }: RecentConversationsProps)
                     <Clock size={10} strokeWidth={2} />
                     {formatDate(convo.updatedAt)}
                   </span>
-                  <span className="text-body-xs text-ink-tertiary">{convo.messageCount} messages</span>
+                  <span className="text-body-xs text-ink-tertiary">{convo.messageCount} {rc.messages}</span>
                   <div className="flex gap-1">
                     {convo.tags.slice(0, 2).map(tag => (
                       <span key={tag} className="px-1.5 py-0.5 bg-raised rounded text-[0.65rem] text-ink-secondary">{tag}</span>

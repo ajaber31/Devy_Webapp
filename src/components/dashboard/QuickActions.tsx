@@ -1,45 +1,52 @@
+'use client'
+
 import Link from 'next/link'
 import { MessageCircle, Users, Settings, ArrowUpRight, BookOpen } from 'lucide-react'
+import { useLanguage } from '@/components/shared/LanguageProvider'
 
 interface QuickActionsProps {
   nounPlural: string
 }
 
 export function QuickActions({ nounPlural }: QuickActionsProps) {
+  const { t } = useLanguage()
+  const qa = t.dashboard.quickActions
+
   const actions = [
     {
       icon: MessageCircle,
-      label: 'Start a chat',
-      description: 'Ask a new question',
+      label: qa.startChat,
+      description: qa.startChatDesc,
       href: '/chat',
       color: 'bg-sage-100 text-sage-600',
     },
     {
       icon: Users,
       label: `My ${nounPlural}`,
-      description: 'View or add profiles',
+      description: qa.viewOrAdd,
       href: '/children',
       color: 'bg-dblue-100 text-dblue-600',
     },
     {
       icon: BookOpen,
-      label: 'Browse Resources',
-      description: 'Approved Knowledge Base',
+      label: qa.browseResources,
+      description: qa.resourcesDesc,
       href: '/resources',
       color: 'bg-sand-100 text-sand-500',
     },
     {
       icon: Settings,
-      label: 'Settings',
-      description: 'Profile & preferences',
+      label: t.nav.settings,
+      description: qa.settingsDesc,
       href: '/settings',
       color: 'bg-raised text-ink-secondary',
     },
   ]
+
   return (
     <div className="bg-white rounded-card-lg shadow-card border border-border/50 overflow-hidden">
       <div className="px-5 py-4 border-b border-border">
-        <h3 className="font-display text-[1.05rem] font-semibold text-ink">Quick actions</h3>
+        <h3 className="font-display text-[1.05rem] font-semibold text-ink">{qa.title}</h3>
       </div>
       <ul className="p-3 grid grid-cols-2 gap-2">
         {actions.map((action) => {

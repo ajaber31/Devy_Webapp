@@ -5,6 +5,8 @@ import Link from 'next/link'
 import { usePathname } from 'next/navigation'
 import { Menu, X, LogOut } from 'lucide-react'
 import { DevyLogo } from '@/components/shared/DevyLogo'
+import { LanguageSwitcher } from '@/components/shared/LanguageSwitcher'
+import { useLanguage } from '@/components/shared/LanguageProvider'
 import { ADMIN_NAV_ITEMS, DASHBOARD_NAV_ITEMS } from '@/lib/constants'
 import { cn, initials } from '@/lib/utils'
 import { signOut } from '@/lib/actions/auth'
@@ -18,6 +20,7 @@ interface MobileSidebarProps {
 export function MobileSidebar({ profile }: MobileSidebarProps) {
   const pathname = usePathname()
   const [open, setOpen] = useState(false)
+  const { t } = useLanguage()
   const rawNavItems = profile.role === 'admin' ? ADMIN_NAV_ITEMS : DASHBOARD_NAV_ITEMS
   const terms = getRoleTerminology(profile.role)
   const navItems = rawNavItems.map(item =>
@@ -98,6 +101,10 @@ export function MobileSidebar({ profile }: MobileSidebarProps) {
               <p className="text-body-xs text-ink-tertiary truncate">{profile.email}</p>
             </div>
           </div>
+          <div className="px-2 py-2 flex items-center justify-between">
+            <span className="text-body-xs text-ink-tertiary">{t.settings.language}</span>
+            <LanguageSwitcher variant="pill" />
+          </div>
           <form action={signOut}>
             <button
               type="submit"
@@ -105,7 +112,7 @@ export function MobileSidebar({ profile }: MobileSidebarProps) {
               style={{ transitionProperty: 'background-color', transitionDuration: '150ms' }}
             >
               <LogOut size={14} />
-              Sign out
+              {t.nav.signOut}
             </button>
           </form>
         </div>

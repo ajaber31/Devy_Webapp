@@ -325,7 +325,7 @@ export function BillingSection({ billingStatus }: BillingSectionProps) {
           <UsageBar
             current={billingStatus.childCount}
             limit={billingStatus.childLimit}
-            label="Child profiles"
+            label="Client profiles"
           />
         </div>
 
@@ -350,7 +350,7 @@ export function BillingSection({ billingStatus }: BillingSectionProps) {
           {billingStatus.planId === 'free' && (
             <div className="flex items-center gap-1.5 text-body-xs text-ink-tertiary">
               <Users size={13} />
-              Add child profiles by upgrading below
+              Add client profiles by upgrading below
             </div>
           )}
         </div>
@@ -407,7 +407,7 @@ export function BillingSection({ billingStatus }: BillingSectionProps) {
             <AlertCircle size={16} className="text-sand-600 mt-0.5 shrink-0" />
             <div>
               <p className="text-body-sm font-medium text-sand-800">
-                You have {billingStatus.childCount} profiles but your plan allows {billingStatus.childLimit}.
+                You have {billingStatus.childCount} client profiles but your plan allows {billingStatus.childLimit}.
               </p>
               <p className="text-body-xs text-sand-700 mt-1">
                 Your existing profiles are safe. You won&apos;t be able to add new ones until you&apos;re under the limit or upgrade your plan.

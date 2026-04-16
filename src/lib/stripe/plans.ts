@@ -57,8 +57,8 @@ export const PLANS: Record<PlanId, PlanDefinition> = {
     },
     features: [
       '20 questions per day',
-      'Up to 2 child profiles',
-      'Child-context-aware answers',
+      'Up to 2 client profiles',
+      'Client-context-aware answers',
       'Full conversation history',
       'Everything in Free',
     ],
@@ -78,8 +78,8 @@ export const PLANS: Record<PlanId, PlanDefinition> = {
     },
     features: [
       'Unlimited questions per day',
-      'Unlimited child profiles',
-      'Child-context-aware answers',
+      'Unlimited client profiles',
+      'Client-context-aware answers',
       'Full conversation history',
       'Priority support',
       'Everything in Standard',

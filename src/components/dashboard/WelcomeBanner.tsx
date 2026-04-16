@@ -1,6 +1,9 @@
+'use client'
+
 import Link from 'next/link'
 import { ArrowRight, Users } from 'lucide-react'
 import { NoiseTexture } from '@/components/shared/NoiseTexture'
+import { useLanguage } from '@/components/shared/LanguageProvider'
 
 interface WelcomeBannerProps {
   firstName: string
@@ -9,9 +12,13 @@ interface WelcomeBannerProps {
 }
 
 export function WelcomeBanner({ firstName, nounPlural, isFirstVisit = false }: WelcomeBannerProps) {
+  const { t } = useLanguage()
   const hour = new Date().getHours()
-  const greeting = hour < 12 ? 'Good morning' : hour < 17 ? 'Good afternoon' : 'Good evening'
-  const headline = isFirstVisit ? `Welcome, ${firstName}.` : `Welcome back, ${firstName}.`
+  const greetingKey = hour < 12 ? 'morning' : hour < 17 ? 'afternoon' : 'evening'
+  const greeting = t.dashboard.greeting[greetingKey]
+  const headline = isFirstVisit
+    ? `${t.dashboard.welcome}, ${firstName}.`
+    : `${t.dashboard.welcomeBack}, ${firstName}.`
 
   return (
     <div
@@ -32,7 +39,7 @@ export function WelcomeBanner({ firstName, nounPlural, isFirstVisit = false }: W
             {headline}
           </h2>
           <p className="text-white/75 text-body-sm max-w-sm">
-            Your Knowledge Base is ready. Ask a question or open a profile to get started.
+            {t.dashboard.readyMessage}
           </p>
         </div>
         <div className="flex items-center gap-2 flex-shrink-0">
@@ -49,7 +56,7 @@ export function WelcomeBanner({ firstName, nounPlural, isFirstVisit = false }: W
             className="flex items-center gap-2 px-5 py-2.5 bg-white text-sage-700 font-semibold text-body-sm rounded-pill shadow-floating hover:bg-sage-50 active:scale-[0.98]"
             style={{ transitionProperty: 'background-color, transform', transitionDuration: '150ms' }}
           >
-            New chat
+            {t.dashboard.newChat}
             <ArrowRight size={14} strokeWidth={2.5} />
           </Link>
         </div>
