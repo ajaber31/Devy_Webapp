@@ -1,26 +1,28 @@
 'use client'
 
 import { useRef, useEffect, useState } from 'react'
-import { SendHorizonal } from 'lucide-react'
+import { SendHorizonal, Zap } from 'lucide-react'
 import { cn } from '@/lib/utils'
+import { useLanguage } from '@/components/shared/LanguageProvider'
 
 interface ChatInputProps {
   value: string
   onChange: (val: string) => void
   onSend: () => void
   disabled?: boolean
+  limitReached?: boolean
+  onLimitClick?: () => void
 }
 
-export function ChatInput({ value, onChange, onSend, disabled }: ChatInputProps) {
+export function ChatInput({ value, onChange, onSend, disabled, limitReached, onLimitClick }: ChatInputProps) {
+  const { t } = useLanguage()
   const ref = useRef<HTMLTextAreaElement>(null)
-  // Track transition from empty → has content to trigger spring animation
   const [sendActive, setSendActive] = useState(false)
   const prevHasContent = useRef(false)
 
   useEffect(() => {
     const hasContent = !!value.trim() && !disabled
     if (hasContent && !prevHasContent.current) {
-      // Just got content — trigger spring animation
       setSendActive(false)
       requestAnimationFrame(() => setSendActive(true))
     } else if (!hasContent) {
@@ -31,7 +33,6 @@ export function ChatInput({ value, onChange, onSend, disabled }: ChatInputProps)
 
   const handleInput = (e: React.ChangeEvent<HTMLTextAreaElement>) => {
     onChange(e.target.value)
-    // Auto-grow
     if (ref.current) {
       ref.current.style.height = 'auto'
       ref.current.style.height = Math.min(ref.current.scrollHeight, 160) + 'px'
@@ -46,12 +47,35 @@ export function ChatInput({ value, onChange, onSend, disabled }: ChatInputProps)
   }
 
   const handleSend = () => {
+    if (limitReached) {
+      onLimitClick?.()
+      return
+    }
     if (value.trim() && !disabled) {
       onSend()
       if (ref.current) {
         ref.current.style.height = 'auto'
       }
     }
+  }
+
+  // Limit reached state
+  if (limitReached) {
+    return (
+      <div className="border-t border-border bg-canvas px-4 py-3">
+        <div className="max-w-3xl mx-auto">
+          <button
+            onClick={() => onLimitClick?.()}
+            className="w-full flex items-center justify-center gap-2.5 py-3 rounded-card border border-sand-200 bg-sand-50 text-sand-600 hover:bg-sand-100 focus-ring"
+            style={{ transitionProperty: 'background-color', transitionDuration: '150ms' }}
+          >
+            <Zap size={15} strokeWidth={2.5} className="flex-shrink-0" />
+            <span className="text-body-sm font-medium">{t.chat.limitDisabledHint}</span>
+            <span className="text-body-xs text-sand-400">— {t.chat.upgradeCta}</span>
+          </button>
+        </div>
+      </div>
+    )
   }
 
   return (
@@ -65,7 +89,7 @@ export function ChatInput({ value, onChange, onSend, disabled }: ChatInputProps)
             value={value}
             onChange={handleInput}
             onKeyDown={handleKeyDown}
-            placeholder="Ask about a child's needs, strategies, or resources…"
+            placeholder={t.chat.inputPlaceholder}
             rows={1}
             className="flex-1 resize-none bg-transparent py-2.5 pl-3 text-body-sm text-ink placeholder:text-ink-tertiary focus:outline-none leading-relaxed"
             style={{ minHeight: '40px', maxHeight: '160px' }}
@@ -88,13 +112,13 @@ export function ChatInput({ value, onChange, onSend, disabled }: ChatInputProps)
               transitionDuration: '150ms',
               animation: sendActive ? 'sendSpring 0.35s cubic-bezier(0.34, 1.56, 0.64, 1)' : undefined,
             }}
-            aria-label="Send message"
+            aria-label={t.chat.send}
           >
             <SendHorizonal size={15} strokeWidth={2.5} />
           </button>
         </div>
         <p className="text-center text-body-xs text-ink-tertiary mt-2">
-          Ctrl / ⌘ Enter to send · Answers cite their sources
+          {t.chat.sendHint}
         </p>
       </div>
     </div>

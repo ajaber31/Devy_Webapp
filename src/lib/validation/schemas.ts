@@ -85,7 +85,7 @@ export const chatRequestSchema = z.object({
   message: z
     .string()
     .min(1, 'Message cannot be empty')
-    .max(4_000, 'Message too long — maximum 4,000 characters'),
+    .max(4_000, 'Message too long. Maximum 4,000 characters.'),
   conversationId: uuid.nullable(),
   childId: uuid.optional(),
   // childName appears verbatim in the system prompt — constrain it tightly.

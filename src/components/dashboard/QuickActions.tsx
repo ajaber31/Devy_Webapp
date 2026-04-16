@@ -24,7 +24,7 @@ export function QuickActions({ nounPlural }: QuickActionsProps) {
     {
       icon: BookOpen,
       label: 'Browse Resources',
-      description: 'Approved knowledge base',
+      description: 'Approved Knowledge Base',
       href: '/resources',
       color: 'bg-sand-100 text-sand-500',
     },

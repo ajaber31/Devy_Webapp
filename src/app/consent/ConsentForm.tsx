@@ -10,8 +10,8 @@ const COMMITMENTS = [
   'We never sell or share your personal information with third parties',
   'Child profiles contain only information you choose to provide',
   'You may request a copy or deletion of your data at any time',
-  'Conversations are used only to provide you with AI support — not for model training',
-  'No clinical diagnoses are stored or generated — Devy is an informational tool only',
+  'Conversations are used only to provide you with AI support, not for model training',
+  'No clinical diagnoses are stored or generated. Devy is an informational tool only.',
 ]
 
 export function ConsentForm() {

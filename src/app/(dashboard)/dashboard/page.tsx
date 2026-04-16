@@ -54,7 +54,7 @@ export default async function DashboardPage() {
       color: 'sand' as const,
     },
     {
-      label: 'KB Documents',
+      label: 'Knowledge Base Documents',
       value: String(documentCount),
       delta: 'Ready to query',
       deltaDirection: 'neutral' as const,
@@ -67,7 +67,7 @@ export default async function DashboardPage() {
     <div className="p-6 max-w-7xl mx-auto space-y-6">
       {/* Welcome banner — no delay, first thing users see */}
       <AnimateIn distance={16}>
-        <WelcomeBanner firstName={firstName} nounPlural={terms.nounPlural} />
+        <WelcomeBanner firstName={firstName} nounPlural={terms.nounPlural} isFirstVisit={isFirstRun} />
       </AnimateIn>
 
       {/* Pending plan banner — shown after signup from pricing page */}

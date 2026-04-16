@@ -5,6 +5,8 @@ import Link from 'next/link'
 import { usePathname } from 'next/navigation'
 import { ChevronDown, LogOut, PanelLeftClose, PanelLeftOpen } from 'lucide-react'
 import { DevyLogo } from '@/components/shared/DevyLogo'
+import { LanguageSwitcher } from '@/components/shared/LanguageSwitcher'
+import { useLanguage } from '@/components/shared/LanguageProvider'
 import { ADMIN_NAV_ITEMS, DASHBOARD_NAV_ITEMS } from '@/lib/constants'
 import { cn, initials } from '@/lib/utils'
 import { signOut } from '@/lib/actions/auth'
@@ -61,6 +63,7 @@ export function Sidebar({ profile }: SidebarProps) {
   const pathname = usePathname()
   const [collapsed, setCollapsed] = useState(false)
   const [userMenuOpen, setUserMenuOpen] = useState(false)
+  const { t } = useLanguage()
 
   const rawNavItems = profile.role === 'admin' ? ADMIN_NAV_ITEMS : DASHBOARD_NAV_ITEMS
   const terms = getRoleTerminology(profile.role)
@@ -158,8 +161,12 @@ export function Sidebar({ profile }: SidebarProps) {
               className="flex items-center gap-2 px-3 py-2 text-body-sm text-ink-secondary hover:bg-raised hover:text-ink"
               style={{ transitionProperty: 'background-color, color', transitionDuration: '150ms' }}
             >
-              Account settings
+              {t.nav.accountSettings}
             </Link>
+            <div className="px-3 py-2 flex items-center justify-between">
+              <span className="text-body-xs text-ink-tertiary">{t.settings.language}</span>
+              <LanguageSwitcher variant="pill" />
+            </div>
             <form action={signOut}>
               <button
                 type="submit"
@@ -167,7 +174,7 @@ export function Sidebar({ profile }: SidebarProps) {
                 style={{ transitionProperty: 'background-color', transitionDuration: '150ms' }}
               >
                 <LogOut size={14} />
-                Sign out
+                {t.nav.signOut}
               </button>
             </form>
           </div>

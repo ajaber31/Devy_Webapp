@@ -23,7 +23,7 @@ export function AiTrustSection() {
           />
           <PolicyRow
             title="Transparency about information sources"
-            description="Devy prioritises its clinician-curated knowledge base and PubMed research. When context is unavailable, responses are drawn from GPT-4o's clinical training and are clearly distinguished from KB-grounded answers."
+            description="Devy prioritises its clinician-curated Knowledge Base and PubMed research. When context is unavailable, responses are drawn from GPT-4o's clinical training and are clearly distinguished from Knowledge Base-grounded answers."
             legal="Required — PIPEDA Principle 4.3 (Openness) and Principle 4.9 (Individual Access to accuracy)"
           />
           <PolicyRow
@@ -33,7 +33,7 @@ export function AiTrustSection() {
           />
           <PolicyRow
             title="Source grounding policy"
-            description="Substantive responses are grounded in Devy's clinician-curated knowledge base or PubMed peer-reviewed research whenever possible. When no specific KB or PubMed context is found, Devy draws on GPT-4o's extensive clinical training — and makes this distinction transparent to the user."
+            description="Substantive responses are grounded in Devy's clinician-curated Knowledge Base or PubMed peer-reviewed research whenever possible. When no Knowledge Base or PubMed context is found, Devy draws on GPT-4o's extensive clinical training and makes this distinction transparent to the user."
             legal="Required — PIPEDA Principle 4.6 (Accuracy) and Principle 4.3 (Openness) for health-adjacent information systems"
           />
         </div>
@@ -48,7 +48,7 @@ export function AiTrustSection() {
         <div className="space-y-4 text-body-sm text-ink-secondary leading-relaxed">
           <p>Your conversations and child profile data are stored securely in Canada (Supabase ca-central-1) in compliance with PIPEDA.</p>
           <p>Devy does not share your personal data, conversation content, or child profiles with third parties for advertising or profiling purposes.</p>
-          <p>Conversation data may be used in aggregate, anonymised form to improve Devy&apos;s knowledge base quality. No personally identifiable information is retained in this process.</p>
+          <p>Conversation data may be used in aggregate, anonymised form to improve Devy&apos;s Knowledge Base quality. No personally identifiable information is retained in this process.</p>
         </div>
       </div>
 

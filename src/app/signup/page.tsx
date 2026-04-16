@@ -104,7 +104,7 @@ function SignupPageInner() {
               </div>
               <div className="flex-1 min-w-0">
                 <p className="text-body-xs font-semibold text-sage-800">
-                  {PLAN_LABELS[selectedPlan].name} plan — {PLAN_LABELS[selectedPlan].price}
+                  {PLAN_LABELS[selectedPlan].name} plan · {PLAN_LABELS[selectedPlan].price}
                 </p>
                 <p className="text-body-xs text-sage-600">
                   Create your account, then complete your upgrade from the dashboard.

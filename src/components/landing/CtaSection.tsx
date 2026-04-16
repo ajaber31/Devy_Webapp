@@ -2,8 +2,12 @@ import Link from 'next/link'
 import { ArrowRight } from 'lucide-react'
 import { NoiseTexture } from '@/components/shared/NoiseTexture'
 import { AnimateIn } from '@/components/shared/AnimateIn'
+import { getT } from '@/lib/i18n'
+import type { Lang } from '@/lib/i18n'
 
-export function CtaSection() {
+export function CtaSection({ lang = 'en' }: { lang?: Lang }) {
+  const t = getT(lang).landing.cta
+
   return (
     <section className="py-24 px-6">
       <AnimateIn>
@@ -22,7 +26,6 @@ export function CtaSection() {
                 background: 'radial-gradient(ellipse 70% 60% at 50% 30%, rgba(255,255,255,0.1) 0%, transparent 60%)',
               }}
             />
-            {/* Secondary glow bottom */}
             <div
               aria-hidden="true"
               className="absolute inset-0 pointer-events-none"
@@ -32,12 +35,12 @@ export function CtaSection() {
             />
 
             <div className="relative z-10">
-              <p className="text-body-sm font-medium text-sage-200 uppercase tracking-wider mb-4">Ready to get started?</p>
+              <p className="text-body-sm font-medium text-sage-200 uppercase tracking-wider mb-4">{t.label}</p>
               <h2 className="font-display text-display-lg font-bold text-white tracking-tight mb-5">
-                Clinical evidence, instantly accessible.
+                {t.heading}
               </h2>
               <p className="text-body-lg text-white/80 max-w-lg mx-auto mb-10 leading-relaxed">
-                Join clinicians, educators, and families who use Devy to get grounded, trustworthy answers — backed by peer-reviewed research and our curated clinical knowledge base.
+                {t.description}
               </p>
 
               <div className="flex flex-wrap items-center justify-center gap-4">
@@ -46,7 +49,7 @@ export function CtaSection() {
                   className="inline-flex items-center gap-2 px-7 py-3.5 bg-white text-sage-700 font-semibold text-body-base rounded-pill shadow-floating hover:bg-sage-50 active:scale-[0.98]"
                   style={{ transitionProperty: 'background-color, transform', transitionDuration: '150ms' }}
                 >
-                  Create a free account
+                  {t.primary}
                   <ArrowRight size={16} strokeWidth={2.5} />
                 </Link>
                 <Link
@@ -54,12 +57,12 @@ export function CtaSection() {
                   className="inline-flex items-center gap-2 px-7 py-3.5 bg-white/10 text-white font-medium text-body-base rounded-pill border border-white/20 hover:bg-white/20"
                   style={{ transitionProperty: 'background-color', transitionDuration: '150ms' }}
                 >
-                  Log in
+                  {t.secondary}
                 </Link>
               </div>
 
               <p className="mt-8 text-body-xs text-white/50">
-                No credit card required. Free to explore.
+                {t.footnote}
               </p>
             </div>
           </div>

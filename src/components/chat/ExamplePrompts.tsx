@@ -28,7 +28,7 @@ export function ExamplePrompts({ onSelect, childName }: ExamplePromptsProps) {
       </h2>
       <p className="text-body-sm text-ink-secondary text-center max-w-md mb-8 leading-relaxed">
         {childName
-          ? `Every answer comes from Devy's approved knowledge base and cites its source.`
+          ? `Every answer comes from Devy's approved Knowledge Base and cites its source.`
           : `Ask a question about a child's needs, routines, support strategies, or development. Every answer cites its source.`}
       </p>
 

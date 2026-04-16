@@ -2,8 +2,10 @@ import Link from 'next/link'
 import { CheckCircle2, Zap, Crown, Sparkles } from 'lucide-react'
 import { AnimateIn } from '@/components/shared/AnimateIn'
 import { PLANS } from '@/lib/stripe/plans'
+import { getT } from '@/lib/i18n'
 import { cn } from '@/lib/utils'
 import type { PlanId } from '@/lib/types'
+import type { Lang } from '@/lib/i18n'
 
 const PLAN_ICONS: Record<PlanId, React.ReactNode> = {
   free: <span className="text-ink-tertiary text-body-xs font-medium">Free</span>,
@@ -11,7 +13,8 @@ const PLAN_ICONS: Record<PlanId, React.ReactNode> = {
   professional: <Crown size={16} className="text-sage-600" strokeWidth={2} />,
 }
 
-export function PricingSection() {
+export function PricingSection({ lang = 'en' }: { lang?: Lang }) {
+  const t = getT(lang).landing.pricing
   return (
     <section id="pricing" className="py-24 px-6 bg-canvas">
       <div className="max-w-5xl mx-auto">
@@ -20,17 +23,16 @@ export function PricingSection() {
           <div className="text-center mb-14">
             <div className="inline-flex items-center gap-2 px-3.5 py-1.5 bg-sage-100 text-sage-700 rounded-pill text-body-xs font-medium border border-sage-200 mb-4">
               <Sparkles size={12} strokeWidth={2} />
-              Simple pricing
+              {t.label}
             </div>
             <h2 className="font-display text-display-lg font-bold text-ink tracking-tight mb-4">
-              Support without limits
+              {t.heading}
             </h2>
             <p className="text-body-lg text-ink-secondary max-w-xl mx-auto leading-relaxed">
-              Start free. Upgrade when you need more. All plans include evidence-based answers
-              powered by peer-reviewed research.
+              {t.description}
             </p>
             <p className="text-body-xs text-ink-tertiary mt-2">
-              All prices in Canadian dollars (CAD). Cancel anytime.
+              {t.priceNote}
             </p>
           </div>
         </AnimateIn>
@@ -54,7 +56,7 @@ export function PricingSection() {
                     <div className="absolute -top-3.5 left-1/2 -translate-x-1/2">
                       <span className="inline-flex items-center gap-1.5 px-3 py-1 bg-sage-500 text-white text-body-xs font-semibold rounded-pill shadow-button">
                         <Sparkles size={11} strokeWidth={2} />
-                        Most popular
+                        {t.mostPopular}
                       </span>
                     </div>
                   )}
@@ -68,11 +70,11 @@ export function PricingSection() {
 
                     <div className="flex items-baseline gap-1 mb-6">
                       {plan.priceCAD === 0 ? (
-                        <span className="text-display-lg font-bold text-ink">Free</span>
+                        <span className="text-display-lg font-bold text-ink">{t.free}</span>
                       ) : (
                         <>
                           <span className="text-display-lg font-bold text-ink">${plan.priceCAD}</span>
-                          <span className="text-body-sm text-ink-tertiary">CAD / mo</span>
+                          <span className="text-body-sm text-ink-tertiary">{t.perMonth}</span>
                         </>
                       )}
                     </div>
@@ -101,7 +103,7 @@ export function PricingSection() {
                         className="w-full flex items-center justify-center px-5 py-3 bg-surface border border-border rounded-card text-body-sm font-semibold text-ink hover:bg-raised focus-ring active:scale-[0.98]"
                         style={{ transitionProperty: 'background-color, transform', transitionDuration: '150ms' }}
                       >
-                        Get started free
+                        {t.getStartedFree}
                       </Link>
                     ) : (
                       <Link
@@ -114,7 +116,7 @@ export function PricingSection() {
                         )}
                         style={{ transitionProperty: 'background-color, transform', transitionDuration: '150ms' }}
                       >
-                        Get started
+                        {t.getStarted}
                       </Link>
                     )}
                   </div>
@@ -127,9 +129,9 @@ export function PricingSection() {
         {/* Footer note */}
         <AnimateIn delay={300}>
           <p className="text-center text-body-xs text-ink-tertiary mt-10">
-            Need more? Have questions about which plan fits your situation?{' '}
+            {t.footerNote}{' '}
             <a href="mailto:hello@devy.ca" className="underline hover:text-ink">
-              Contact us
+              {t.contact}
             </a>
             .
           </p>

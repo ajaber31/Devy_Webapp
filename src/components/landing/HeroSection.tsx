@@ -1,8 +1,12 @@
 import Link from 'next/link'
 import { ArrowRight, FlaskConical } from 'lucide-react'
 import { NoiseTexture } from '@/components/shared/NoiseTexture'
+import { getT } from '@/lib/i18n'
+import type { Lang } from '@/lib/i18n'
 
-export function HeroSection() {
+export function HeroSection({ lang = 'en' }: { lang?: Lang }) {
+  const t = getT(lang).landing.hero
+
   return (
     <section className="relative min-h-screen flex items-center overflow-hidden bg-gradient-hero">
       <NoiseTexture opacity={0.025} />
@@ -24,32 +28,24 @@ export function HeroSection() {
           filter: 'blur(55px)',
         }}
       />
-      <div
-        aria-hidden="true"
-        className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[800px] h-[800px] rounded-full opacity-10 pointer-events-none"
-        style={{
-          background: 'radial-gradient(circle, rgba(92,134,81,0.08) 0%, transparent 65%)',
-          filter: 'blur(80px)',
-        }}
-      />
 
       <div className="relative z-10 max-w-6xl mx-auto px-6 pt-24 pb-20 grid grid-cols-1 lg:grid-cols-2 gap-16 items-center">
         {/* Copy */}
         <div className="animate-fade-up">
           <div className="inline-flex items-center gap-2 px-3.5 py-1.5 bg-sage-100 text-sage-700 rounded-pill text-body-xs font-medium mb-6 border border-sage-200">
             <FlaskConical size={13} strokeWidth={2.5} />
-            Clinician-designed · PubMed-grounded · Evidence-based
+            {t.badge}
           </div>
 
           <h1 className="font-display text-display-xl font-bold text-ink leading-[1.08] tracking-[-0.03em] mb-6">
-            The clinical reference
+            {t.headline1}
             <br />
-            you can actually{' '}
-            <span className="italic text-sage-600">talk to.</span>
+            {t.headline2}{' '}
+            <span className="italic text-sage-600">{t.headline3}</span>
           </h1>
 
           <p className="text-body-lg text-ink-secondary max-w-lg mb-8 leading-relaxed">
-            Devy gives clinicians, therapists, educators, and parents instant access to evidence-based guidance — grounded in a curated clinical knowledge base and peer-reviewed PubMed research. Ask in plain language. Get answers you can trust.
+            {t.description}
           </p>
 
           <div className="flex flex-wrap items-center gap-4">
@@ -58,7 +54,7 @@ export function HeroSection() {
               className="inline-flex items-center gap-2 px-6 py-3 bg-sage-500 text-white font-medium text-body-base rounded-pill shadow-button hover:bg-sage-600 hover:shadow-button-hover active:scale-[0.98] focus-ring"
               style={{ transitionProperty: 'background-color, box-shadow, transform', transitionDuration: '150ms' }}
             >
-              Start for free
+              {t.ctaPrimary}
               <ArrowRight size={16} strokeWidth={2.5} />
             </Link>
             <a
@@ -66,16 +62,12 @@ export function HeroSection() {
               className="inline-flex items-center gap-2 px-6 py-3 bg-white/70 text-ink font-medium text-body-base rounded-pill border border-border hover:bg-white shadow-card focus-ring"
               style={{ transitionProperty: 'background-color, box-shadow', transitionDuration: '150ms' }}
             >
-              See how it works
+              {t.ctaSecondary}
             </a>
           </div>
 
           <div className="mt-10 flex items-center gap-6 flex-wrap">
-            {[
-              'Trusted by clinicians & therapists',
-              'Grounded in peer-reviewed research',
-              'Never guesses — always sources',
-            ].map((point) => (
+            {[t.trust1, t.trust2, t.trust3].map((point) => (
               <div key={point} className="flex items-center gap-2 text-body-sm text-ink-secondary">
                 <div className="w-1.5 h-1.5 rounded-full bg-sage-400 flex-shrink-0" />
                 {point}
@@ -89,7 +81,6 @@ export function HeroSection() {
           className="relative animate-fade-up"
           style={{ animationDelay: '150ms' }}
         >
-          {/* Subtle float */}
           <div
             className="relative rounded-card-lg overflow-hidden shadow-floating bg-white"
             style={{ animation: 'heroFloat 6s ease-in-out infinite' }}
@@ -97,14 +88,14 @@ export function HeroSection() {
             {/* Mock chat header */}
             <div className="bg-surface px-5 py-4 border-b border-border flex items-center gap-3">
               <div className="w-2.5 h-2.5 rounded-full bg-sage-400" />
-              <span className="text-body-xs font-medium text-ink-secondary">Devy — Evidence-based strategies</span>
+              <span className="text-body-xs font-medium text-ink-secondary">{t.mockHeader}</span>
             </div>
 
             <div className="p-5 space-y-4">
               {/* User message */}
               <div className="flex justify-end">
                 <div className="max-w-[82%] bg-sage-500 text-white text-body-sm rounded-card rounded-br-sm px-4 py-3 shadow-button leading-relaxed">
-                  What does the evidence say about supporting a child with dyspraxia in the classroom?
+                  {t.mockQuestion}
                 </div>
               </div>
 
@@ -112,7 +103,7 @@ export function HeroSection() {
               <div className="flex justify-start">
                 <div className="max-w-[88%] space-y-3">
                   <div className="bg-surface text-ink text-body-sm rounded-card rounded-bl-sm px-4 py-3.5 shadow-card leading-relaxed border border-border/40">
-                    Research consistently supports a multi-modal approach: motor skill activities embedded in daily routines, reduced fine-motor demands with alternative outputs, and explicit instruction in task sequencing. Occupational therapy collaboration is strongly recommended.
+                    {t.mockAnswer}
                   </div>
 
                   {/* Research trust badge */}
@@ -121,7 +112,7 @@ export function HeroSection() {
                       <path d="M7 1.5C4 1.5 2 4 2 7s2 5.5 5 5.5S12 10 12 7 10 1.5 7 1.5z" stroke="currentColor" strokeWidth="1.1" fill="none"/>
                       <path d="M5 7h4M7 5v4" stroke="currentColor" strokeWidth="1.2" strokeLinecap="round"/>
                     </svg>
-                    Grounded in clinical knowledge base + PubMed
+                    {t.mockBadge}
                   </div>
                 </div>
               </div>
@@ -130,7 +121,7 @@ export function HeroSection() {
             {/* Input bar */}
             <div className="px-5 py-3 border-t border-border bg-canvas flex items-center gap-2">
               <div className="flex-1 bg-raised rounded-pill px-4 py-2 text-body-sm text-ink-tertiary">
-                Ask a question…
+                {t.mockPlaceholder}
               </div>
               <div className="w-8 h-8 rounded-full bg-sage-500 flex items-center justify-center flex-shrink-0 shadow-button">
                 <svg className="w-4 h-4 text-white" viewBox="0 0 16 16" fill="none">
@@ -151,8 +142,8 @@ export function HeroSection() {
               </svg>
             </div>
             <div>
-              <p className="text-body-xs font-semibold text-ink">PubMed-grounded</p>
-              <p className="text-body-xs text-ink-tertiary">Peer-reviewed research</p>
+              <p className="text-body-xs font-semibold text-ink">{t.mockBadgePubMed}</p>
+              <p className="text-body-xs text-ink-tertiary">{t.mockBadgePeer}</p>
             </div>
           </div>
 
@@ -163,7 +154,7 @@ export function HeroSection() {
             <svg className="w-3.5 h-3.5" viewBox="0 0 14 14" fill="none">
               <path d="M2 7L5.5 10.5L12 3.5" stroke="white" strokeWidth="1.6" strokeLinecap="round" strokeLinejoin="round"/>
             </svg>
-            <p className="text-body-xs font-semibold">Evidence verified</p>
+            <p className="text-body-xs font-semibold">{t.mockBadgeVerified}</p>
           </div>
         </div>
       </div>

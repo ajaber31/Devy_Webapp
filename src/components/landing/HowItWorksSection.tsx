@@ -1,59 +1,60 @@
 import { AnimateIn } from '@/components/shared/AnimateIn'
+import { getT } from '@/lib/i18n'
+import type { Lang } from '@/lib/i18n'
 
-const steps = [
-  {
-    number: '01',
-    title: 'Ask in plain language',
-    description:
-      'Type your question the way you\'d ask a knowledgeable colleague — whether you\'re preparing for an IEP meeting, researching an intervention, or supporting a family at home. No clinical jargon required.',
-    icon: (
-      <svg className="w-6 h-6" viewBox="0 0 24 24" fill="none">
-        <path d="M12 22C17.5228 22 22 17.5228 22 12C22 6.47715 17.5228 2 12 2C6.47715 2 2 6.47715 2 12C2 17.5228 6.47715 22 12 22Z" stroke="currentColor" strokeWidth="1.5"/>
-        <path d="M9 9C9 7.34315 10.3431 6 12 6C13.6569 6 15 7.34315 15 9C15 10.6569 13.6569 12 12 12V14" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round"/>
-        <circle cx="12" cy="17" r="1" fill="currentColor"/>
-      </svg>
-    ),
-  },
-  {
-    number: '02',
-    title: 'Devy searches trusted sources',
-    description:
-      'Devy searches its clinician-curated knowledge base first. If more depth is needed, it automatically queries PubMed for peer-reviewed abstracts — and adds them to the KB so future searches are even faster.',
-    icon: (
-      <svg className="w-6 h-6" viewBox="0 0 24 24" fill="none">
-        <circle cx="11" cy="11" r="7" stroke="currentColor" strokeWidth="1.5"/>
-        <path d="M20 20L17 17" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round"/>
-        <path d="M8 11H14M11 8V14" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round"/>
-      </svg>
-    ),
-  },
-  {
-    number: '03',
-    title: 'Get a clear, grounded answer',
-    description:
-      'You receive a calm, precise response drawn from real clinical evidence — translated into plain language. Sources are noted, and Devy is explicit when something lies outside its current knowledge base.',
-    icon: (
-      <svg className="w-6 h-6" viewBox="0 0 24 24" fill="none">
-        <rect x="3" y="3" width="18" height="18" rx="3" stroke="currentColor" strokeWidth="1.5"/>
-        <path d="M8 9H16M8 13H13M8 17H11" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round"/>
-        <circle cx="18" cy="6" r="3" fill="#5C8651"/>
-        <path d="M17 6L17.8 6.8L19.5 5" stroke="white" strokeWidth="1" strokeLinecap="round" strokeLinejoin="round"/>
-      </svg>
-    ),
-  },
-]
+export function HowItWorksSection({ lang = 'en' }: { lang?: Lang }) {
+  const t = getT(lang).landing.howItWorks
 
-export function HowItWorksSection() {
+  const steps = [
+    {
+      number: '01',
+      title: t.step1Title,
+      description: t.step1Desc,
+      icon: (
+        <svg className="w-6 h-6" viewBox="0 0 24 24" fill="none">
+          <path d="M12 22C17.5228 22 22 17.5228 22 12C22 6.47715 17.5228 2 12 2C6.47715 2 2 6.47715 2 12C2 17.5228 6.47715 22 12 22Z" stroke="currentColor" strokeWidth="1.5"/>
+          <path d="M9 9C9 7.34315 10.3431 6 12 6C13.6569 6 15 7.34315 15 9C15 10.6569 13.6569 12 12 12V14" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round"/>
+          <circle cx="12" cy="17" r="1" fill="currentColor"/>
+        </svg>
+      ),
+    },
+    {
+      number: '02',
+      title: t.step2Title,
+      description: t.step2Desc,
+      icon: (
+        <svg className="w-6 h-6" viewBox="0 0 24 24" fill="none">
+          <circle cx="11" cy="11" r="7" stroke="currentColor" strokeWidth="1.5"/>
+          <path d="M20 20L17 17" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round"/>
+          <path d="M8 11H14M11 8V14" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round"/>
+        </svg>
+      ),
+    },
+    {
+      number: '03',
+      title: t.step3Title,
+      description: t.step3Desc,
+      icon: (
+        <svg className="w-6 h-6" viewBox="0 0 24 24" fill="none">
+          <rect x="3" y="3" width="18" height="18" rx="3" stroke="currentColor" strokeWidth="1.5"/>
+          <path d="M8 9H16M8 13H13M8 17H11" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round"/>
+          <circle cx="18" cy="6" r="3" fill="#5C8651"/>
+          <path d="M17 6L17.8 6.8L19.5 5" stroke="white" strokeWidth="1" strokeLinecap="round" strokeLinejoin="round"/>
+        </svg>
+      ),
+    },
+  ]
+
   return (
     <section id="how-it-works" className="py-24 bg-canvas">
       <div className="max-w-6xl mx-auto px-6">
         <AnimateIn className="text-center mb-16">
-          <p className="text-body-sm font-medium text-sage-600 uppercase tracking-wider mb-3">How it works</p>
+          <p className="text-body-sm font-medium text-sage-600 uppercase tracking-wider mb-3">{t.label}</p>
           <h2 className="font-display text-display-lg font-bold text-ink tracking-tight mb-4">
-            Simple to use. Trustworthy by design.
+            {t.heading}
           </h2>
           <p className="text-body-lg text-ink-secondary max-w-xl mx-auto">
-            Every response is built from real, vetted material — never invented. That commitment is baked into how Devy works at every step.
+            {t.description}
           </p>
         </AnimateIn>
 

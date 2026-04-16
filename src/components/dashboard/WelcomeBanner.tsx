@@ -5,11 +5,13 @@ import { NoiseTexture } from '@/components/shared/NoiseTexture'
 interface WelcomeBannerProps {
   firstName: string
   nounPlural: string
+  isFirstVisit?: boolean
 }
 
-export function WelcomeBanner({ firstName, nounPlural }: WelcomeBannerProps) {
+export function WelcomeBanner({ firstName, nounPlural, isFirstVisit = false }: WelcomeBannerProps) {
   const hour = new Date().getHours()
   const greeting = hour < 12 ? 'Good morning' : hour < 17 ? 'Good afternoon' : 'Good evening'
+  const headline = isFirstVisit ? `Welcome, ${firstName}.` : `Welcome back, ${firstName}.`
 
   return (
     <div
@@ -27,10 +29,10 @@ export function WelcomeBanner({ firstName, nounPlural }: WelcomeBannerProps) {
         <div>
           <p className="text-sage-200 text-body-sm font-medium mb-1">{greeting}</p>
           <h2 className="font-display text-display-md font-bold text-white tracking-tight mb-2">
-            Welcome back, {firstName}.
+            {headline}
           </h2>
           <p className="text-white/75 text-body-sm max-w-sm">
-            Devy&apos;s knowledge base is ready. Ask a question or open a profile to get started.
+            Your Knowledge Base is ready. Ask a question or open a profile to get started.
           </p>
         </div>
         <div className="flex items-center gap-2 flex-shrink-0">

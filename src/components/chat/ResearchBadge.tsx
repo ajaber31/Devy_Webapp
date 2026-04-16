@@ -19,7 +19,7 @@ export function ResearchBadge({ hasPubMed }: ResearchBadgeProps) {
   return (
     <div className="inline-flex items-center gap-1.5 px-3 py-1.5 border border-sage-200 bg-sage-50 rounded-pill text-body-xs font-medium text-sage-700 mt-2 select-none">
       <BookOpen size={11} strokeWidth={2.5} className="shrink-0" />
-      Grounded in Devy&apos;s clinical knowledge base
+      Grounded in Devy&apos;s clinical Knowledge Base
     </div>
   )
 }

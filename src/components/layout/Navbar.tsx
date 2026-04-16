@@ -4,10 +4,14 @@ import Link from 'next/link'
 import { useState, useEffect } from 'react'
 import { Menu, X } from 'lucide-react'
 import { DevyLogo } from '@/components/shared/DevyLogo'
+import { LanguageSwitcher } from '@/components/shared/LanguageSwitcher'
+import { useLanguage } from '@/components/shared/LanguageProvider'
 import { cn } from '@/lib/utils'
-import { LANDING_NAV_LINKS } from '@/lib/constants'
+import type { Lang } from '@/lib/i18n'
 
-export function Navbar() {
+// eslint-disable-next-line @typescript-eslint/no-unused-vars
+export function Navbar({ lang: _lang }: { lang?: Lang }) {
+  const { t } = useLanguage()
   const [scrolled, setScrolled] = useState(false)
   const [mobileOpen, setMobileOpen] = useState(false)
 
@@ -16,6 +20,12 @@ export function Navbar() {
     window.addEventListener('scroll', handler, { passive: true })
     return () => window.removeEventListener('scroll', handler)
   }, [])
+
+  const navLinks = [
+    { label: t.nav.howItWorks,  href: '#how-it-works' },
+    { label: t.nav.whoItsFor,   href: '#who-its-for' },
+    { label: t.nav.trustSafety, href: '#trust' },
+  ]
 
   return (
     <header
@@ -33,7 +43,7 @@ export function Navbar() {
 
         {/* Desktop nav */}
         <nav className="hidden md:flex items-center gap-8" aria-label="Main navigation">
-          {LANDING_NAV_LINKS.map((link) => (
+          {navLinks.map((link) => (
             <a
               key={link.href}
               href={link.href}
@@ -45,35 +55,39 @@ export function Navbar() {
         </nav>
 
         <div className="hidden md:flex items-center gap-3">
+          <LanguageSwitcher variant="pill" />
           <Link
             href="/login"
             className="px-4 py-2 text-body-sm font-medium text-ink-secondary hover:text-ink transition-colors duration-150 focus-ring rounded-md"
           >
-            Log in
+            {t.nav.logIn}
           </Link>
           <Link
             href="/signup"
             className="px-5 py-2 text-body-sm font-medium bg-sage-500 text-white rounded-pill shadow-button hover:bg-sage-600 hover:shadow-button-hover active:scale-[0.98] transition-colors duration-150 focus-ring"
             style={{ transitionProperty: 'background-color, box-shadow' }}
           >
-            Get started
+            {t.nav.getStarted}
           </Link>
         </div>
 
         {/* Mobile menu button */}
-        <button
-          onClick={() => setMobileOpen(!mobileOpen)}
-          className="md:hidden p-2 rounded-md text-ink-secondary hover:text-ink hover:bg-raised transition-colors duration-150 focus-ring"
-          aria-label="Toggle menu"
-        >
-          {mobileOpen ? <X size={20} /> : <Menu size={20} />}
-        </button>
+        <div className="md:hidden flex items-center gap-2">
+          <LanguageSwitcher variant="minimal" />
+          <button
+            onClick={() => setMobileOpen(!mobileOpen)}
+            className="p-2 rounded-md text-ink-secondary hover:text-ink hover:bg-raised transition-colors duration-150 focus-ring"
+            aria-label="Toggle menu"
+          >
+            {mobileOpen ? <X size={20} /> : <Menu size={20} />}
+          </button>
+        </div>
       </div>
 
       {/* Mobile menu */}
       {mobileOpen && (
         <div className="md:hidden bg-canvas border-t border-border px-6 py-4 flex flex-col gap-3">
-          {LANDING_NAV_LINKS.map((link) => (
+          {navLinks.map((link) => (
             <a
               key={link.href}
               href={link.href}
@@ -85,10 +99,10 @@ export function Navbar() {
           ))}
           <div className="flex flex-col gap-2 pt-2 border-t border-border">
             <Link href="/login" className="text-center py-2.5 text-body-sm font-medium text-ink-secondary border border-border rounded-card hover:bg-raised transition-colors duration-150">
-              Log in
+              {t.nav.logIn}
             </Link>
             <Link href="/signup" className="text-center py-2.5 text-body-sm font-medium bg-sage-500 text-white rounded-pill shadow-button hover:bg-sage-600 transition-colors duration-150">
-              Get started
+              {t.nav.getStarted}
             </Link>
           </div>
         </div>

@@ -6,9 +6,17 @@ import { MessageBubble } from './MessageBubble'
 import { TypingIndicator } from './TypingIndicator'
 import { ExamplePrompts } from './ExamplePrompts'
 import { ChatInput } from './ChatInput'
+import { DailyLimitModal } from './DailyLimitModal'
 import { insertMessage, createConversation } from '@/lib/actions/conversations'
+import { useLanguage } from '@/components/shared/LanguageProvider'
 import type { Message, Conversation, Source } from '@/lib/types'
 import { ArrowUpRight, PanelLeft } from 'lucide-react'
+
+interface DailyLimitState {
+  limit: number
+  planId: string
+  resetTimeText: string
+}
 
 interface ChatAreaProps {
   conversationId: string | null
@@ -33,16 +41,16 @@ export function ChatArea({
   onMessageSent,
   onShowConversations,
 }: ChatAreaProps) {
+  const { t } = useLanguage()
   const [messages, setMessages] = useState<Message[]>(initialMessages)
   const [input, setInput] = useState('')
-  // true while waiting for server (retrieval / PubMed / first token)
   const [isTyping, setIsTyping] = useState(false)
-  // ID of the message currently being streamed — null when idle
   const [streamingId, setStreamingId] = useState<string | null>(null)
   const [convoId, setConvoId] = useState<string | null>(initialConversationId)
+  const [dailyLimit, setDailyLimit] = useState<DailyLimitState | null>(null)
+  const [showLimitModal, setShowLimitModal] = useState(false)
   const bottomRef = useRef<HTMLDivElement>(null)
   const selfCreatedId = useRef<string | null>(null)
-  // Track message count so we only auto-scroll on new messages, not token updates
   const prevMessageCountRef = useRef(messages.length)
 
   // Sync when parent switches to a different conversation
@@ -56,7 +64,7 @@ export function ChatArea({
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [initialConversationId])
 
-  // Auto-scroll: only when a new message is added or typing starts — not on token updates
+  // Auto-scroll: only when a new message is added or typing starts
   useEffect(() => {
     const newCount = messages.length
     if (newCount > prevMessageCountRef.current || isTyping) {
@@ -65,8 +73,16 @@ export function ChatArea({
     prevMessageCountRef.current = newCount
   }, [messages.length, isTyping])
 
+  const isInputDisabled = isTyping || !!streamingId || !!dailyLimit
+
   const handleSend = async () => {
-    if (!input.trim() || isTyping || streamingId) return
+    if (!input.trim() || isInputDisabled) return
+
+    // If limit was previously hit (e.g., resumed session), show modal
+    if (dailyLimit) {
+      setShowLimitModal(true)
+      return
+    }
 
     const content = input.trim()
     setInput('')
@@ -109,10 +125,28 @@ export function ChatArea({
 
       if (!res.ok || !res.body) {
         const err = await res.json().catch(() => ({}))
+
+        // Handle daily limit specially
+        if (err.code === 'DAILY_LIMIT_REACHED') {
+          // Calculate human-readable reset time
+          const retryAfterSecs = parseInt(res.headers.get('Retry-After') ?? '0', 10)
+          const resetDate = new Date(Date.now() + retryAfterSecs * 1000)
+          const resetTimeText = resetDate.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })
+
+          setDailyLimit({
+            limit: err.limit ?? 5,
+            planId: err.planId ?? 'free',
+            resetTimeText,
+          })
+          setShowLimitModal(true)
+          setIsTyping(false)
+          return
+        }
+
         throw new Error(err.error ?? `HTTP ${res.status}`)
       }
 
-      // ── Start streaming ──────────────────────────────────────────────────
+      // Start streaming
       const aiMsgId = `ai-${Date.now()}`
       setMessages(prev => [...prev, {
         id: aiMsgId,
@@ -160,7 +194,6 @@ export function ChatArea({
               throw new Error(event.message)
             }
           } catch (parseErr) {
-            // Skip malformed SSE lines
             if (parseErr instanceof SyntaxError) continue
             throw parseErr
           }
@@ -169,7 +202,6 @@ export function ChatArea({
 
       setStreamingId(null)
 
-      // Persist AI message to DB
       const finalContent = accumulatedContent.trim() ||
         "I wasn't able to generate a response. Please try again."
 
@@ -181,7 +213,6 @@ export function ChatArea({
         notFoundNote,
       })
 
-      // Swap temp ID for the real DB-persisted ID and attach sources
       setMessages(prev =>
         prev.map(m =>
           m.id === aiMsgId
@@ -197,7 +228,7 @@ export function ChatArea({
         id: `err-${Date.now()}`,
         conversationId: activeConvoId!,
         role: 'assistant',
-        content: 'Something went wrong while generating a response. Please try again.',
+        content: t.chat.error,
         createdAt: new Date().toISOString(),
       }])
     } finally {
@@ -209,10 +240,19 @@ export function ChatArea({
 
   return (
     <div className="flex-1 flex flex-col min-w-0 h-full">
+      {/* Daily limit modal */}
+      {showLimitModal && dailyLimit && (
+        <DailyLimitModal
+          limit={dailyLimit.limit}
+          planId={dailyLimit.planId}
+          resetTimeText={dailyLimit.resetTimeText}
+          onClose={() => setShowLimitModal(false)}
+        />
+      )}
+
       {/* Chat header */}
       <div className="h-14 flex items-center justify-between px-5 border-b border-border flex-shrink-0 bg-canvas">
         <div className="flex items-center gap-3 min-w-0">
-          {/* Mobile conversations toggle — hidden on desktop */}
           {onShowConversations && (
             <button
               onClick={onShowConversations}
@@ -236,7 +276,7 @@ export function ChatArea({
               {childName.charAt(0)}
             </div>
             <span className="text-body-xs text-dblue-700 font-medium">
-              Conversation about <span className="font-semibold">{childName}</span>
+              {t.chat.conversationAbout} <span className="font-semibold">{childName}</span>
             </span>
           </div>
           <Link
@@ -244,7 +284,7 @@ export function ChatArea({
             className="flex items-center gap-1 text-body-xs text-dblue-600 hover:text-dblue-800 font-medium focus-ring rounded flex-shrink-0"
             style={{ transitionProperty: 'color', transitionDuration: '150ms' }}
           >
-            View profile
+            {t.chat.viewProfile}
             <ArrowUpRight size={12} strokeWidth={2} />
           </Link>
         </div>
@@ -286,7 +326,9 @@ export function ChatArea({
         value={input}
         onChange={setInput}
         onSend={handleSend}
-        disabled={isTyping || !!streamingId}
+        disabled={isInputDisabled}
+        limitReached={!!dailyLimit}
+        onLimitClick={() => setShowLimitModal(true)}
       />
     </div>
   )
