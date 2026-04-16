@@ -5,6 +5,8 @@ import { PageTransition } from '@/components/shared/PageTransition'
 import { getProfile } from '@/lib/actions/profile'
 import { initials } from '@/lib/utils'
 import { CURRENT_CONSENT_VERSION } from '@/lib/types'
+import { getLang } from '@/lib/i18n/server'
+import { getT } from '@/lib/i18n'
 
 export default async function DashboardLayout({ children }: { children: React.ReactNode }) {
   const profile = await getProfile()
@@ -18,8 +20,11 @@ export default async function DashboardLayout({ children }: { children: React.Re
     redirect('/login')
   }
 
+  const lang = await getLang()
+  const t = getT(lang)
   const hour = new Date().getHours()
   const timeOfDay = hour < 12 ? 'morning' : hour < 17 ? 'afternoon' : 'evening'
+  const greetingText = t.dashboard.greeting[timeOfDay as 'morning' | 'afternoon' | 'evening']
   const firstName = profile.name.split(' ')[0]
 
   const avatarBg: Record<string, string> = {
@@ -50,7 +55,7 @@ export default async function DashboardLayout({ children }: { children: React.Re
 
           {/* Desktop: greeting */}
           <p className="hidden lg:block text-body-sm text-ink-secondary">
-            Good {timeOfDay},{' '}
+            {greetingText},{' '}
             <span className="font-semibold text-ink">{firstName}</span>
           </p>
 

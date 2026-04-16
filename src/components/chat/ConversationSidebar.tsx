@@ -3,6 +3,7 @@
 import { useState, useRef } from 'react'
 import { Search, Plus, Pin, PinOff, MessageCircle, User, MoreHorizontal, Pencil, Trash2 } from 'lucide-react'
 import { formatDate, truncate, cn } from '@/lib/utils'
+import { useLanguage } from '@/components/shared/LanguageProvider'
 import type { Conversation } from '@/lib/types'
 
 interface ConversationSidebarProps {
@@ -30,6 +31,8 @@ export function ConversationSidebar({
   hideHeader = false,
   className = '',
 }: ConversationSidebarProps) {
+  const { t } = useLanguage()
+  const tc = t.chatUi
   const [query, setQuery] = useState('')
 
   const filtered = conversations.filter(c =>
@@ -45,12 +48,12 @@ export function ConversationSidebar({
       {/* Header */}
       {!hideHeader && (
         <div className="px-4 pt-4 pb-3 flex items-center justify-between flex-shrink-0">
-          <h2 className="font-display text-[1.05rem] font-semibold text-ink">Conversations</h2>
+          <h2 className="font-display text-[1.05rem] font-semibold text-ink">{tc.sidebarTitle}</h2>
           <button
             onClick={onNewConversation}
             className="w-7 h-7 rounded-full bg-sage-500 text-white flex items-center justify-center hover:bg-sage-600 active:scale-95 focus-ring"
             style={{ transitionProperty: 'background-color, transform', transitionDuration: '150ms' }}
-            aria-label="New conversation"
+            aria-label={t.chat.newConversation}
           >
             <Plus size={14} strokeWidth={2.5} />
           </button>
@@ -65,7 +68,7 @@ export function ConversationSidebar({
             type="search"
             value={query}
             onChange={e => setQuery(e.target.value)}
-            placeholder="Search…"
+            placeholder={tc.searchPlaceholder}
             className="w-full pl-8 pr-3 py-1.5 bg-raised border border-border rounded-pill text-body-xs placeholder:text-ink-tertiary focus:outline-none focus:border-sage-400 focus:shadow-input-focus"
             style={{ transitionProperty: 'border-color, box-shadow', transitionDuration: '150ms' }}
           />
@@ -77,7 +80,7 @@ export function ConversationSidebar({
         {pinned.length > 0 && (
           <>
             <p className="px-2 pt-1 pb-1.5 text-body-xs font-semibold text-ink-tertiary uppercase tracking-wider flex items-center gap-1">
-              <Pin size={10} strokeWidth={2.5} /> Pinned
+              <Pin size={10} strokeWidth={2.5} /> {tc.pinned}
             </p>
             {pinned.map(c => (
               <ConvoItem
@@ -96,7 +99,7 @@ export function ConversationSidebar({
 
         {recents.length > 0 && (
           <>
-            <p className="px-2 pt-1 pb-1.5 text-body-xs font-semibold text-ink-tertiary uppercase tracking-wider">Recent</p>
+            <p className="px-2 pt-1 pb-1.5 text-body-xs font-semibold text-ink-tertiary uppercase tracking-wider">{tc.recent}</p>
             {recents.map(c => (
               <ConvoItem
                 key={c.id}
@@ -113,19 +116,19 @@ export function ConversationSidebar({
 
         {filtered.length === 0 && conversations.length === 0 && (
           <div className="text-center py-8 px-3">
-            <p className="text-body-xs text-ink-tertiary mb-3">No conversations yet.</p>
+            <p className="text-body-xs text-ink-tertiary mb-3">{tc.noConversationsYet}</p>
             <button
               onClick={onNewConversation}
               className="text-body-xs text-sage-600 hover:text-sage-700 font-medium"
               style={{ transitionProperty: 'color', transitionDuration: '150ms' }}
             >
-              Select a profile to start →
+              {tc.selectToStart}
             </button>
           </div>
         )}
 
         {filtered.length === 0 && conversations.length > 0 && (
-          <p className="text-center text-body-xs text-ink-tertiary py-8">No conversations match your search.</p>
+          <p className="text-center text-body-xs text-ink-tertiary py-8">{tc.noSearchResults}</p>
         )}
       </div>
     </aside>
@@ -147,6 +150,8 @@ function ConvoItem({
   onPin?: (id: string, isPinned: boolean) => void
   onDelete?: (id: string) => void
 }) {
+  const { t } = useLanguage()
+  const tc = t.chatUi
   const [menuOpen, setMenuOpen] = useState(false)
   const [renaming, setRenaming] = useState(false)
   const [confirming, setConfirming] = useState(false)
@@ -244,21 +249,21 @@ function ConvoItem({
           <div className="absolute right-0 top-full mt-0.5 bg-white rounded-card shadow-floating border border-border py-1 z-20 min-w-[150px]">
             {confirming ? (
               <div className="px-3 py-2">
-                <p className="text-body-xs text-ink font-medium mb-2">Delete this conversation?</p>
+                <p className="text-body-xs text-ink font-medium mb-2">{tc.deleteConversation}</p>
                 <div className="flex gap-2">
                   <button
                     onClick={() => { setMenuOpen(false); setConfirming(false); onDelete?.(convo.id) }}
                     className="flex-1 px-2 py-1 text-body-xs font-medium bg-danger text-white rounded-card hover:bg-danger/90"
                     style={{ transitionProperty: 'background-color', transitionDuration: '150ms' }}
                   >
-                    Delete
+                    {t.common.delete}
                   </button>
                   <button
                     onClick={() => setConfirming(false)}
                     className="flex-1 px-2 py-1 text-body-xs font-medium bg-raised text-ink rounded-card hover:bg-border/60"
                     style={{ transitionProperty: 'background-color', transitionDuration: '150ms' }}
                   >
-                    Cancel
+                    {t.common.cancel}
                   </button>
                 </div>
               </div>
@@ -270,7 +275,7 @@ function ConvoItem({
                   style={{ transitionProperty: 'background-color, color', transitionDuration: '150ms' }}
                 >
                   <Pencil size={13} />
-                  Rename
+                  {tc.rename}
                 </button>
                 <button
                   onClick={() => { setMenuOpen(false); onPin?.(convo.id, !convo.isPinned) }}
@@ -278,7 +283,7 @@ function ConvoItem({
                   style={{ transitionProperty: 'background-color, color', transitionDuration: '150ms' }}
                 >
                   {convo.isPinned ? <PinOff size={13} /> : <Pin size={13} />}
-                  {convo.isPinned ? 'Unpin' : 'Pin'}
+                  {convo.isPinned ? tc.unpin : tc.pin}
                 </button>
                 <button
                   onClick={() => setConfirming(true)}
@@ -286,7 +291,7 @@ function ConvoItem({
                   style={{ transitionProperty: 'background-color', transitionDuration: '150ms' }}
                 >
                   <Trash2 size={13} />
-                  Delete
+                  {t.common.delete}
                 </button>
               </>
             )}

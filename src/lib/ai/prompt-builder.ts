@@ -117,8 +117,14 @@ export function buildSystemPrompt(
   childName?: string,
   child?: Child | null,
   userRole?: UserRole | string,
+  lang?: string,
 ): string {
   let prompt = SYSTEM_PROMPT_BASE
+
+  // ── Language instruction ─────────────────────────────────────────────────
+  if (lang === 'fr') {
+    prompt += `\n\n## LANGUAGE\n\nThe user has selected **French** as their language. You MUST respond entirely in French (Français) for all messages, regardless of the language in which the question is asked. Research context below may be in English — translate findings naturally into French. Do not switch to English under any circumstances.`
+  }
 
   // ── User role context ────────────────────────────────────────────────────
   if (userRole) {

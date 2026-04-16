@@ -3,6 +3,7 @@
 import Link from 'next/link'
 import { MessageCircle, Plus, Users, Sparkles } from 'lucide-react'
 import { ageFromDob } from '@/lib/utils'
+import { useLanguage } from '@/components/shared/LanguageProvider'
 import type { Child } from '@/lib/types'
 
 interface ProfileSelectorProps {
@@ -30,6 +31,8 @@ export function ProfileSelector({
   onSelectChild,
   onGeneral,
 }: ProfileSelectorProps) {
+  const { t } = useLanguage()
+  const tc = t.chatUi
   return (
     <div className="flex-1 flex flex-col items-center justify-center p-8 overflow-y-auto">
       <div className="w-full max-w-xl">
@@ -40,11 +43,10 @@ export function ProfileSelector({
             <Users size={22} className="text-sage-600" strokeWidth={1.75} />
           </div>
           <h2 className="font-display text-display-sm font-semibold text-ink tracking-tight mb-2">
-            Who are we supporting today?
+            {tc.selectorTitle}
           </h2>
           <p className="text-body-sm text-ink-secondary max-w-sm mx-auto leading-relaxed">
-            Select a {nounSingular.toLowerCase()} profile to keep conversations
-            organised and grounded in their context — or ask a general question.
+            {tc.selectorDesc.replace('{noun}', nounSingular.toLowerCase())}
           </p>
         </div>
 
@@ -90,7 +92,7 @@ export function ProfileSelector({
                   <div className="flex items-center gap-1.5 flex-shrink-0 px-3 py-1.5 rounded-card bg-sage-50 text-sage-700 group-hover:bg-sage-500 group-hover:text-white border border-sage-200 group-hover:border-sage-500"
                     style={{ transitionProperty: 'background-color, color, border-color', transitionDuration: '150ms' }}>
                     <MessageCircle size={13} strokeWidth={2} />
-                    <span className="text-body-xs font-semibold">Chat</span>
+                    <span className="text-body-xs font-semibold">{tc.chat}</span>
                   </div>
                 </button>
               )
@@ -100,8 +102,8 @@ export function ProfileSelector({
           /* Empty state — no profiles added yet */
           <div className="text-center py-10 px-6 bg-surface rounded-card-lg border border-border mb-3">
             <p className="text-body-sm text-ink-secondary mb-4 leading-relaxed">
-              No {nounPlural.toLowerCase()} added yet.
-              <br />Add a profile first to start a contextual conversation.
+              {tc.noProfilesAdded.replace('{noun}', nounPlural.toLowerCase())}
+              <br />{tc.addProfileFirst}
             </p>
             <Link
               href="/children"
@@ -127,14 +129,14 @@ export function ProfileSelector({
           <div className="flex-1 min-w-0">
             <p className="font-semibold text-ink text-body-sm group-hover:text-dblue-800 leading-tight"
               style={{ transitionProperty: 'color', transitionDuration: '150ms' }}>
-              General question
+              {tc.generalQuestion}
             </p>
-            <p className="text-body-xs text-ink-tertiary mt-0.5">Ask without linking to a specific profile</p>
+            <p className="text-body-xs text-ink-tertiary mt-0.5">{tc.askWithoutProfile}</p>
           </div>
           <div className="flex items-center gap-1.5 flex-shrink-0 px-3 py-1.5 rounded-card bg-dblue-50 text-dblue-600 group-hover:bg-dblue-500 group-hover:text-white border border-dblue-200 group-hover:border-dblue-500"
             style={{ transitionProperty: 'background-color, color, border-color', transitionDuration: '150ms' }}>
             <MessageCircle size={13} strokeWidth={2} />
-            <span className="text-body-xs font-semibold">Ask</span>
+            <span className="text-body-xs font-semibold">{tc.ask}</span>
           </div>
         </button>
 

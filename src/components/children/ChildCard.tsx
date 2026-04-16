@@ -3,6 +3,7 @@
 import Link from 'next/link'
 import { MessageCircle, ArrowRight } from 'lucide-react'
 import { ageFromDob } from '@/lib/utils'
+import { useLanguage } from '@/components/shared/LanguageProvider'
 import type { Child } from '@/lib/types'
 
 const avatarBgMap: Record<string, string> = {
@@ -22,6 +23,8 @@ interface ChildCardProps {
 }
 
 export function ChildCard({ child }: ChildCardProps) {
+  const { t } = useLanguage()
+  const tc = t.children
   const avatarClass = avatarBgMap[child.avatarColor] ?? avatarBgMap.sage
   const labelClass = labelBgMap[child.avatarColor] ?? labelBgMap.sage
   const initial = child.name.charAt(0)
@@ -56,7 +59,7 @@ export function ChildCard({ child }: ChildCardProps) {
               {child.name}
             </h3>
             <p className="text-body-xs text-ink-secondary mt-0.5">
-              {age !== null ? `Age ${age}` : 'Age not set'}
+              {age !== null ? `${tc.ageLabel} ${age}` : tc.ageNotSet}
               {child.contextLabels[0] ? ` · ${child.contextLabels[0]}` : ''}
             </p>
           </div>
@@ -81,7 +84,7 @@ export function ChildCard({ child }: ChildCardProps) {
         {/* Support needs preview */}
         {child.supportNeeds.length > 0 && (
           <div className="mt-3 pt-3 border-t border-border/50">
-            <p className="text-body-xs text-ink-tertiary uppercase tracking-wider font-semibold mb-1.5">Support needs</p>
+            <p className="text-body-xs text-ink-tertiary uppercase tracking-wider font-semibold mb-1.5">{tc.supportNeeds}</p>
             <ul className="space-y-1">
               {child.supportNeeds.slice(0, 2).map((need) => (
                 <li key={need} className="flex items-start gap-1.5">
@@ -101,7 +104,7 @@ export function ChildCard({ child }: ChildCardProps) {
           className="flex-1 flex items-center justify-center gap-1.5 px-3 py-2 rounded-card text-body-xs font-semibold text-ink-secondary hover:text-ink hover:bg-raised border border-transparent hover:border-border focus-ring"
           style={{ transitionProperty: 'color, background-color, border-color', transitionDuration: '150ms' }}
         >
-          View Profile
+          {tc.viewProfile}
           <ArrowRight size={12} strokeWidth={2} />
         </Link>
         <Link
@@ -110,7 +113,7 @@ export function ChildCard({ child }: ChildCardProps) {
           style={{ transitionProperty: 'background-color, transform', transitionDuration: '150ms' }}
         >
           <MessageCircle size={12} strokeWidth={2} />
-          Ask Devy
+          {tc.askDevy}
         </Link>
       </div>
     </div>

@@ -244,6 +244,9 @@ export async function POST(request: NextRequest) {
 
   const { message, conversationId, childId, childName } = parsed.data
 
+  // ── Read language preference ───────────────────────────────────────────────
+  const lang = cookieStore.get('devy-lang')?.value === 'fr' ? 'fr' : 'en'
+
   // ── Fetch user role + child profile in parallel ────────────────────────────
   const [profileResult, childResult] = await Promise.all([
     supabase.from('profiles').select('role').eq('id', user.id).single(),
@@ -294,13 +297,16 @@ export async function POST(request: NextRequest) {
 
   // ── Short-circuit: purely conversational (greetings, thanks, etc.) ─────────
   if (isConversational(message)) {
+    const conversationalPrompt = lang === 'fr'
+      ? `${CONVERSATIONAL_SYSTEM_PROMPT}\n\nYou MUST respond in French (Français).`
+      : CONVERSATIONAL_SYSTEM_PROMPT
     return streamSSE(
       {
         model: 'gpt-4o',
         temperature: 0.5,
         max_tokens: 150,
         messages: [
-          { role: 'system', content: CONVERSATIONAL_SYSTEM_PROMPT },
+          { role: 'system', content: conversationalPrompt },
           ...history,
           { role: 'user', content: message },
         ],
@@ -320,7 +326,7 @@ export async function POST(request: NextRequest) {
   const chunks = await searchChunks(retrievalQuery, { topK: 8 })
 
   // ── Build system prompt with full child profile + user role ───────────────
-  const basePrompt = buildSystemPrompt(childName, child, userRole)
+  const basePrompt = buildSystemPrompt(childName, child, userRole, lang)
 
   let fullSystem: string
   let sources: Source[] = []

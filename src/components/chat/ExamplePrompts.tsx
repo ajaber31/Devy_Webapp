@@ -3,6 +3,7 @@
 import { useState } from 'react'
 import { Sparkles } from 'lucide-react'
 import { EXAMPLE_PROMPTS, CHILD_EXAMPLE_PROMPTS } from '@/lib/constants'
+import { useLanguage } from '@/components/shared/LanguageProvider'
 
 interface ExamplePromptsProps {
   onSelect: (prompt: string) => void
@@ -13,6 +14,9 @@ const pickRandom = (pool: string[], n: number) =>
   [...pool].sort(() => Math.random() - 0.5).slice(0, n)
 
 export function ExamplePrompts({ onSelect, childName }: ExamplePromptsProps) {
+  const { t } = useLanguage()
+  const tc = t.chatUi
+
   const [prompts] = useState(() => {
     const pool = childName ? CHILD_EXAMPLE_PROMPTS(childName) : EXAMPLE_PROMPTS
     return pickRandom(pool, 4)
@@ -24,12 +28,10 @@ export function ExamplePrompts({ onSelect, childName }: ExamplePromptsProps) {
         <Sparkles size={22} className="text-sage-600" strokeWidth={1.75} />
       </div>
       <h2 className="font-display text-display-sm font-semibold text-ink text-center mb-2 tracking-tight">
-        {childName ? `Asking about ${childName}` : 'How can I help today?'}
+        {childName ? `${tc.askingAbout} ${childName}` : tc.helpToday}
       </h2>
       <p className="text-body-sm text-ink-secondary text-center max-w-md mb-8 leading-relaxed">
-        {childName
-          ? `Every answer comes from Devy's approved Knowledge Base and cites its source.`
-          : `Ask a question about a child's needs, routines, support strategies, or development. Every answer cites its source.`}
+        {childName ? tc.sourceNoteChild : tc.sourceNoteGeneral}
       </p>
 
       <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 w-full max-w-xl">

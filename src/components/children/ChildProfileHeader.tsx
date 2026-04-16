@@ -1,6 +1,9 @@
+'use client'
+
 import Link from 'next/link'
 import { MessageCircle, ArrowRight, Trash2 } from 'lucide-react'
 import { ageFromDob } from '@/lib/utils'
+import { useLanguage } from '@/components/shared/LanguageProvider'
 import type { Child } from '@/lib/types'
 
 const avatarBgMap: Record<string, string> = {
@@ -22,6 +25,8 @@ interface ChildProfileHeaderProps {
 }
 
 export function ChildProfileHeader({ child, onEdit, onDelete }: ChildProfileHeaderProps) {
+  const { t } = useLanguage()
+  const tc = t.children
   const avatarClass = avatarBgMap[child.avatarColor] ?? avatarBgMap.sage
   const labelClass = labelBgMap[child.avatarColor] ?? labelBgMap.sage
   const initial = child.name.charAt(0)
@@ -42,8 +47,8 @@ export function ChildProfileHeader({ child, onEdit, onDelete }: ChildProfileHead
               {child.name}
             </h1>
             <p className="text-body-sm text-ink-secondary mt-1">
-              {age !== null ? `Age ${age}` : 'Age not set'}
-              {child.dateOfBirth ? ` · Born ${new Date(child.dateOfBirth).toLocaleDateString('en-CA', { month: 'long', day: 'numeric', year: 'numeric' })}` : ''}
+              {age !== null ? `${tc.ageLabel} ${age}` : tc.ageNotSet}
+              {child.dateOfBirth ? ` · ${tc.bornLabel} ${new Date(child.dateOfBirth).toLocaleDateString('en-CA', { month: 'long', day: 'numeric', year: 'numeric' })}` : ''}
             </p>
 
             {/* Context label badges */}
@@ -66,8 +71,8 @@ export function ChildProfileHeader({ child, onEdit, onDelete }: ChildProfileHead
               onClick={onDelete}
               className="p-2 rounded-card text-ink-tertiary hover:text-danger hover:bg-danger/5 border border-transparent hover:border-danger/20 focus-ring"
               style={{ transitionProperty: 'color, background-color, border-color', transitionDuration: '150ms' }}
-              aria-label="Delete profile"
-              title="Delete profile"
+              aria-label={tc.deleteProfile}
+              title={tc.deleteProfile}
             >
               <Trash2 size={15} strokeWidth={1.75} />
             </button>
@@ -78,7 +83,7 @@ export function ChildProfileHeader({ child, onEdit, onDelete }: ChildProfileHead
               className="flex items-center gap-1.5 px-4 py-2 rounded-card text-body-sm font-medium text-ink-secondary hover:text-ink hover:bg-raised border border-border focus-ring"
               style={{ transitionProperty: 'color, background-color', transitionDuration: '150ms' }}
             >
-              Edit profile
+              {tc.editProfile}
             </button>
           )}
           <Link
@@ -87,7 +92,7 @@ export function ChildProfileHeader({ child, onEdit, onDelete }: ChildProfileHead
             style={{ transitionProperty: 'background-color, transform', transitionDuration: '150ms' }}
           >
             <MessageCircle size={15} strokeWidth={2} />
-            Ask Devy about {child.name.split(' ')[0]}
+            {tc.askDevyAbout} {child.name.split(' ')[0]}
             <ArrowRight size={13} strokeWidth={2.5} />
           </Link>
         </div>

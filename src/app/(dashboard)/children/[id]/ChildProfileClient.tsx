@@ -8,6 +8,7 @@ import { ChildProfileHeader } from '@/components/children/ChildProfileHeader'
 import { EditChildModal } from '@/components/children/EditChildModal'
 import { deleteChild } from '@/lib/actions/children'
 import { formatDate, ageFromDob } from '@/lib/utils'
+import { useLanguage } from '@/components/shared/LanguageProvider'
 import type { Child, Conversation } from '@/lib/types'
 import type { RoleTerminology } from '@/lib/role-terminology'
 
@@ -18,6 +19,8 @@ interface ChildProfileClientProps {
 }
 
 export function ChildProfileClient({ child: initialChild, conversations, terms }: ChildProfileClientProps) {
+  const { t } = useLanguage()
+  const tc = t.children
   const [child, setChild] = useState(initialChild)
   const [editOpen, setEditOpen] = useState(false)
   const [deleteConfirm, setDeleteConfirm] = useState(false)
@@ -42,14 +45,14 @@ export function ChildProfileClient({ child: initialChild, conversations, terms }
   const sections = [
     {
       id: 'support',
-      label: 'Support Needs',
+      label: tc.sections.supportNeeds,
       icon: Heart,
       items: child.supportNeeds,
       chipClass: 'bg-sage-50 text-sage-700 border border-sage-200',
     },
     {
       id: 'strengths',
-      label: 'Strengths & Interests',
+      label: tc.sections.strengthsInterests,
       icon: Star,
       items: [...child.strengths, ...child.interests],
       chipClass: 'bg-dblue-50 text-dblue-700 border border-dblue-200',
@@ -65,7 +68,7 @@ export function ChildProfileClient({ child: initialChild, conversations, terms }
         style={{ transitionProperty: 'color', transitionDuration: '150ms' }}
       >
         <ChevronLeft size={14} strokeWidth={2} />
-        Back to {terms.nounPlural}
+        {tc.backTo} {terms.nounPlural}
       </Link>
 
       {/* Profile header */}
@@ -76,8 +79,8 @@ export function ChildProfileClient({ child: initialChild, conversations, terms }
         <div className="bg-white rounded-card-lg shadow-card border border-danger/30 px-5 py-4 flex items-start gap-3">
           <AlertCircle size={16} className="text-danger flex-shrink-0 mt-0.5" strokeWidth={2} />
           <div className="flex-1 min-w-0">
-            <p className="text-body-sm font-medium text-ink mb-0.5">Delete {child.name}&apos;s profile?</p>
-            <p className="text-body-xs text-ink-secondary mb-3">This will permanently remove the profile and all associated data. Conversations linked to this profile will not be deleted.</p>
+            <p className="text-body-sm font-medium text-ink mb-0.5">{tc.deleteConfirmTitle.replace('{name}', child.name)}</p>
+            <p className="text-body-xs text-ink-secondary mb-3">{tc.deleteConfirmDesc}</p>
             {deleteError && <p className="text-body-xs text-danger mb-2">{deleteError}</p>}
             <div className="flex items-center gap-2">
               <button
@@ -86,7 +89,7 @@ export function ChildProfileClient({ child: initialChild, conversations, terms }
                 className="px-4 py-1.5 bg-danger text-white text-body-xs font-medium rounded-card hover:bg-danger/90 focus-ring disabled:opacity-60"
                 style={{ transitionProperty: 'background-color', transitionDuration: '150ms' }}
               >
-                {isDeleting ? 'Deleting…' : 'Yes, delete'}
+                {isDeleting ? tc.deleting : tc.confirmDelete}
               </button>
               <button
                 onClick={() => { setDeleteConfirm(false); setDeleteError(null) }}
@@ -94,7 +97,7 @@ export function ChildProfileClient({ child: initialChild, conversations, terms }
                 className="px-4 py-1.5 bg-raised text-ink-secondary text-body-xs font-medium rounded-card hover:bg-border/60 focus-ring"
                 style={{ transitionProperty: 'background-color', transitionDuration: '150ms' }}
               >
-                Cancel
+                {t.common.cancel}
               </button>
             </div>
           </div>
@@ -121,7 +124,7 @@ export function ChildProfileClient({ child: initialChild, conversations, terms }
                   ))}
                 </div>
               ) : (
-                <p className="text-body-xs text-ink-tertiary">None added yet.</p>
+                <p className="text-body-xs text-ink-tertiary">{tc.noneAdded}</p>
               )}
             </div>
           ))}
@@ -130,7 +133,7 @@ export function ChildProfileClient({ child: initialChild, conversations, terms }
           <div className="bg-white rounded-card-lg shadow-card border border-border/50 px-5 py-4">
             <div className="flex items-center gap-2 mb-3">
               <Target size={15} strokeWidth={1.75} className="text-ink-secondary" />
-              <h3 className="font-display text-[0.95rem] font-semibold text-ink">Goals &amp; Focus Areas</h3>
+              <h3 className="font-display text-[0.95rem] font-semibold text-ink">{tc.sections.goals}</h3>
             </div>
             {child.goals.length > 0 ? (
               <ul className="space-y-2">
@@ -142,7 +145,7 @@ export function ChildProfileClient({ child: initialChild, conversations, terms }
                 ))}
               </ul>
             ) : (
-              <p className="text-body-xs text-ink-tertiary">No goals added yet.</p>
+              <p className="text-body-xs text-ink-tertiary">{tc.noGoals}</p>
             )}
           </div>
 
@@ -150,7 +153,7 @@ export function ChildProfileClient({ child: initialChild, conversations, terms }
           <div className="bg-white rounded-card-lg shadow-card border border-border/50 px-5 py-4">
             <div className="flex items-center gap-2 mb-3">
               <Clock size={15} strokeWidth={1.75} className="text-ink-secondary" />
-              <h3 className="font-display text-[0.95rem] font-semibold text-ink">Routines</h3>
+              <h3 className="font-display text-[0.95rem] font-semibold text-ink">{tc.sections.routines}</h3>
             </div>
             {child.routines.length > 0 ? (
               <ol className="space-y-2">
@@ -164,7 +167,7 @@ export function ChildProfileClient({ child: initialChild, conversations, terms }
                 ))}
               </ol>
             ) : (
-              <p className="text-body-xs text-ink-tertiary">No routines added yet.</p>
+              <p className="text-body-xs text-ink-tertiary">{tc.noRoutines}</p>
             )}
           </div>
 
@@ -173,7 +176,7 @@ export function ChildProfileClient({ child: initialChild, conversations, terms }
             <div className="bg-white rounded-card-lg shadow-card border border-border/50 px-5 py-4">
               <div className="flex items-center gap-2 mb-3">
                 <FileText size={15} strokeWidth={1.75} className="text-ink-secondary" />
-                <h3 className="font-display text-[0.95rem] font-semibold text-ink">Notes</h3>
+                <h3 className="font-display text-[0.95rem] font-semibold text-ink">{tc.sections.notes}</h3>
               </div>
               <p className="text-body-sm text-ink-secondary leading-relaxed">{child.notes}</p>
             </div>
@@ -185,11 +188,11 @@ export function ChildProfileClient({ child: initialChild, conversations, terms }
           <div className="bg-white rounded-card-lg shadow-card border border-border/50 px-5 py-4">
             <div className="flex items-center gap-2 mb-3">
               <MessageCircle size={15} strokeWidth={1.75} className="text-ink-secondary" />
-              <h3 className="font-display text-[0.95rem] font-semibold text-ink">Recent Conversations</h3>
+              <h3 className="font-display text-[0.95rem] font-semibold text-ink">{tc.sections.recentConversations}</h3>
             </div>
 
             {conversations.length === 0 ? (
-              <p className="text-body-xs text-ink-tertiary">No conversations yet.</p>
+              <p className="text-body-xs text-ink-tertiary">{tc.noConversationsYet}</p>
             ) : (
               <ul className="space-y-2">
                 {conversations.slice(0, 5).map((convo) => (
@@ -206,7 +209,7 @@ export function ChildProfileClient({ child: initialChild, conversations, terms }
                       <div className="flex items-center gap-2 mt-1">
                         <span className="text-body-xs text-ink-tertiary">{formatDate(convo.updatedAt)}</span>
                         <span className="text-ink-tertiary">&middot;</span>
-                        <span className="text-body-xs text-ink-tertiary">{convo.messageCount} messages</span>
+                        <span className="text-body-xs text-ink-tertiary">{convo.messageCount} {tc.messages}</span>
                       </div>
                     </Link>
                   </li>
@@ -220,7 +223,7 @@ export function ChildProfileClient({ child: initialChild, conversations, terms }
               style={{ transitionProperty: 'background-color, transform', transitionDuration: '150ms' }}
             >
               <MessageCircle size={12} strokeWidth={2} />
-              New conversation
+              {tc.newConversation}
             </Link>
           </div>
 
@@ -228,29 +231,29 @@ export function ChildProfileClient({ child: initialChild, conversations, terms }
           <div className="bg-white rounded-card-lg shadow-card border border-border/50 px-5 py-4">
             <div className="flex items-center gap-2 mb-3">
               <Calendar size={15} strokeWidth={1.75} className="text-ink-secondary" />
-              <h3 className="font-display text-[0.95rem] font-semibold text-ink">Profile Info</h3>
+              <h3 className="font-display text-[0.95rem] font-semibold text-ink">{tc.sections.profileInfo}</h3>
             </div>
             <dl className="space-y-2">
               <div className="flex justify-between gap-2">
-                <dt className="text-body-xs text-ink-tertiary">Age</dt>
+                <dt className="text-body-xs text-ink-tertiary">{tc.meta.age}</dt>
                 <dd className="text-body-xs text-ink font-medium">
-                  {age !== null ? `${age} years old` : 'Not set'}
+                  {age !== null ? `${age} ${tc.yearsOld}` : tc.notSet}
                 </dd>
               </div>
               {child.dateOfBirth && (
                 <div className="flex justify-between gap-2">
-                  <dt className="text-body-xs text-ink-tertiary">Date of birth</dt>
+                  <dt className="text-body-xs text-ink-tertiary">{tc.meta.dateOfBirth}</dt>
                   <dd className="text-body-xs text-ink font-medium">
                     {new Date(child.dateOfBirth).toLocaleDateString('en-CA', { month: 'short', day: 'numeric', year: 'numeric' })}
                   </dd>
                 </div>
               )}
               <div className="flex justify-between gap-2">
-                <dt className="text-body-xs text-ink-tertiary">Profile created</dt>
+                <dt className="text-body-xs text-ink-tertiary">{tc.meta.profileCreated}</dt>
                 <dd className="text-body-xs text-ink font-medium">{formatDate(child.createdAt)}</dd>
               </div>
               <div className="flex justify-between gap-2">
-                <dt className="text-body-xs text-ink-tertiary">Conversations</dt>
+                <dt className="text-body-xs text-ink-tertiary">{tc.meta.conversations}</dt>
                 <dd className="text-body-xs text-ink font-medium">{conversations.length}</dd>
               </div>
             </dl>

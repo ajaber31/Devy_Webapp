@@ -4,6 +4,7 @@ import { useEffect, useState, useTransition } from 'react'
 import { Zap, Crown, ArrowRight, X, Loader2 } from 'lucide-react'
 import { createCheckoutSession } from '@/lib/actions/billing'
 import { PLANS } from '@/lib/stripe/plans'
+import { useLanguage } from '@/components/shared/LanguageProvider'
 import type { PlanId } from '@/lib/types'
 
 const PLAN_ICONS: Record<string, React.ReactNode> = {
@@ -17,6 +18,8 @@ const PLAN_ICONS: Record<string, React.ReactNode> = {
  * the Stripe checkout flow immediately.
  */
 export function PendingPlanBanner({ currentPlanId }: { currentPlanId: PlanId }) {
+  const { t } = useLanguage()
+  const tp = t.pendingPlan
   const [pendingPlan, setPendingPlan] = useState<PlanId | null>(null)
   const [dismissed, setDismissed] = useState(false)
   const [error, setError] = useState<string | null>(null)
@@ -72,7 +75,7 @@ export function PendingPlanBanner({ currentPlanId }: { currentPlanId: PlanId }) 
         </div>
         <div className="flex-1 min-w-0">
           <p className="text-body-sm font-semibold text-ink">
-            Complete your upgrade to {plan.name}
+            {tp.completeUpgrade} {plan.name}
           </p>
           <p className="text-body-xs text-ink-secondary">
             ${plan.priceCAD} CAD/mo · {plan.features[0]} · {plan.features[1]}
@@ -90,7 +93,7 @@ export function PendingPlanBanner({ currentPlanId }: { currentPlanId: PlanId }) 
               <Loader2 size={13} className="animate-spin" />
             ) : (
               <>
-                Upgrade now
+                {tp.upgradeNow}
                 <ArrowRight size={12} strokeWidth={2.5} />
               </>
             )}

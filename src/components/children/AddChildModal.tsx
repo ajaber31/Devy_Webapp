@@ -3,6 +3,7 @@
 import { useState } from 'react'
 import { X, Plus, Trash2 } from 'lucide-react'
 import { createChild } from '@/lib/actions/children'
+import { useLanguage } from '@/components/shared/LanguageProvider'
 import { cn } from '@/lib/utils'
 
 const AVATAR_COLORS = [
@@ -17,7 +18,10 @@ interface AddChildModalProps {
   title?: string
 }
 
-export function AddChildModal({ onClose, onSaved, title = 'Add a child profile' }: AddChildModalProps) {
+export function AddChildModal({ onClose, onSaved, title }: AddChildModalProps) {
+  const { t } = useLanguage()
+  const tm = t.children.modal
+  const resolvedTitle = title ?? tm.addTitle
   const [name, setName] = useState('')
   const [dateOfBirth, setDateOfBirth] = useState('')
   const [avatarColor, setAvatarColor] = useState<'sage' | 'dblue' | 'sand'>('sage')
@@ -43,7 +47,7 @@ export function AddChildModal({ onClose, onSaved, title = 'Add a child profile' 
     e.preventDefault()
     setError(null)
     if (!name.trim()) {
-      setError("Child's name is required.")
+      setError(tm.nameRequired)
       return
     }
     setIsPending(true)
@@ -76,7 +80,7 @@ export function AddChildModal({ onClose, onSaved, title = 'Add a child profile' 
         <div className="bg-white rounded-card-lg shadow-floating border border-border/50 w-full max-w-md max-h-[90vh] overflow-y-auto">
           {/* Header */}
           <div className="flex items-center justify-between px-6 py-4 border-b border-border">
-            <h2 className="font-display text-display-sm font-semibold text-ink">{title}</h2>
+            <h2 className="font-display text-display-sm font-semibold text-ink">{resolvedTitle}</h2>
             <button
               onClick={onClose}
               className="p-1.5 rounded-md text-ink-tertiary hover:text-ink hover:bg-raised focus-ring"
@@ -97,7 +101,7 @@ export function AddChildModal({ onClose, onSaved, title = 'Add a child profile' 
             {/* Name */}
             <div>
               <label htmlFor="child-name" className="block text-body-sm font-medium text-ink mb-1.5">
-                First name <span className="text-danger">*</span>
+                {tm.firstName} <span className="text-danger">*</span>
               </label>
               <input
                 id="child-name"
@@ -105,7 +109,7 @@ export function AddChildModal({ onClose, onSaved, title = 'Add a child profile' 
                 required
                 value={name}
                 onChange={e => setName(e.target.value)}
-                placeholder="e.g. Emma"
+                placeholder={tm.firstNamePlaceholder}
                 className="w-full px-4 py-2.5 bg-surface border border-border rounded-card text-body-sm text-ink placeholder:text-ink-tertiary shadow-input focus:outline-none focus:shadow-input-focus focus:border-sage-400"
                 style={{ transitionProperty: 'border-color, box-shadow', transitionDuration: '150ms' }}
               />
@@ -114,7 +118,7 @@ export function AddChildModal({ onClose, onSaved, title = 'Add a child profile' 
             {/* Date of birth */}
             <div>
               <label htmlFor="child-dob" className="block text-body-sm font-medium text-ink mb-1.5">
-                Date of birth <span className="text-body-xs text-ink-tertiary font-normal">(optional)</span>
+                {tm.dob} <span className="text-body-xs text-ink-tertiary font-normal">{tm.dobOptional}</span>
               </label>
               <input
                 id="child-dob"
@@ -129,7 +133,7 @@ export function AddChildModal({ onClose, onSaved, title = 'Add a child profile' 
 
             {/* Avatar color */}
             <div>
-              <p className="text-body-sm font-medium text-ink mb-2">Avatar colour</p>
+              <p className="text-body-sm font-medium text-ink mb-2">{tm.avatarColour}</p>
               <div className="flex gap-3">
                 {AVATAR_COLORS.map(c => (
                   <button
@@ -152,16 +156,16 @@ export function AddChildModal({ onClose, onSaved, title = 'Add a child profile' 
             {/* Context labels */}
             <div>
               <label className="block text-body-sm font-medium text-ink mb-1">
-                Context labels <span className="text-body-xs text-ink-tertiary font-normal">(optional — e.g. ADHD, sensory processing)</span>
+                {tm.contextLabels} <span className="text-body-xs text-ink-tertiary font-normal">{tm.contextLabelsOptional}</span>
               </label>
-              <p className="text-body-xs text-ink-tertiary mb-2">These are freeform tags you choose, not medical records.</p>
+              <p className="text-body-xs text-ink-tertiary mb-2">{tm.contextLabelsHelp}</p>
               <div className="flex gap-2">
                 <input
                   type="text"
                   value={labelInput}
                   onChange={e => setLabelInput(e.target.value)}
                   onKeyDown={e => { if (e.key === 'Enter') { e.preventDefault(); addLabel() } }}
-                  placeholder="Type a label and press Enter"
+                  placeholder={tm.contextLabelsPlaceholder}
                   className="flex-1 px-4 py-2 bg-surface border border-border rounded-card text-body-sm text-ink placeholder:text-ink-tertiary shadow-input focus:outline-none focus:shadow-input-focus focus:border-sage-400"
                   style={{ transitionProperty: 'border-color, box-shadow', transitionDuration: '150ms' }}
                 />
@@ -197,14 +201,14 @@ export function AddChildModal({ onClose, onSaved, title = 'Add a child profile' 
             {/* Notes */}
             <div>
               <label htmlFor="child-notes" className="block text-body-sm font-medium text-ink mb-1.5">
-                Notes <span className="text-body-xs text-ink-tertiary font-normal">(optional)</span>
+                {tm.notes} <span className="text-body-xs text-ink-tertiary font-normal">{tm.dobOptional}</span>
               </label>
               <textarea
                 id="child-notes"
                 rows={3}
                 value={notes}
                 onChange={e => setNotes(e.target.value)}
-                placeholder="Any context that helps you get better support..."
+                placeholder={tm.notesPlaceholder}
                 className="w-full px-4 py-2.5 bg-surface border border-border rounded-card text-body-sm text-ink placeholder:text-ink-tertiary shadow-input focus:outline-none focus:shadow-input-focus focus:border-sage-400 resize-none"
                 style={{ transitionProperty: 'border-color, box-shadow', transitionDuration: '150ms' }}
               />
@@ -218,7 +222,7 @@ export function AddChildModal({ onClose, onSaved, title = 'Add a child profile' 
                 className="px-4 py-2 text-body-sm font-medium text-ink-secondary hover:text-ink hover:bg-raised rounded-card focus-ring"
                 style={{ transitionProperty: 'color, background-color', transitionDuration: '150ms' }}
               >
-                Cancel
+                {t.common.cancel}
               </button>
               <button
                 type="submit"
@@ -226,7 +230,7 @@ export function AddChildModal({ onClose, onSaved, title = 'Add a child profile' 
                 className="px-5 py-2.5 bg-sage-500 text-white font-medium text-body-sm rounded-pill shadow-button hover:bg-sage-600 active:scale-[0.98] focus-ring disabled:opacity-60"
                 style={{ transitionProperty: 'background-color, box-shadow, transform', transitionDuration: '150ms' }}
               >
-                {isPending ? 'Saving…' : 'Add child'}
+                {isPending ? tm.saving : tm.addButton}
               </button>
             </div>
           </form>
