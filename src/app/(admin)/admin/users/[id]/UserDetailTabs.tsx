@@ -1,14 +1,16 @@
 'use client'
 
-import { useState } from 'react'
 import {
   User, Users, CreditCard, MessageCircle,
   Calendar, Clock, ShieldCheck, ShieldOff,
-  Zap, Crown, CheckCircle2,
+  Zap, Crown, Stethoscope, Sparkles, CheckCircle2,
+  Gift, Trash2, Loader2,
 } from 'lucide-react'
 import { cn, initials, formatDate } from '@/lib/utils'
-import { updateUserStatus, updateUserRole } from '@/lib/actions/admin'
+import { updateUserStatus, updateUserRole, grantPetitsGeniesPlan, revokeSponsoredPlan } from '@/lib/actions/admin'
 import { PLANS } from '@/lib/stripe/plans'
+import { useRouter } from 'next/navigation'
+import { useState, useTransition } from 'react'
 import type { AdminUserDetail } from '@/lib/actions/admin'
 import type { UserRole, UserStatus } from '@/lib/types'
 
@@ -245,9 +247,153 @@ function ClientsTab({ detail }: { detail: AdminUserDetail }) {
   )
 }
 
+// ─── Petits Génies grant panel (admin-only) ───────────────────────────────────
+
+function PetitsGeniesGrantPanel({
+  userId,
+  currentPlanId,
+  onGranted,
+}: {
+  userId: string
+  currentPlanId: string
+  onGranted: () => void
+}) {
+  const router = useRouter()
+  const [isPending, startTransition] = useTransition()
+  const [msg, setMsg] = useState<{ kind: 'success' | 'warning' | 'error'; text: string } | null>(null)
+  const [confirming, setConfirming] = useState<'grant' | 'revoke' | null>(null)
+
+  const isOnPlan = currentPlanId === 'petits_genies'
+
+  function grant() {
+    setMsg(null)
+    startTransition(async () => {
+      const result = await grantPetitsGeniesPlan(userId)
+      if (result.error) {
+        setMsg({ kind: 'error', text: result.error })
+        return
+      }
+      if (result.warning) {
+        setMsg({ kind: 'warning', text: result.warning })
+      } else {
+        setMsg({ kind: 'success', text: 'Petits Génies plan granted.' })
+      }
+      setConfirming(null)
+      onGranted()
+      router.refresh()
+    })
+  }
+
+  function revoke() {
+    setMsg(null)
+    startTransition(async () => {
+      const result = await revokeSponsoredPlan(userId)
+      if (result.error) {
+        setMsg({ kind: 'error', text: result.error })
+        return
+      }
+      setMsg({ kind: 'success', text: 'Sponsored plan revoked. User is now on Free.' })
+      setConfirming(null)
+      onGranted()
+      router.refresh()
+    })
+  }
+
+  return (
+    <div className="bg-dblue-50/60 rounded-card-lg border border-dblue-200 p-5">
+      <div className="flex items-start gap-3 mb-4">
+        <div className="w-9 h-9 rounded-card bg-white border border-dblue-200 flex items-center justify-center shrink-0">
+          <Sparkles size={16} className="text-dblue-600" strokeWidth={1.75} />
+        </div>
+        <div className="flex-1 min-w-0">
+          <p className="text-body-sm font-semibold text-ink">Petits Génies Family Plan</p>
+          <p className="text-body-xs text-ink-secondary">
+            Admin-granted sponsored plan for clinic members. 5 questions/day · 3 child profiles · not billed.
+          </p>
+        </div>
+      </div>
+
+      {msg && (
+        <div className={cn(
+          'text-body-xs px-3 py-2 rounded-card border mb-3',
+          msg.kind === 'success' && 'bg-sage-50 border-sage-200 text-sage-800',
+          msg.kind === 'warning' && 'bg-sand-50 border-sand-200 text-sand-800',
+          msg.kind === 'error'   && 'bg-red-50 border-red-200 text-red-700',
+        )}>
+          {msg.text}
+        </div>
+      )}
+
+      {!isOnPlan && confirming !== 'grant' && (
+        <button
+          onClick={() => setConfirming('grant')}
+          disabled={isPending}
+          className="flex items-center gap-2 px-4 py-2 bg-dblue-500 text-white text-body-xs font-semibold rounded-card hover:bg-dblue-600 focus-ring active:scale-[0.98] disabled:opacity-60"
+          style={{ transitionProperty: 'background-color, transform', transitionDuration: '150ms' }}
+        >
+          <Gift size={13} strokeWidth={2} />
+          Grant Petits Génies plan
+        </button>
+      )}
+
+      {!isOnPlan && confirming === 'grant' && (
+        <div className="flex items-center gap-2">
+          <button
+            onClick={grant}
+            disabled={isPending}
+            className="flex items-center gap-2 px-4 py-2 bg-dblue-500 text-white text-body-xs font-semibold rounded-card hover:bg-dblue-600 focus-ring disabled:opacity-60"
+          >
+            {isPending ? <Loader2 size={13} className="animate-spin" /> : <Gift size={13} strokeWidth={2} />}
+            Confirm grant
+          </button>
+          <button
+            onClick={() => setConfirming(null)}
+            disabled={isPending}
+            className="px-3 py-2 text-body-xs text-ink-secondary hover:text-ink"
+          >
+            Cancel
+          </button>
+        </div>
+      )}
+
+      {isOnPlan && confirming !== 'revoke' && (
+        <button
+          onClick={() => setConfirming('revoke')}
+          disabled={isPending}
+          className="flex items-center gap-2 px-4 py-2 bg-white border border-red-200 text-red-600 text-body-xs font-semibold rounded-card hover:bg-red-50 focus-ring disabled:opacity-60"
+          style={{ transitionProperty: 'background-color', transitionDuration: '150ms' }}
+        >
+          <Trash2 size={13} strokeWidth={2} />
+          Revoke sponsored plan
+        </button>
+      )}
+
+      {isOnPlan && confirming === 'revoke' && (
+        <div className="flex items-center gap-2">
+          <button
+            onClick={revoke}
+            disabled={isPending}
+            className="flex items-center gap-2 px-4 py-2 bg-red-500 text-white text-body-xs font-semibold rounded-card hover:bg-red-600 focus-ring disabled:opacity-60"
+          >
+            {isPending ? <Loader2 size={13} className="animate-spin" /> : <Trash2 size={13} strokeWidth={2} />}
+            Confirm revoke
+          </button>
+          <button
+            onClick={() => setConfirming(null)}
+            disabled={isPending}
+            className="px-3 py-2 text-body-xs text-ink-secondary hover:text-ink"
+          >
+            Cancel
+          </button>
+        </div>
+      )}
+    </div>
+  )
+}
+
 // ─── Billing tab ──────────────────────────────────────────────────────────────
 
-function BillingTab({ detail }: { detail: AdminUserDetail }) {
+function BillingTab({ detail, onRefresh }: { detail: AdminUserDetail; onRefresh: () => void }) {
   const { subscription } = detail
   const planId = subscription?.planId ?? 'free'
   const plan = PLANS[planId as keyof typeof PLANS] ?? PLANS.free
@@ -268,14 +414,26 @@ function BillingTab({ detail }: { detail: AdminUserDetail }) {
     : null
 
   return (
-    <div className="bg-white rounded-card-lg border border-border/50 shadow-card p-6 space-y-6">
+    <div className="space-y-5">
+      {/* Admin-only: grant/revoke Petits Génies plan */}
+      <PetitsGeniesGrantPanel
+        userId={detail.user.id}
+        currentPlanId={planId}
+        onGranted={onRefresh}
+      />
+
+      <div className="bg-white rounded-card-lg border border-border/50 shadow-card p-6 space-y-6">
       {/* Plan */}
       <div className="flex items-center gap-4">
         <div className="w-10 h-10 rounded-card bg-sage-100 flex items-center justify-center shrink-0">
-          {planId === 'professional' ? (
+          {planId === 'clinician' ? (
+            <Stethoscope size={18} className="text-sand-600" strokeWidth={1.75} />
+          ) : planId === 'pro' ? (
             <Crown size={18} className="text-sage-600" strokeWidth={1.75} />
-          ) : planId === 'standard' ? (
+          ) : planId === 'starter' ? (
             <Zap size={18} className="text-dblue-500" strokeWidth={1.75} />
+          ) : planId === 'petits_genies' ? (
+            <Sparkles size={18} className="text-dblue-600" strokeWidth={1.75} />
           ) : (
             <CreditCard size={18} className="text-ink-tertiary" strokeWidth={1.75} />
           )}
@@ -321,6 +479,7 @@ function BillingTab({ detail }: { detail: AdminUserDetail }) {
           ))}
         </ul>
       </div>
+      </div>
     </div>
   )
 }
@@ -328,6 +487,7 @@ function BillingTab({ detail }: { detail: AdminUserDetail }) {
 // ─── Main tabbed component ────────────────────────────────────────────────────
 
 export function UserDetailTabs({ detail }: { detail: AdminUserDetail }) {
+  const router = useRouter()
   const [activeTab, setActiveTab] = useState('overview')
   const [localDetail, setLocalDetail] = useState(detail)
 
@@ -392,7 +552,9 @@ export function UserDetailTabs({ detail }: { detail: AdminUserDetail }) {
         />
       )}
       {activeTab === 'clients' && <ClientsTab detail={localDetail} />}
-      {activeTab === 'billing' && <BillingTab detail={localDetail} />}
+      {activeTab === 'billing' && (
+        <BillingTab detail={localDetail} onRefresh={() => router.refresh()} />
+      )}
     </div>
   )
 }

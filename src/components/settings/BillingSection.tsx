@@ -4,15 +4,33 @@ import { useState, useTransition, useEffect } from 'react'
 import { useRouter, useSearchParams } from 'next/navigation'
 import {
   CreditCard, Zap, Users, CheckCircle2, AlertCircle,
-  Clock, ArrowRight, ExternalLink, Loader2, Crown, Sparkles,
+  Clock, ArrowRight, ExternalLink, Loader2, Crown, Stethoscope, Sparkles,
 } from 'lucide-react'
 import { createCheckoutSession, createPortalSession } from '@/lib/actions/billing'
-import { PLANS } from '@/lib/stripe/plans'
+import { PLANS, PUBLIC_PLAN_IDS } from '@/lib/stripe/plans'
 import { cn } from '@/lib/utils'
 import type { BillingStatus, PlanId } from '@/lib/types'
 
 interface BillingSectionProps {
   billingStatus: BillingStatus
+}
+
+// Relative rank used for "Upgrade" vs "Switch plan" labelling.
+// Hidden sponsored plans are treated as pre-Starter.
+const PLAN_RANK: Record<PlanId, number> = {
+  free: 0,
+  petits_genies: 0,
+  starter: 1,
+  pro: 2,
+  clinician: 3,
+}
+
+const PLAN_ICON: Record<PlanId, React.ReactNode> = {
+  free:          <CreditCard size={18} className="text-ink-tertiary" />,
+  starter:       <Zap size={18} className="text-dblue-500" />,
+  pro:           <Crown size={18} className="text-sage-600" />,
+  clinician:     <Stethoscope size={18} className="text-sand-600" />,
+  petits_genies: <Sparkles size={18} className="text-dblue-600" />,
 }
 
 // ─── Status badge ─────────────────────────────────────────────────────────────
@@ -92,10 +110,7 @@ function PlanCard({
 }) {
   const plan = PLANS[planId]
   const isCurrent = planId === currentPlanId
-  const isPlanHigher = (
-    (planId === 'standard' && currentPlanId === 'free') ||
-    (planId === 'professional' && (currentPlanId === 'free' || currentPlanId === 'standard'))
-  )
+  const isPlanHigher = PLAN_RANK[planId] > PLAN_RANK[currentPlanId]
 
   return (
     <div className={cn(
@@ -104,7 +119,6 @@ function PlanCard({
         ? 'border-sage-400 shadow-card bg-white'
         : 'border-border bg-surface',
     )}>
-      {/* Current plan indicator */}
       {isCurrent && (
         <div className="absolute -top-3 left-4">
           <span className="inline-flex items-center gap-1 px-2.5 py-1 bg-sage-500 text-white text-body-xs font-semibold rounded-pill shadow-button">
@@ -124,7 +138,10 @@ function PlanCard({
       )}
 
       <div>
-        <h4 className="font-display font-semibold text-ink text-body-base">{plan.name}</h4>
+        <div className="flex items-center gap-2 mb-1">
+          {PLAN_ICON[planId]}
+          <h4 className="font-display font-semibold text-ink text-body-base">{plan.name}</h4>
+        </div>
         <div className="flex items-baseline gap-1 mt-1">
           {plan.priceCAD === 0 ? (
             <span className="text-display-sm font-bold text-ink">Free</span>
@@ -151,7 +168,7 @@ function PlanCard({
           onClick={() => onUpgrade(planId)}
           disabled={loading}
           className={cn(
-            'w-full flex items-center justify-center gap-2 px-4 py-2.5 rounded-card text-body-sm font-semibold focus-ring',
+            'w-full flex items-center justify-center gap-2 px-4 py-2.5 rounded-card text-body-sm font-semibold focus-ring disabled:opacity-60',
             isPlanHigher
               ? 'bg-sage-500 text-white shadow-button hover:bg-sage-600'
               : 'bg-surface border border-border text-ink-secondary hover:bg-raised',
@@ -189,11 +206,9 @@ export function BillingSection({ billingStatus }: BillingSectionProps) {
   const [isCheckoutLoading, startCheckout] = useTransition()
   const [isPortalLoading, startPortal] = useTransition()
 
-  // Show success banner when returning from Stripe Checkout
   useEffect(() => {
     if (searchParams.get('checkout') === 'success') {
       setSuccessMessage('Your plan has been updated! It may take a moment to reflect.')
-      // Remove the query param without a full reload
       const params = new URLSearchParams(searchParams.toString())
       params.delete('checkout')
       const newUrl = params.toString() ? `?${params.toString()}` : window.location.pathname
@@ -230,6 +245,7 @@ export function BillingSection({ billingStatus }: BillingSectionProps) {
   }
 
   const currentPlan = PLANS[billingStatus.planId]
+  const isSponsored = billingStatus.planId === 'petits_genies'
   const periodEndDate = billingStatus.currentPeriodEnd
     ? new Date(billingStatus.currentPeriodEnd).toLocaleDateString('en-CA', {
         year: 'numeric', month: 'long', day: 'numeric',
@@ -238,8 +254,6 @@ export function BillingSection({ billingStatus }: BillingSectionProps) {
 
   return (
     <div className="space-y-8">
-
-      {/* Success banner */}
       {successMessage && (
         <div className="flex items-start gap-3 p-4 bg-sage-50 border border-sage-200 rounded-card-lg">
           <CheckCircle2 size={18} className="text-sage-600 mt-0.5 shrink-0" />
@@ -260,31 +274,27 @@ export function BillingSection({ billingStatus }: BillingSectionProps) {
               Current plan
             </h3>
             <p className="text-body-sm text-ink-secondary">
-              Your active subscription and usage this billing period.
+              Your active subscription and usage today.
             </p>
           </div>
-          <StatusBadge status={billingStatus.status} />
+          {!isSponsored && <StatusBadge status={billingStatus.status} />}
         </div>
 
         <div className="flex items-center gap-4 p-4 bg-surface rounded-card border border-border/50 mb-6">
           <div className="w-10 h-10 rounded-card bg-sage-100 flex items-center justify-center shrink-0">
-            {billingStatus.planId === 'professional' ? (
-              <Crown size={18} className="text-sage-600" />
-            ) : billingStatus.planId === 'standard' ? (
-              <Zap size={18} className="text-sage-600" />
-            ) : (
-              <CreditCard size={18} className="text-ink-tertiary" />
-            )}
+            {PLAN_ICON[billingStatus.planId]}
           </div>
           <div className="flex-1 min-w-0">
             <p className="text-body-sm font-semibold text-ink">{currentPlan.name}</p>
             <p className="text-body-xs text-ink-tertiary">
-              {currentPlan.priceCAD === 0
-                ? 'Free forever'
-                : `$${currentPlan.priceCAD} CAD / month`}
+              {isSponsored
+                ? 'Provided by your clinic'
+                : currentPlan.priceCAD === 0
+                  ? 'Free forever'
+                  : `$${currentPlan.priceCAD} CAD / month`}
             </p>
           </div>
-          {periodEndDate && (
+          {periodEndDate && !isSponsored && (
             <div className="text-right shrink-0">
               <p className="text-body-xs text-ink-tertiary flex items-center gap-1 justify-end">
                 <Clock size={11} />
@@ -296,17 +306,16 @@ export function BillingSection({ billingStatus }: BillingSectionProps) {
         </div>
 
         {/* Past due warning */}
-        {billingStatus.status === 'past_due' && (
+        {billingStatus.status === 'past_due' && !isSponsored && (
           <div className="flex items-start gap-3 p-4 bg-sand-50 border border-sand-200 rounded-card mb-6">
             <AlertCircle size={16} className="text-sand-600 mt-0.5 shrink-0" />
             <p className="text-body-xs text-sand-800">
-              Your last payment failed. Please update your payment method to keep access to your plan.
+              Your last payment failed. Please update your payment method to keep access.
             </p>
           </div>
         )}
 
-        {/* Cancel-at-period-end notice */}
-        {billingStatus.cancelAtPeriodEnd && (
+        {billingStatus.cancelAtPeriodEnd && !isSponsored && (
           <div className="flex items-start gap-3 p-4 bg-raised border border-border rounded-card mb-6">
             <AlertCircle size={16} className="text-ink-tertiary mt-0.5 shrink-0" />
             <p className="text-body-xs text-ink-secondary">
@@ -325,92 +334,114 @@ export function BillingSection({ billingStatus }: BillingSectionProps) {
           <UsageBar
             current={billingStatus.childCount}
             limit={billingStatus.childLimit}
-            label="Client profiles"
+            label="Child profiles"
           />
         </div>
 
         {/* Action buttons */}
-        <div className="flex flex-wrap gap-3 mt-6 pt-6 border-t border-border">
-          {billingStatus.stripeCustomerId && (
-            <button
-              onClick={handlePortal}
-              disabled={isPortalLoading}
-              className="flex items-center gap-2 px-4 py-2.5 bg-surface border border-border rounded-card text-body-sm font-medium text-ink hover:bg-raised focus-ring active:scale-[0.98]"
-              style={{ transitionProperty: 'background-color, transform', transitionDuration: '150ms' }}
-            >
-              {isPortalLoading ? (
-                <Loader2 size={14} className="animate-spin" />
-              ) : (
-                <ExternalLink size={14} />
-              )}
-              Manage billing
-            </button>
-          )}
+        {!isSponsored && (
+          <div className="flex flex-wrap gap-3 mt-6 pt-6 border-t border-border">
+            {billingStatus.stripeCustomerId && (
+              <button
+                onClick={handlePortal}
+                disabled={isPortalLoading}
+                className="flex items-center gap-2 px-4 py-2.5 bg-surface border border-border rounded-card text-body-sm font-medium text-ink hover:bg-raised focus-ring active:scale-[0.98] disabled:opacity-60"
+                style={{ transitionProperty: 'background-color, transform', transitionDuration: '150ms' }}
+              >
+                {isPortalLoading ? (
+                  <Loader2 size={14} className="animate-spin" />
+                ) : (
+                  <ExternalLink size={14} />
+                )}
+                Manage billing
+              </button>
+            )}
 
-          {billingStatus.planId === 'free' && (
-            <div className="flex items-center gap-1.5 text-body-xs text-ink-tertiary">
-              <Users size={13} />
-              Add client profiles by upgrading below
-            </div>
-          )}
-        </div>
-
-        {portalError && (
-          <p className="mt-3 text-body-xs text-red-600">{portalError}</p>
-        )}
-      </div>
-
-      {/* Plan comparison */}
-      <div className="bg-white rounded-card-lg shadow-card border border-border/50 p-6">
-        <h3 className="font-display text-display-sm font-semibold text-ink mb-1">Plans</h3>
-        <p className="text-body-sm text-ink-secondary mb-6">
-          All prices in Canadian dollars. Cancel or change anytime.
-        </p>
-
-        {checkoutError && (
-          <div className="flex items-start gap-3 p-4 bg-red-50 border border-red-200 rounded-card mb-5">
-            <AlertCircle size={16} className="text-red-500 mt-0.5 shrink-0" />
-            <p className="text-body-xs text-red-700">{checkoutError}</p>
+            {billingStatus.planId === 'free' && (
+              <div className="flex items-center gap-1.5 text-body-xs text-ink-tertiary">
+                <Users size={13} />
+                Add more profiles by upgrading below
+              </div>
+            )}
           </div>
         )}
 
-        <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 mt-2">
-          {(['free', 'standard', 'professional'] as PlanId[]).map((id) => (
-            <PlanCard
-              key={id}
-              planId={id}
-              currentPlanId={billingStatus.planId}
-              onUpgrade={handleUpgrade}
-              loading={isCheckoutLoading}
-            />
-          ))}
-        </div>
-
-        {billingStatus.planId !== 'free' && (
-          <p className="mt-5 text-body-xs text-ink-tertiary text-center">
-            To downgrade or cancel your subscription, use the{' '}
-            <button
-              onClick={handlePortal}
-              className="underline hover:text-ink focus-ring rounded"
-            >
-              billing portal
-            </button>
-            .
-          </p>
-        )}
+        {portalError && <p className="mt-3 text-body-xs text-red-600">{portalError}</p>}
       </div>
 
-      {/* Over-limit notice for downgraded users */}
+      {/* Sponsored plan notice — hides Plans grid */}
+      {isSponsored && (
+        <div className="bg-white rounded-card-lg shadow-card border border-dblue-200 p-6">
+          <div className="flex items-start gap-3">
+            <div className="w-10 h-10 rounded-card bg-dblue-50 flex items-center justify-center shrink-0">
+              <Sparkles size={18} className="text-dblue-600" />
+            </div>
+            <div>
+              <h3 className="font-display font-semibold text-ink mb-1">
+                You&apos;re on a clinic-sponsored plan
+              </h3>
+              <p className="text-body-sm text-ink-secondary">
+                Your access to Devy is provided by Petits Génies. If you have questions about your plan,
+                please contact the clinic directly.
+              </p>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Plans grid — only for self-serve customers */}
+      {!isSponsored && (
+        <div className="bg-white rounded-card-lg shadow-card border border-border/50 p-6">
+          <h3 className="font-display text-display-sm font-semibold text-ink mb-1">Plans</h3>
+          <p className="text-body-sm text-ink-secondary mb-6">
+            All prices in Canadian dollars. Cancel or change anytime.
+          </p>
+
+          {checkoutError && (
+            <div className="flex items-start gap-3 p-4 bg-red-50 border border-red-200 rounded-card mb-5">
+              <AlertCircle size={16} className="text-red-500 mt-0.5 shrink-0" />
+              <p className="text-body-xs text-red-700">{checkoutError}</p>
+            </div>
+          )}
+
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 mt-2">
+            {PUBLIC_PLAN_IDS.map((id) => (
+              <PlanCard
+                key={id}
+                planId={id}
+                currentPlanId={billingStatus.planId}
+                onUpgrade={handleUpgrade}
+                loading={isCheckoutLoading}
+              />
+            ))}
+          </div>
+
+          {billingStatus.planId !== 'free' && (
+            <p className="mt-5 text-body-xs text-ink-tertiary text-center">
+              To downgrade or cancel your subscription, use the{' '}
+              <button
+                onClick={handlePortal}
+                className="underline hover:text-ink focus-ring rounded"
+              >
+                billing portal
+              </button>
+              .
+            </p>
+          )}
+        </div>
+      )}
+
+      {/* Over-limit notice */}
       {billingStatus.childLimit !== -1 &&
         billingStatus.childCount > billingStatus.childLimit && (
           <div className="flex items-start gap-3 p-4 bg-sand-50 border border-sand-200 rounded-card-lg">
             <AlertCircle size={16} className="text-sand-600 mt-0.5 shrink-0" />
             <div>
               <p className="text-body-sm font-medium text-sand-800">
-                You have {billingStatus.childCount} client profiles but your plan allows {billingStatus.childLimit}.
+                You have {billingStatus.childCount} profiles but your plan allows {billingStatus.childLimit}.
               </p>
               <p className="text-body-xs text-sand-700 mt-1">
-                Your existing profiles are safe. You won&apos;t be able to add new ones until you&apos;re under the limit or upgrade your plan.
+                Your existing profiles are safe. You won&apos;t be able to add new ones until you&apos;re under the limit or upgrade.
               </p>
             </div>
           </div>

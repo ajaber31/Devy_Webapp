@@ -1,8 +1,9 @@
 import {
-  Users, MessageCircle, DollarSign, Zap, Crown,
+  Users, MessageCircle, DollarSign, Zap, Crown, Stethoscope, Sparkles,
   Layers, HelpCircle, TrendingUp,
 } from 'lucide-react'
 import { cn } from '@/lib/utils'
+import { PLANS } from '@/lib/stripe/plans'
 import type { AdminAnalytics } from '@/lib/actions/admin'
 
 // ─── Stat card ────────────────────────────────────────────────────────────────
@@ -73,8 +74,13 @@ function SectionHeading({ children }: { children: React.ReactNode }) {
 // ─── Main dashboard ───────────────────────────────────────────────────────────
 
 export function AnalyticsDashboard({ data }: { data: AdminAnalytics }) {
-  const totalSubs = data.planCounts.free + data.planCounts.standard + data.planCounts.professional
-  const paidUsers = data.planCounts.standard + data.planCounts.professional
+  const totalSubs =
+    data.planCounts.free +
+    data.planCounts.starter +
+    data.planCounts.pro +
+    data.planCounts.clinician +
+    data.planCounts.petits_genies
+  const paidUsers = data.planCounts.starter + data.planCounts.pro + data.planCounts.clinician
 
   return (
     <div className="space-y-8 mt-6">
@@ -132,33 +138,61 @@ export function AnalyticsDashboard({ data }: { data: AdminAnalytics }) {
               color="bg-ink-tertiary/30"
             />
             <PlanBar
-              label="Standard — $15/mo"
-              count={data.planCounts.standard}
+              label={`Starter — $${PLANS.starter.priceCAD}/mo`}
+              count={data.planCounts.starter}
               total={totalSubs}
               color="bg-dblue-400"
             />
             <PlanBar
-              label="Professional — $50/mo"
-              count={data.planCounts.professional}
+              label={`Pro — $${PLANS.pro.priceCAD}/mo`}
+              count={data.planCounts.pro}
               total={totalSubs}
               color="bg-sage-500"
             />
+            <PlanBar
+              label={`Clinician — $${PLANS.clinician.priceCAD}/mo`}
+              count={data.planCounts.clinician}
+              total={totalSubs}
+              color="bg-sand-500"
+            />
+            {data.planCounts.petits_genies > 0 && (
+              <PlanBar
+                label="Petits Génies — sponsored"
+                count={data.planCounts.petits_genies}
+                total={totalSubs}
+                color="bg-dblue-300"
+              />
+            )}
           </div>
 
           {/* Plan icon summary */}
-          <div className="flex items-center gap-3 mt-6 pt-5 border-t border-border">
+          <div className="flex items-center gap-3 mt-6 pt-5 border-t border-border flex-wrap">
             <div className="flex items-center gap-1.5 text-body-xs text-ink-secondary">
               <div className="w-5 h-5 rounded-full bg-dblue-100 flex items-center justify-center">
                 <Zap size={11} className="text-dblue-600" strokeWidth={2} />
               </div>
-              <span className="font-medium">{data.planCounts.standard}</span> Standard
+              <span className="font-medium">{data.planCounts.starter}</span> Starter
             </div>
             <div className="flex items-center gap-1.5 text-body-xs text-ink-secondary">
               <div className="w-5 h-5 rounded-full bg-sage-100 flex items-center justify-center">
                 <Crown size={11} className="text-sage-600" strokeWidth={2} />
               </div>
-              <span className="font-medium">{data.planCounts.professional}</span> Professional
+              <span className="font-medium">{data.planCounts.pro}</span> Pro
             </div>
+            <div className="flex items-center gap-1.5 text-body-xs text-ink-secondary">
+              <div className="w-5 h-5 rounded-full bg-sand-100 flex items-center justify-center">
+                <Stethoscope size={11} className="text-sand-600" strokeWidth={2} />
+              </div>
+              <span className="font-medium">{data.planCounts.clinician}</span> Clinician
+            </div>
+            {data.planCounts.petits_genies > 0 && (
+              <div className="flex items-center gap-1.5 text-body-xs text-ink-secondary">
+                <div className="w-5 h-5 rounded-full bg-dblue-50 flex items-center justify-center">
+                  <Sparkles size={11} className="text-dblue-600" strokeWidth={2} />
+                </div>
+                <span className="font-medium">{data.planCounts.petits_genies}</span> Petits Génies
+              </div>
+            )}
             <div className="ml-auto">
               <span className="px-2 py-0.5 bg-sage-50 border border-sage-200 text-sage-700 text-body-xs font-medium rounded-pill">
                 {totalSubs > 0

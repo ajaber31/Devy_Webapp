@@ -3,7 +3,7 @@
 import { useState } from 'react'
 import { useSearchParams } from 'next/navigation'
 import Link from 'next/link'
-import { Eye, EyeOff, ArrowRight, Check, AlertCircle, MailCheck, Zap, Crown } from 'lucide-react'
+import { Eye, EyeOff, ArrowRight, Check, AlertCircle, MailCheck, Zap, Crown, Stethoscope } from 'lucide-react'
 import { DevyLogo } from '@/components/shared/DevyLogo'
 import { NoiseTexture } from '@/components/shared/NoiseTexture'
 import { ACCOUNT_TYPE_OPTIONS } from '@/lib/constants'
@@ -12,15 +12,20 @@ import { signUp } from '@/lib/actions/auth'
 import type { PlanId } from '@/lib/types'
 
 const PLAN_LABELS: Record<string, { name: string; price: string; icon: React.ReactNode }> = {
-  standard: {
-    name: 'Standard',
-    price: '$15 CAD/mo',
+  starter: {
+    name: 'Starter',
+    price: '$14 CAD/mo',
     icon: <Zap size={13} className="text-dblue-500" strokeWidth={2} />,
   },
-  professional: {
-    name: 'Professional',
-    price: '$50 CAD/mo',
+  pro: {
+    name: 'Pro',
+    price: '$24 CAD/mo',
     icon: <Crown size={13} className="text-sage-600" strokeWidth={2} />,
+  },
+  clinician: {
+    name: 'Clinician',
+    price: '$39 CAD/mo',
+    icon: <Stethoscope size={13} className="text-sand-600" strokeWidth={2} />,
   },
 }
 

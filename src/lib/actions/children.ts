@@ -92,7 +92,7 @@ export async function createChild(input: {
   if (!limitCheck.allowed) {
     return {
       error: limitCheck.limit === 0
-        ? 'Child profiles require a paid plan. Upgrade to Standard or Professional to get started.'
+        ? 'Child profiles require a paid plan. Upgrade to Starter, Pro, or Clinician to get started.'
         : `You've reached the ${limitCheck.limit}-profile limit on your current plan. Upgrade to add more.`,
       code: 'PROFILE_LIMIT_REACHED',
       planId: limitCheck.planId,

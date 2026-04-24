@@ -293,12 +293,14 @@ export interface Database {
           stripe_customer_id: string | null
           stripe_subscription_id: string | null
           stripe_price_id: string | null
-          plan_id: 'free' | 'standard' | 'professional'
+          plan_id: 'free' | 'starter' | 'pro' | 'clinician' | 'petits_genies'
           status: 'active' | 'trialing' | 'past_due' | 'canceled' | 'incomplete' | 'paused'
           current_period_start: string | null
           current_period_end: string | null
           cancel_at_period_end: boolean
           canceled_at: string | null
+          plan_granted_by: string | null
+          plan_granted_at: string | null
           created_at: string
           updated_at: string
         }
@@ -308,12 +310,14 @@ export interface Database {
           stripe_customer_id?: string | null
           stripe_subscription_id?: string | null
           stripe_price_id?: string | null
-          plan_id?: 'free' | 'standard' | 'professional'
+          plan_id?: 'free' | 'starter' | 'pro' | 'clinician' | 'petits_genies'
           status?: 'active' | 'trialing' | 'past_due' | 'canceled' | 'incomplete' | 'paused'
           current_period_start?: string | null
           current_period_end?: string | null
           cancel_at_period_end?: boolean
           canceled_at?: string | null
+          plan_granted_by?: string | null
+          plan_granted_at?: string | null
           created_at?: string
           updated_at?: string
         }
@@ -321,12 +325,14 @@ export interface Database {
           stripe_customer_id?: string | null
           stripe_subscription_id?: string | null
           stripe_price_id?: string | null
-          plan_id?: 'free' | 'standard' | 'professional'
+          plan_id?: 'free' | 'starter' | 'pro' | 'clinician' | 'petits_genies'
           status?: 'active' | 'trialing' | 'past_due' | 'canceled' | 'incomplete' | 'paused'
           current_period_start?: string | null
           current_period_end?: string | null
           cancel_at_period_end?: boolean
           canceled_at?: string | null
+          plan_granted_by?: string | null
+          plan_granted_at?: string | null
           updated_at?: string
         }
         Relationships: [

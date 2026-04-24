@@ -9,7 +9,7 @@ import type { User, UserRole, UserStatus } from '@/lib/types'
 
 export interface AdminAnalytics {
   // Subscription breakdown
-  planCounts: { free: number; standard: number; professional: number }
+  planCounts: { free: number; starter: number; pro: number; clinician: number; petits_genies: number }
   mrr: number // Monthly recurring revenue in CAD
   // Engagement
   totalConversations: number
@@ -83,11 +83,18 @@ export async function getAnalytics(): Promise<AdminAnalytics | null> {
     supabase.from('documents').select('status, file_type, chunk_count'),
   ])
 
-  const plans = { free: 0, standard: 0, professional: 0 }
+  const plans = { free: 0, starter: 0, pro: 0, clinician: 0, petits_genies: 0 }
   for (const row of subRows.data ?? []) {
     const p = row.plan_id as keyof typeof plans
     if (p in plans) plans[p]++
   }
+
+  // MRR uses plan price tables — petits_genies is $0 (sponsored), so it doesn't contribute.
+  const { PLANS } = await import('@/lib/stripe/plans')
+  const mrr =
+    plans.starter   * PLANS.starter.priceCAD +
+    plans.pro       * PLANS.pro.priceCAD +
+    plans.clinician * PLANS.clinician.priceCAD
 
   const questionsToday = (usageTodayResult.data ?? []).reduce(
     (sum, r) => sum + (r.question_count ?? 0), 0
@@ -104,7 +111,7 @@ export async function getAnalytics(): Promise<AdminAnalytics | null> {
 
   return {
     planCounts: plans,
-    mrr: plans.standard * 15 + plans.professional * 50,
+    mrr,
     totalConversations: convResult.count ?? 0,
     totalMessages: msgResult.count ?? 0,
     questionsToday,
@@ -255,6 +262,109 @@ export async function updateUserStatus(
 
   if (error) return { error: 'Update failed' }
   revalidatePath('/admin/users')
+  return {}
+}
+
+// ─── Sponsored / admin-granted plans ─────────────────────────────────────────
+
+/**
+ * Grant the Petits Génies Family Plan to a user.
+ * Admin-only. The plan is never purchasable via Stripe — it's purely a DB flag.
+ * If the user already has a Stripe subscription, this overrides it locally but does NOT cancel
+ * their Stripe sub — the admin should either (a) ask them to cancel first or (b) handle the
+ * existing Stripe sub via the billing portal. We warn via the returned `warning` field.
+ */
+export async function grantPetitsGeniesPlan(
+  targetUserId: string,
+): Promise<{ error?: string; warning?: string }> {
+  const authErr = await requireAdmin()
+  if (authErr) return authErr
+
+  const supabase = createClient()
+  const { data: { user: adminUser } } = await supabase.auth.getUser()
+  if (!adminUser) return { error: 'Not authenticated' }
+
+  const svc = serviceClient()
+
+  // Check for an existing active Stripe subscription
+  const { data: existing } = await svc
+    .from('subscriptions')
+    .select('stripe_subscription_id, status, plan_id')
+    .eq('user_id', targetUserId)
+    .single()
+
+  const now = new Date().toISOString()
+
+  const { error } = await svc
+    .from('subscriptions')
+    .upsert(
+      {
+        user_id: targetUserId,
+        plan_id: 'petits_genies',
+        status: 'active',
+        plan_granted_by: adminUser.id,
+        plan_granted_at: now,
+        // Clear stripe subscription fields since this isn't a Stripe-backed plan
+        stripe_subscription_id: null,
+        stripe_price_id: null,
+        current_period_start: null,
+        current_period_end: null,
+        cancel_at_period_end: false,
+        updated_at: now,
+      },
+      { onConflict: 'user_id' },
+    )
+
+  if (error) return { error: 'Failed to grant plan' }
+
+  revalidatePath('/admin/users')
+  revalidatePath(`/admin/users/${targetUserId}`)
+
+  if (existing?.stripe_subscription_id && existing.status === 'active') {
+    return {
+      warning: 'User had an active Stripe subscription. The sponsored plan now applies, but the Stripe subscription is still active — cancel it via the Stripe dashboard or ask the user to cancel.',
+    }
+  }
+  return {}
+}
+
+/**
+ * Revoke a sponsored plan (e.g. Petits Génies) and revert the user to Free.
+ * Does not affect Stripe subscriptions.
+ */
+export async function revokeSponsoredPlan(
+  targetUserId: string,
+): Promise<{ error?: string }> {
+  const authErr = await requireAdmin()
+  if (authErr) return authErr
+
+  const svc = serviceClient()
+
+  const { data: existing } = await svc
+    .from('subscriptions')
+    .select('plan_id')
+    .eq('user_id', targetUserId)
+    .single()
+
+  if (!existing || existing.plan_id !== 'petits_genies') {
+    return { error: 'User is not on a sponsored plan' }
+  }
+
+  const { error } = await svc
+    .from('subscriptions')
+    .update({
+      plan_id: 'free',
+      status: 'canceled',
+      plan_granted_by: null,
+      plan_granted_at: null,
+      updated_at: new Date().toISOString(),
+    })
+    .eq('user_id', targetUserId)
+
+  if (error) return { error: 'Failed to revoke plan' }
+
+  revalidatePath('/admin/users')
+  revalidatePath(`/admin/users/${targetUserId}`)
   return {}
 }
 

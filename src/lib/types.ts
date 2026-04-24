@@ -2,7 +2,7 @@ export type UserRole = 'parent' | 'caregiver' | 'clinician' | 'teacher' | 'other
 
 // ─── Billing types ────────────────────────────────────────────────────────────
 
-export type PlanId = 'free' | 'standard' | 'professional'
+export type PlanId = 'free' | 'starter' | 'pro' | 'clinician' | 'petits_genies'
 
 export type SubscriptionStatus =
   | 'active'

@@ -67,7 +67,8 @@ export function DailyLimitModal({ limit, planId, resetTimeText, onClose }: Daily
         </div>
 
         {/* CTA */}
-        {planId !== 'professional' && (
+        {/* Hide upgrade CTA on top-tier plans (Clinician) and on sponsored Petits Génies. */}
+        {planId !== 'clinician' && planId !== 'petits_genies' && (
           <Link
             href="/settings?tab=billing"
             onClick={onClose}
