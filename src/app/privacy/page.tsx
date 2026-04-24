@@ -1,12 +1,16 @@
 import Link from 'next/link'
+import type { Metadata } from 'next'
 import { ShieldCheck } from 'lucide-react'
 import { CURRENT_CONSENT_VERSION } from '@/lib/types'
 import { Navbar } from '@/components/layout/Navbar'
 import { Footer } from '@/components/layout/Footer'
+import { getLang } from '@/lib/i18n/server'
+import { getT } from '@/lib/i18n'
 
-export const metadata = {
-  title: 'Privacy Policy — Devy',
-  description: 'How Devy collects, uses, and protects your personal information in accordance with PIPEDA and PHIPA.',
+export async function generateMetadata(): Promise<Metadata> {
+  const lang = await getLang()
+  const t = getT(lang)
+  return { title: t.meta.privacy.title, description: t.meta.privacy.description }
 }
 
 function Section({ id, title, children }: { id: string; title: string; children: React.ReactNode }) {

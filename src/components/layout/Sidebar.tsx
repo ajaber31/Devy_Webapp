@@ -63,10 +63,10 @@ export function Sidebar({ profile }: SidebarProps) {
   const pathname = usePathname()
   const [collapsed, setCollapsed] = useState(false)
   const [userMenuOpen, setUserMenuOpen] = useState(false)
-  const { t } = useLanguage()
+  const { t, lang } = useLanguage()
 
   const rawNavItems = profile.role === 'admin' ? ADMIN_NAV_ITEMS : DASHBOARD_NAV_ITEMS
-  const terms = getRoleTerminology(profile.role)
+  const terms = getRoleTerminology(profile.role, lang)
   const navItems = rawNavItems.map(item =>
     item.href === '/children' ? { ...item, label: terms.nounPlural } : item
   )

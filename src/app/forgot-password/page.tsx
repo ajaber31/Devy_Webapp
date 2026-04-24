@@ -5,9 +5,12 @@ import Link from 'next/link'
 import { ArrowLeft, ArrowRight, AlertCircle, MailCheck } from 'lucide-react'
 import { DevyLogo } from '@/components/shared/DevyLogo'
 import { NoiseTexture } from '@/components/shared/NoiseTexture'
+import { useLanguage } from '@/components/shared/LanguageProvider'
 import { forgotPassword } from '@/lib/actions/auth'
 
 export default function ForgotPasswordPage() {
+  const { t } = useLanguage()
+  const f = t.auth.forgot
   const [email, setEmail] = useState('')
   const [error, setError] = useState<string | null>(null)
   const [isPending, setIsPending] = useState(false)
@@ -47,28 +50,27 @@ export default function ForgotPasswordPage() {
                 <MailCheck size={24} className="text-sage-600" strokeWidth={1.75} />
               </div>
               <h1 className="font-display text-display-md font-bold text-ink tracking-tight mb-2">
-                Check your email
+                {f.successTitle}
               </h1>
               <p className="text-body-sm text-ink-secondary mb-6 leading-relaxed">
-                We&apos;ve sent a password reset link to <span className="font-medium text-ink">{email}</span>.
-                It may take a minute to arrive.
+                {f.successBody}
               </p>
               <Link
                 href="/login"
                 className="inline-flex items-center gap-2 text-body-sm text-sage-600 hover:text-sage-700 font-medium transition-colors duration-150"
               >
                 <ArrowLeft size={15} strokeWidth={2} />
-                Back to sign in
+                {f.backToSignIn}
               </Link>
             </div>
           ) : (
             <>
               <div className="text-center mb-8">
                 <h1 className="font-display text-display-md font-bold text-ink tracking-tight mb-2">
-                  Reset your password
+                  {f.title}
                 </h1>
                 <p className="text-body-sm text-ink-secondary">
-                  Enter your email and we&apos;ll send you a reset link.
+                  {f.subtitle}
                 </p>
               </div>
 
@@ -81,7 +83,7 @@ export default function ForgotPasswordPage() {
                 )}
                 <div>
                   <label htmlFor="email" className="block text-body-sm font-medium text-ink mb-1.5">
-                    Email address
+                    {f.emailLabel}
                   </label>
                   <input
                     id="email"
@@ -90,7 +92,7 @@ export default function ForgotPasswordPage() {
                     required
                     value={email}
                     onChange={e => setEmail(e.target.value)}
-                    placeholder="you@example.com"
+                    placeholder={f.emailPlaceholder}
                     className="w-full px-4 py-2.5 bg-surface border border-border rounded-card text-body-sm text-ink placeholder:text-ink-tertiary shadow-input focus:outline-none focus:shadow-input-focus focus:border-sage-400"
                     style={{ transitionProperty: 'border-color, box-shadow', transitionDuration: '150ms' }}
                   />
@@ -102,7 +104,7 @@ export default function ForgotPasswordPage() {
                   className="w-full py-3 bg-sage-500 text-white font-medium text-body-base rounded-pill shadow-button hover:bg-sage-600 hover:shadow-button-hover active:scale-[0.99] focus-ring flex items-center justify-center gap-2 disabled:opacity-60 disabled:cursor-not-allowed"
                   style={{ transitionProperty: 'background-color, box-shadow, transform', transitionDuration: '150ms' }}
                 >
-                  {isPending ? 'Sending…' : 'Send reset link'}
+                  {isPending ? f.submitting : f.submit}
                   {!isPending && <ArrowRight size={16} strokeWidth={2.5} />}
                 </button>
               </form>
@@ -113,7 +115,7 @@ export default function ForgotPasswordPage() {
                   className="inline-flex items-center gap-1.5 text-sage-600 hover:text-sage-700 font-medium transition-colors duration-150"
                 >
                   <ArrowLeft size={14} strokeWidth={2} />
-                  Back to sign in
+                  {f.backToSignIn}
                 </Link>
               </p>
             </>

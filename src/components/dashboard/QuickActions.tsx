@@ -22,7 +22,7 @@ export function QuickActions({ nounPlural }: QuickActionsProps) {
     },
     {
       icon: Users,
-      label: `My ${nounPlural}`,
+      label: qa.myPeople.replace('{noun}', nounPlural.toLowerCase()),
       description: qa.viewOrAdd,
       href: '/children',
       color: 'bg-dblue-100 text-dblue-600',

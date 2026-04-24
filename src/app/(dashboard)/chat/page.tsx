@@ -3,6 +3,7 @@ import { getConversations, getMessages } from '@/lib/actions/conversations'
 import { getChildren, getChild } from '@/lib/actions/children'
 import { getProfile } from '@/lib/actions/profile'
 import { getRoleTerminology } from '@/lib/role-terminology'
+import { getLang } from '@/lib/i18n/server'
 import { ChatPageClient } from './ChatPageClient'
 
 export default async function ChatPage({
@@ -10,13 +11,14 @@ export default async function ChatPage({
 }: {
   searchParams: { childId?: string; childName?: string; conversationId?: string }
 }) {
-  const [conversations, children, profile] = await Promise.all([
+  const [conversations, children, profile, lang] = await Promise.all([
     getConversations(),
     getChildren(),
     getProfile(),
+    getLang(),
   ])
 
-  const terms = getRoleTerminology(profile?.role ?? 'parent')
+  const terms = getRoleTerminology(profile?.role ?? 'parent', lang)
 
   // Show selector only when no URL params AND no existing conversations
   const hasUrlContext = !!(searchParams.childId || searchParams.conversationId)

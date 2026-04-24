@@ -49,7 +49,7 @@ export function WelcomeBanner({ firstName, nounPlural, isFirstVisit = false }: W
             style={{ transitionProperty: 'background-color, transform', transitionDuration: '150ms' }}
           >
             <Users size={14} strokeWidth={2} />
-            My {nounPlural}
+            {t.dashboard.welcomeBanner.myPossessive.replace('{noun}', nounPlural.toLowerCase())}
           </Link>
           <Link
             href="/chat"

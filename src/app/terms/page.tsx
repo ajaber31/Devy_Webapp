@@ -9,9 +9,13 @@ import {
   LegalContact,
 } from '@/components/layout/LegalLayout'
 
-export const metadata: Metadata = {
-  title: 'Terms of Service — Devy',
-  description: 'The terms governing your use of the Devy platform.',
+import { getLang } from '@/lib/i18n/server'
+import { getT } from '@/lib/i18n'
+
+export async function generateMetadata(): Promise<Metadata> {
+  const lang = await getLang()
+  const t = getT(lang)
+  return { title: t.meta.terms.title, description: t.meta.terms.description }
 }
 
 const TOC = [

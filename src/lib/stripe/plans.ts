@@ -46,14 +46,14 @@ export const PLANS: Record<PlanId, PlanDefinition> = {
     priceCAD: 0,
     stripePriceId: '',
     limits: {
-      childProfiles: 1,
+      childProfiles: 0,
       questionsPerDay: 3,
     },
     features: [
       '3 questions per day',
-      '1 child profile',
       'Evidence-based AI answers',
       'Access to knowledge base',
+      'Child profiles available on paid plans',
     ],
     tagline: 'Try Devy, no credit card',
   },

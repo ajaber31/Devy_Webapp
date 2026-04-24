@@ -9,9 +9,13 @@ import {
   LegalContact,
 } from '@/components/layout/LegalLayout'
 
-export const metadata: Metadata = {
-  title: 'Refund Policy — Devy',
-  description: 'Devy\'s cancellation and refund policy for subscriptions.',
+import { getLang } from '@/lib/i18n/server'
+import { getT } from '@/lib/i18n'
+
+export async function generateMetadata(): Promise<Metadata> {
+  const lang = await getLang()
+  const t = getT(lang)
+  return { title: t.meta.refund.title, description: t.meta.refund.description }
 }
 
 const TOC = [

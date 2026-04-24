@@ -6,11 +6,14 @@ import Link from 'next/link'
 import { Eye, EyeOff, ArrowRight, AlertCircle, CheckCircle2 } from 'lucide-react'
 import { DevyLogo } from '@/components/shared/DevyLogo'
 import { NoiseTexture } from '@/components/shared/NoiseTexture'
+import { useLanguage } from '@/components/shared/LanguageProvider'
 import { updatePassword } from '@/lib/actions/auth'
 import { createBrowserClient } from '@supabase/ssr'
 
 export default function ResetPasswordPage() {
   const router = useRouter()
+  const { t } = useLanguage()
+  const r = t.auth.reset
   const [password, setPassword] = useState('')
   const [confirm, setConfirm] = useState('')
   const [showPassword, setShowPassword] = useState(false)
@@ -18,8 +21,6 @@ export default function ResetPasswordPage() {
   const [isPending, setIsPending] = useState(false)
   const [sessionReady, setSessionReady] = useState(false)
 
-  // Supabase sets the session from the magic link hash on the client.
-  // Wait for the session before allowing form submission.
   useEffect(() => {
     const supabase = createBrowserClient(
       process.env.NEXT_PUBLIC_SUPABASE_URL!,
@@ -39,11 +40,11 @@ export default function ResetPasswordPage() {
     setError(null)
 
     if (password !== confirm) {
-      setError('Passwords do not match.')
+      setError(t.validation.passwordsDoNotMatch)
       return
     }
     if (password.length < 8) {
-      setError('Password must be at least 8 characters.')
+      setError(t.validation.passwordTooShort)
       return
     }
 
@@ -90,10 +91,10 @@ export default function ResetPasswordPage() {
               <CheckCircle2 size={24} className="text-sage-600" strokeWidth={1.75} />
             </div>
             <h1 className="font-display text-display-md font-bold text-ink tracking-tight mb-2">
-              Set new password
+              {r.title}
             </h1>
             <p className="text-body-sm text-ink-secondary">
-              Choose a strong password for your account.
+              {r.subtitle}
             </p>
           </div>
 
@@ -107,7 +108,7 @@ export default function ResetPasswordPage() {
 
             <div>
               <label htmlFor="password" className="block text-body-sm font-medium text-ink mb-1.5">
-                New password
+                {r.passwordLabel}
               </label>
               <div className="relative">
                 <input
@@ -117,7 +118,7 @@ export default function ResetPasswordPage() {
                   required
                   value={password}
                   onChange={e => setPassword(e.target.value)}
-                  placeholder="At least 8 characters"
+                  placeholder={r.passwordPlaceholder}
                   className="w-full px-4 py-2.5 pr-10 bg-surface border border-border rounded-card text-body-sm text-ink placeholder:text-ink-tertiary shadow-input focus:outline-none focus:shadow-input-focus focus:border-sage-400"
                   style={{ transitionProperty: 'border-color, box-shadow', transitionDuration: '150ms' }}
                 />
@@ -125,7 +126,7 @@ export default function ResetPasswordPage() {
                   type="button"
                   onClick={() => setShowPassword(!showPassword)}
                   className="absolute right-3 top-1/2 -translate-y-1/2 text-ink-tertiary hover:text-ink-secondary transition-colors duration-150 focus-ring rounded"
-                  aria-label={showPassword ? 'Hide password' : 'Show password'}
+                  aria-label={showPassword ? t.common.dismiss : t.common.learnMore}
                 >
                   {showPassword ? <EyeOff size={16} /> : <Eye size={16} />}
                 </button>
@@ -134,7 +135,7 @@ export default function ResetPasswordPage() {
 
             <div>
               <label htmlFor="confirm" className="block text-body-sm font-medium text-ink mb-1.5">
-                Confirm password
+                {r.confirmLabel}
               </label>
               <input
                 id="confirm"
@@ -143,7 +144,7 @@ export default function ResetPasswordPage() {
                 required
                 value={confirm}
                 onChange={e => setConfirm(e.target.value)}
-                placeholder="Repeat your password"
+                placeholder={r.confirmPlaceholder}
                 className="w-full px-4 py-2.5 bg-surface border border-border rounded-card text-body-sm text-ink placeholder:text-ink-tertiary shadow-input focus:outline-none focus:shadow-input-focus focus:border-sage-400"
                 style={{ transitionProperty: 'border-color, box-shadow', transitionDuration: '150ms' }}
               />
@@ -155,7 +156,7 @@ export default function ResetPasswordPage() {
               className="w-full py-3 bg-sage-500 text-white font-medium text-body-base rounded-pill shadow-button hover:bg-sage-600 hover:shadow-button-hover active:scale-[0.99] focus-ring flex items-center justify-center gap-2 disabled:opacity-60 disabled:cursor-not-allowed"
               style={{ transitionProperty: 'background-color, box-shadow, transform', transitionDuration: '150ms' }}
             >
-              {isPending ? 'Updating…' : 'Update password'}
+              {isPending ? r.submitting : r.submit}
               {!isPending && <ArrowRight size={16} strokeWidth={2.5} />}
             </button>
           </form>

@@ -1,43 +1,49 @@
+'use client'
+
 import Link from 'next/link'
 import { ArrowRight, UserPlus, MessageCircle, Sparkles } from 'lucide-react'
-
-const steps = [
-  {
-    icon: UserPlus,
-    label: 'Add a profile',
-    description: 'Create a profile for the child or client you support.',
-    href: '/children',
-    color: 'bg-sage-100 text-sage-600',
-    number: '01',
-  },
-  {
-    icon: MessageCircle,
-    label: 'Start a conversation',
-    description: 'Ask a question about their needs, strategies, or development.',
-    href: '/chat',
-    color: 'bg-dblue-100 text-dblue-600',
-    number: '02',
-  },
-  {
-    icon: Sparkles,
-    label: 'Get grounded answers',
-    description: 'Every response is grounded in peer-reviewed clinical research.',
-    href: '/chat',
-    color: 'bg-sand-100 text-sand-500',
-    number: '03',
-  },
-]
+import { useLanguage } from '@/components/shared/LanguageProvider'
 
 export function FirstRunBanner() {
+  const { t } = useLanguage()
+  const fr = t.dashboard.firstRun
+
+  const steps = [
+    {
+      icon: UserPlus,
+      label: fr.step1Label,
+      description: fr.step1Desc,
+      href: '/children',
+      color: 'bg-sage-100 text-sage-600',
+      number: '01',
+    },
+    {
+      icon: MessageCircle,
+      label: fr.step2Label,
+      description: fr.step2Desc,
+      href: '/chat',
+      color: 'bg-dblue-100 text-dblue-600',
+      number: '02',
+    },
+    {
+      icon: Sparkles,
+      label: fr.step3Label,
+      description: fr.step3Desc,
+      href: '/chat',
+      color: 'bg-sand-100 text-sand-500',
+      number: '03',
+    },
+  ]
+
   return (
     <div className="bg-white rounded-card-lg shadow-card border border-border/50 overflow-hidden">
       <div className="px-6 py-5 border-b border-border flex items-center justify-between">
         <div>
           <h3 className="font-display text-[1.1rem] font-semibold text-ink tracking-tight">
-            Let&apos;s get you set up
+            {fr.heading}
           </h3>
           <p className="text-body-xs text-ink-secondary mt-0.5">
-            Three steps to your first evidence-based answer.
+            {fr.subheading}
           </p>
         </div>
         <Link
@@ -45,7 +51,7 @@ export function FirstRunBanner() {
           className="hidden sm:inline-flex items-center gap-1.5 px-4 py-2 bg-sage-500 text-white text-body-xs font-semibold rounded-pill shadow-button hover:bg-sage-600 active:scale-[0.98]"
           style={{ transitionProperty: 'background-color, transform', transitionDuration: '150ms' }}
         >
-          Skip ahead
+          {fr.skip}
           <ArrowRight size={13} strokeWidth={2.5} />
         </Link>
       </div>

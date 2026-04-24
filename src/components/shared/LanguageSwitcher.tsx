@@ -10,11 +10,13 @@ interface LanguageSwitcherProps {
 }
 
 export function LanguageSwitcher({ className, variant = 'pill' }: LanguageSwitcherProps) {
-  const { lang, setLang } = useLanguage()
+  const { lang, setLang, t } = useLanguage()
+  const ls = t.languageSwitcher
 
   if (variant === 'minimal') {
     const next = lang === 'en' ? 'fr' : 'en'
     const label = lang === 'en' ? 'FR' : 'EN'
+    const targetLang = lang === 'en' ? ls.french : ls.english
     return (
       <button
         onClick={() => setLang(next)}
@@ -23,7 +25,7 @@ export function LanguageSwitcher({ className, variant = 'pill' }: LanguageSwitch
           className,
         )}
         style={{ transitionProperty: 'color', transitionDuration: '150ms' }}
-        aria-label={`Switch to ${lang === 'en' ? 'French' : 'English'}`}
+        aria-label={ls.switchTo.replace('{language}', targetLang)}
       >
         {label}
       </button>
@@ -37,7 +39,7 @@ export function LanguageSwitcher({ className, variant = 'pill' }: LanguageSwitch
         className,
       )}
       role="group"
-      aria-label="Language selector"
+      aria-label={t.settings.language}
     >
       {(['en', 'fr'] as const).map((l) => (
         <button

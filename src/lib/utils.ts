@@ -1,26 +1,47 @@
 import { clsx, type ClassValue } from 'clsx'
 import { twMerge } from 'tailwind-merge'
+import type { Lang } from '@/lib/i18n/translations'
 
 export function cn(...inputs: ClassValue[]) {
   return twMerge(clsx(inputs))
 }
 
-export function formatDate(dateStr: string): string {
+function toLocale(lang: Lang | undefined): string {
+  return lang === 'fr' ? 'fr-CA' : 'en-CA'
+}
+
+/**
+ * Short relative date — "Today", "Yesterday", "3 days ago", or an absolute
+ * month/day for anything older than a week. Localizes month names in French.
+ */
+export function formatDate(dateStr: string, lang: Lang = 'en'): string {
   const date = new Date(dateStr)
   const now = new Date()
   const diff = now.getTime() - date.getTime()
   const days = Math.floor(diff / (1000 * 60 * 60 * 24))
 
-  if (days === 0) return 'Today'
-  if (days === 1) return 'Yesterday'
-  if (days < 7) return `${days} days ago`
-  return date.toLocaleDateString('en-CA', { month: 'short', day: 'numeric' })
+  if (lang === 'fr') {
+    if (days === 0) return "Aujourd’hui"
+    if (days === 1) return 'Hier'
+    if (days < 7) return `il y a ${days} jour${days > 1 ? 's' : ''}`
+  } else {
+    if (days === 0) return 'Today'
+    if (days === 1) return 'Yesterday'
+    if (days < 7) return `${days} days ago`
+  }
+  return date.toLocaleDateString(toLocale(lang), { month: 'short', day: 'numeric' })
 }
 
-export function formatDateFull(dateStr: string): string {
-  return new Date(dateStr).toLocaleDateString('en-CA', {
-    month: 'long', day: 'numeric', year: 'numeric'
+/** Full "15 April 2026" / "15 avril 2026" */
+export function formatDateFull(dateStr: string, lang: Lang = 'en'): string {
+  return new Date(dateStr).toLocaleDateString(toLocale(lang), {
+    month: 'long', day: 'numeric', year: 'numeric',
   })
+}
+
+/** Number with locale-appropriate grouping (1 234 in fr, 1,234 in en). */
+export function formatNumber(n: number, lang: Lang = 'en'): string {
+  return n.toLocaleString(toLocale(lang))
 }
 
 export function truncate(str: string, max: number): string {

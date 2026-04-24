@@ -3,18 +3,12 @@
 import { useState, useTransition } from 'react'
 import { useRouter } from 'next/navigation'
 import { Shield, CheckCircle2, ExternalLink, Loader2 } from 'lucide-react'
+import { useLanguage } from '@/components/shared/LanguageProvider'
 import { recordConsent } from '@/lib/actions/consent'
 
-const COMMITMENTS = [
-  'Your data is stored in Canada (PIPEDA & PHIPA aligned)',
-  'We never sell or share your personal information with third parties',
-  'Child profiles contain only information you choose to provide',
-  'You may request a copy or deletion of your data at any time',
-  'Conversations are used only to provide you with AI support, not for model training',
-  'No clinical diagnoses are stored or generated. Devy is an informational tool only.',
-]
-
 export function ConsentForm() {
+  const { t } = useLanguage()
+  const c = t.auth.consent
   const [checked, setChecked] = useState(false)
   const [isPending, startTransition] = useTransition()
   const [error, setError] = useState<string | null>(null)
@@ -27,7 +21,7 @@ export function ConsentForm() {
     startTransition(async () => {
       const result = await recordConsent()
       if (result.error) {
-        setError('Something went wrong. Please try again.')
+        setError(c.errorRetry)
       } else {
         router.replace('/dashboard')
         router.refresh()
@@ -37,25 +31,22 @@ export function ConsentForm() {
 
   return (
     <form onSubmit={handleSubmit} className="w-full max-w-xl mx-auto space-y-8">
-
-      {/* Commitments */}
       <div className="bg-sage-50 border border-sage-200 rounded-2xl p-6 space-y-3">
         <p className="text-body-xs font-semibold text-sage-700 uppercase tracking-widest mb-4">
-          Our commitments to you
+          {c.commitmentsTitle}
         </p>
-        {COMMITMENTS.map((c) => (
-          <div key={c} className="flex items-start gap-3">
+        {c.commitments.map((commitment) => (
+          <div key={commitment} className="flex items-start gap-3">
             <CheckCircle2
               size={16}
               className="text-sage-500 flex-shrink-0 mt-0.5"
               strokeWidth={2}
             />
-            <p className="text-body-sm text-ink-secondary leading-relaxed">{c}</p>
+            <p className="text-body-sm text-ink-secondary leading-relaxed">{commitment}</p>
           </div>
         ))}
       </div>
 
-      {/* Full policy link */}
       <div className="text-center">
         <a
           href="/privacy"
@@ -63,19 +54,15 @@ export function ConsentForm() {
           rel="noopener noreferrer"
           className="inline-flex items-center gap-1.5 text-body-sm text-dblue-600 hover:text-dblue-700 font-medium focus-ring rounded px-1"
         >
-          Read our full Privacy Policy
+          {c.readPolicy}
           <ExternalLink size={13} strokeWidth={2} />
         </a>
       </div>
 
-      {/* Checkbox consent */}
       <label className={`
         flex items-start gap-4 p-5 rounded-2xl border-2 cursor-pointer select-none
         transition-colors duration-150
-        ${checked
-          ? 'bg-sage-50 border-sage-400'
-          : 'bg-white border-border hover:border-sage-300'
-        }
+        ${checked ? 'bg-sage-50 border-sage-400' : 'bg-white border-border hover:border-sage-300'}
       `}>
         <div className="relative flex-shrink-0 mt-0.5">
           <input
@@ -98,7 +85,7 @@ export function ConsentForm() {
         </div>
         <div>
           <p className="text-body-sm font-medium text-ink leading-snug">
-            I have read and agree to Devy&apos;s{' '}
+            {c.checkboxLabel}{' '}
             <a
               href="/privacy"
               target="_blank"
@@ -106,22 +93,20 @@ export function ConsentForm() {
               onClick={(e) => e.stopPropagation()}
               className="text-dblue-600 hover:underline"
             >
-              Privacy Policy
+              {c.checkboxPrivacy}
             </a>{' '}
-            and understand how my information will be used.
+            {c.checkboxAnd}
           </p>
           <p className="text-body-xs text-ink-tertiary mt-1">
-            I understand Devy is an informational tool and does not provide medical or clinical advice.
+            {c.checkboxDisclaimer}
           </p>
         </div>
       </label>
 
-      {/* Error */}
       {error && (
         <p className="text-body-xs text-red-600 text-center">{error}</p>
       )}
 
-      {/* Submit */}
       <button
         type="submit"
         disabled={!checked || isPending}
@@ -138,19 +123,19 @@ export function ConsentForm() {
         {isPending ? (
           <>
             <Loader2 size={16} className="animate-spin" />
-            Saving your consent…
+            {c.savingConsent}
           </>
         ) : (
           <>
             <Shield size={16} strokeWidth={2} />
-            Continue to Devy
+            {c.continueToDevy}
           </>
         )}
       </button>
 
       <p className="text-center text-body-xs text-ink-tertiary pb-4">
-        You can update your data preferences at any time in{' '}
-        <span className="font-medium text-ink-secondary">Settings → Privacy & Data</span>.
+        {c.updatePreferences}{' '}
+        <span className="font-medium text-ink-secondary">{c.settingsPath}</span>.
       </p>
     </form>
   )

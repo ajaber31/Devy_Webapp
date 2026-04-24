@@ -20,9 +20,9 @@ interface MobileSidebarProps {
 export function MobileSidebar({ profile }: MobileSidebarProps) {
   const pathname = usePathname()
   const [open, setOpen] = useState(false)
-  const { t } = useLanguage()
+  const { t, lang } = useLanguage()
   const rawNavItems = profile.role === 'admin' ? ADMIN_NAV_ITEMS : DASHBOARD_NAV_ITEMS
-  const terms = getRoleTerminology(profile.role)
+  const terms = getRoleTerminology(profile.role, lang)
   const navItems = rawNavItems.map(item =>
     item.href === '/children' ? { ...item, label: terms.nounPlural } : item
   )

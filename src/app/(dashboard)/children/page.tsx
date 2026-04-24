@@ -20,7 +20,7 @@ export default async function ChildrenPage() {
   ])
   const t = getT(lang)
   const tc = t.children
-  const terms = getRoleTerminology(profile?.role ?? 'parent')
+  const terms = getRoleTerminology(profile?.role ?? 'parent', lang)
 
   // Plan limit enforcement for the UI — actual enforcement is in createChild() server action
   const planLimitReached = billingStatus !== null && (

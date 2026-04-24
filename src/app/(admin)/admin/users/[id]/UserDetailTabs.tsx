@@ -11,14 +11,9 @@ import { updateUserStatus, updateUserRole, grantPetitsGeniesPlan, revokeSponsore
 import { PLANS } from '@/lib/stripe/plans'
 import { useRouter } from 'next/navigation'
 import { useState, useTransition } from 'react'
+import { useLanguage } from '@/components/shared/LanguageProvider'
 import type { AdminUserDetail } from '@/lib/actions/admin'
 import type { UserRole, UserStatus } from '@/lib/types'
-
-const TABS = [
-  { id: 'overview', label: 'Overview',  icon: User },
-  { id: 'clients',  label: 'Clients',   icon: Users },
-  { id: 'billing',  label: 'Billing',   icon: CreditCard },
-]
 
 const roleColorMap: Record<string, string> = {
   clinician: 'bg-sage-100 text-sage-700',
@@ -46,14 +41,18 @@ function OverviewTab({
   onStatusChange: (s: UserStatus) => void
   onRoleChange: (r: UserRole) => void
 }) {
+  const { t, lang } = useLanguage()
+  const ud = t.admin.userDetail
   const { user, stats } = detail
   const ROLE_OPTIONS: { value: UserRole; label: string }[] = [
-    { value: 'parent',    label: 'Parent' },
-    { value: 'caregiver', label: 'Caregiver' },
-    { value: 'clinician', label: 'Clinician' },
-    { value: 'teacher',   label: 'Teacher' },
-    { value: 'other',     label: 'Other' },
+    { value: 'parent',    label: t.roles.parent },
+    { value: 'caregiver', label: t.roles.caregiver },
+    { value: 'clinician', label: t.roles.clinician },
+    { value: 'teacher',   label: t.roles.teacher },
+    { value: 'other',     label: t.roles.other },
   ]
+  const roleLabel = t.roles[user.role as keyof typeof t.roles] ?? user.role
+  const statusLabel = t.status[user.status as keyof typeof t.status] ?? user.status
 
   return (
     <div className="space-y-5">
@@ -68,7 +67,7 @@ function OverviewTab({
             <p className="text-body-sm text-ink-secondary">{user.email}</p>
             <div className="flex items-center gap-2 mt-2 flex-wrap">
               <span className={cn('px-2.5 py-0.5 rounded-pill text-body-xs font-medium', roleColorMap[user.role] ?? 'bg-raised text-ink-secondary')}>
-                {user.role.charAt(0).toUpperCase() + user.role.slice(1)}
+                {roleLabel}
               </span>
               <span className={cn(
                 'px-2.5 py-0.5 rounded-pill text-body-xs font-medium border',
@@ -76,7 +75,7 @@ function OverviewTab({
                 user.status === 'suspended' ? 'bg-red-50 text-red-600 border-red-200' :
                                              'bg-raised text-ink-tertiary border-border'
               )}>
-                {user.status.charAt(0).toUpperCase() + user.status.slice(1)}
+                {statusLabel}
               </span>
             </div>
           </div>
@@ -84,19 +83,19 @@ function OverviewTab({
 
         <div className="grid grid-cols-2 sm:grid-cols-4 gap-4 mt-6 pt-6 border-t border-border">
           <div>
-            <p className="text-body-xs text-ink-tertiary flex items-center gap-1 mb-0.5"><Calendar size={11} /> Joined</p>
-            <p className="text-body-sm font-medium text-ink">{formatDate(user.joinedAt)}</p>
+            <p className="text-body-xs text-ink-tertiary flex items-center gap-1 mb-0.5"><Calendar size={11} /> {ud.joined}</p>
+            <p className="text-body-sm font-medium text-ink">{formatDate(user.joinedAt, lang)}</p>
           </div>
           <div>
-            <p className="text-body-xs text-ink-tertiary flex items-center gap-1 mb-0.5"><Clock size={11} /> Last active</p>
-            <p className="text-body-sm font-medium text-ink">{formatDate(user.lastActiveAt)}</p>
+            <p className="text-body-xs text-ink-tertiary flex items-center gap-1 mb-0.5"><Clock size={11} /> {ud.lastActive}</p>
+            <p className="text-body-sm font-medium text-ink">{formatDate(user.lastActiveAt, lang)}</p>
           </div>
           <div>
-            <p className="text-body-xs text-ink-tertiary flex items-center gap-1 mb-0.5"><MessageCircle size={11} /> Conversations</p>
+            <p className="text-body-xs text-ink-tertiary flex items-center gap-1 mb-0.5"><MessageCircle size={11} /> {ud.conversations}</p>
             <p className="text-body-sm font-medium text-ink">{stats.conversationCount}</p>
           </div>
           <div>
-            <p className="text-body-xs text-ink-tertiary flex items-center gap-1 mb-0.5"><MessageCircle size={11} /> Questions asked</p>
+            <p className="text-body-xs text-ink-tertiary flex items-center gap-1 mb-0.5"><MessageCircle size={11} /> {ud.questionsAsked}</p>
             <p className="text-body-sm font-medium text-ink">{stats.messageCount}</p>
           </div>
         </div>
@@ -105,9 +104,8 @@ function OverviewTab({
       {/* Actions */}
       {user.role !== 'admin' && (
         <div className="bg-white rounded-card-lg border border-border/50 shadow-card p-6">
-          <h3 className="font-display text-body-base font-semibold text-ink mb-4">Account actions</h3>
+          <h3 className="font-display text-body-base font-semibold text-ink mb-4">{ud.accountActions}</h3>
           <div className="space-y-3">
-            {/* Status toggle */}
             {user.status === 'suspended' ? (
               <button
                 onClick={() => onStatusChange('active')}
@@ -115,7 +113,7 @@ function OverviewTab({
                 style={{ transitionProperty: 'background-color', transitionDuration: '150ms' }}
               >
                 <ShieldCheck size={15} strokeWidth={2} />
-                Reactivate account
+                {ud.reactivate}
               </button>
             ) : (
               <button
@@ -124,13 +122,12 @@ function OverviewTab({
                 style={{ transitionProperty: 'background-color', transitionDuration: '150ms' }}
               >
                 <ShieldOff size={15} strokeWidth={2} />
-                Suspend account
+                {ud.suspend}
               </button>
             )}
 
-            {/* Role picker */}
             <div>
-              <label className="block text-body-xs text-ink-tertiary mb-1.5">Account role</label>
+              <label className="block text-body-xs text-ink-tertiary mb-1.5">{ud.accountRole}</label>
               <div className="flex flex-wrap gap-2">
                 {ROLE_OPTIONS.map(opt => (
                   <button
@@ -160,8 +157,12 @@ function OverviewTab({
 
 function ClientsTab({ detail }: { detail: AdminUserDetail }) {
   const { children, user } = detail
-  const noun = ['clinician', 'teacher'].includes(user.role) ? 'client' : 'child'
-  const nounPlural = ['clinician', 'teacher'].includes(user.role) ? 'clients' : 'children'
+  const { t, lang } = useLanguage()
+  const ud = t.admin.userDetail
+  const isClinicianLike = ['clinician', 'teacher'].includes(user.role)
+  const terms = isClinicianLike ? t.role.clinician : t.role.parent
+  const noun = terms.nounSingular.toLowerCase()
+  const nounPlural = terms.nounPlural.toLowerCase()
 
   if (children.length === 0) {
     return (
@@ -169,8 +170,8 @@ function ClientsTab({ detail }: { detail: AdminUserDetail }) {
         <div className="w-12 h-12 rounded-full bg-surface flex items-center justify-center mx-auto mb-3">
           <Users size={20} className="text-ink-tertiary" strokeWidth={1.5} />
         </div>
-        <p className="text-body-sm font-medium text-ink mb-1">No {nounPlural} yet</p>
-        <p className="text-body-xs text-ink-tertiary">This user hasn&apos;t added any {noun} profiles.</p>
+        <p className="text-body-sm font-medium text-ink mb-1">{ud.clientsEmpty.replace('{noun}', nounPlural)}</p>
+        <p className="text-body-xs text-ink-tertiary">{ud.clientsEmptyDesc.replace('{noun}', noun)}</p>
       </div>
     )
   }
@@ -178,11 +179,10 @@ function ClientsTab({ detail }: { detail: AdminUserDetail }) {
   return (
     <div className="space-y-3">
       <p className="text-body-xs text-ink-tertiary">
-        {children.length} {children.length === 1 ? noun : nounPlural}
+        {ud.clientsCount.replace('{count}', String(children.length)).replace('{noun}', children.length === 1 ? noun : nounPlural)}
       </p>
       {children.map(child => {
         const ring = avatarRing[child.avatarColor] ?? avatarRing.sage
-        // Age calculation
         const age = child.dateOfBirth
           ? Math.floor((Date.now() - new Date(child.dateOfBirth).getTime()) / (365.25 * 24 * 60 * 60 * 1000))
           : null
@@ -200,7 +200,7 @@ function ClientsTab({ detail }: { detail: AdminUserDetail }) {
                 <div className="flex items-center gap-2 mb-1">
                   <h4 className="font-display font-semibold text-ink text-body-base">{child.name}</h4>
                   {age !== null && (
-                    <span className="text-body-xs text-ink-tertiary">· {age} yr{age !== 1 ? 's' : ''}</span>
+                    <span className="text-body-xs text-ink-tertiary">· {age} {lang === 'fr' ? 'ans' : `yr${age !== 1 ? 's' : ''}`}</span>
                   )}
                 </div>
 
@@ -229,14 +229,14 @@ function ClientsTab({ detail }: { detail: AdminUserDetail }) {
                     ))}
                     {child.supportNeeds.length > 4 && (
                       <span className="px-2 py-0.5 text-body-xs text-ink-tertiary">
-                        +{child.supportNeeds.length - 4} more
+                        +{child.supportNeeds.length - 4}
                       </span>
                     )}
                   </div>
                 )}
 
                 <p className="text-body-xs text-ink-tertiary mt-2">
-                  Added {formatDate(child.createdAt)}
+                  {ud.addedOn.replace('{date}', formatDate(child.createdAt, lang))}
                 </p>
               </div>
             </div>
@@ -259,6 +259,8 @@ function PetitsGeniesGrantPanel({
   onGranted: () => void
 }) {
   const router = useRouter()
+  const { t } = useLanguage()
+  const pg = t.admin.userDetail.petitsGenies
   const [isPending, startTransition] = useTransition()
   const [msg, setMsg] = useState<{ kind: 'success' | 'warning' | 'error'; text: string } | null>(null)
   const [confirming, setConfirming] = useState<'grant' | 'revoke' | null>(null)
@@ -276,7 +278,7 @@ function PetitsGeniesGrantPanel({
       if (result.warning) {
         setMsg({ kind: 'warning', text: result.warning })
       } else {
-        setMsg({ kind: 'success', text: 'Petits Génies plan granted.' })
+        setMsg({ kind: 'success', text: pg.granted })
       }
       setConfirming(null)
       onGranted()
@@ -292,7 +294,7 @@ function PetitsGeniesGrantPanel({
         setMsg({ kind: 'error', text: result.error })
         return
       }
-      setMsg({ kind: 'success', text: 'Sponsored plan revoked. User is now on Free.' })
+      setMsg({ kind: 'success', text: pg.revoked })
       setConfirming(null)
       onGranted()
       router.refresh()
@@ -306,10 +308,8 @@ function PetitsGeniesGrantPanel({
           <Sparkles size={16} className="text-dblue-600" strokeWidth={1.75} />
         </div>
         <div className="flex-1 min-w-0">
-          <p className="text-body-sm font-semibold text-ink">Petits Génies Family Plan</p>
-          <p className="text-body-xs text-ink-secondary">
-            Admin-granted sponsored plan for clinic members. 5 questions/day · 3 child profiles · not billed.
-          </p>
+          <p className="text-body-sm font-semibold text-ink">{pg.title}</p>
+          <p className="text-body-xs text-ink-secondary">{pg.description}</p>
         </div>
       </div>
 
@@ -332,7 +332,7 @@ function PetitsGeniesGrantPanel({
           style={{ transitionProperty: 'background-color, transform', transitionDuration: '150ms' }}
         >
           <Gift size={13} strokeWidth={2} />
-          Grant Petits Génies plan
+          {pg.grant}
         </button>
       )}
 
@@ -344,14 +344,14 @@ function PetitsGeniesGrantPanel({
             className="flex items-center gap-2 px-4 py-2 bg-dblue-500 text-white text-body-xs font-semibold rounded-card hover:bg-dblue-600 focus-ring disabled:opacity-60"
           >
             {isPending ? <Loader2 size={13} className="animate-spin" /> : <Gift size={13} strokeWidth={2} />}
-            Confirm grant
+            {pg.confirmGrant}
           </button>
           <button
             onClick={() => setConfirming(null)}
             disabled={isPending}
             className="px-3 py-2 text-body-xs text-ink-secondary hover:text-ink"
           >
-            Cancel
+            {pg.cancel}
           </button>
         </div>
       )}
@@ -364,7 +364,7 @@ function PetitsGeniesGrantPanel({
           style={{ transitionProperty: 'background-color', transitionDuration: '150ms' }}
         >
           <Trash2 size={13} strokeWidth={2} />
-          Revoke sponsored plan
+          {pg.revoke}
         </button>
       )}
 
@@ -376,14 +376,14 @@ function PetitsGeniesGrantPanel({
             className="flex items-center gap-2 px-4 py-2 bg-red-500 text-white text-body-xs font-semibold rounded-card hover:bg-red-600 focus-ring disabled:opacity-60"
           >
             {isPending ? <Loader2 size={13} className="animate-spin" /> : <Trash2 size={13} strokeWidth={2} />}
-            Confirm revoke
+            {pg.confirmRevoke}
           </button>
           <button
             onClick={() => setConfirming(null)}
             disabled={isPending}
             className="px-3 py-2 text-body-xs text-ink-secondary hover:text-ink"
           >
-            Cancel
+            {pg.cancel}
           </button>
         </div>
       )}
@@ -394,9 +394,14 @@ function PetitsGeniesGrantPanel({
 // ─── Billing tab ──────────────────────────────────────────────────────────────
 
 function BillingTab({ detail, onRefresh }: { detail: AdminUserDetail; onRefresh: () => void }) {
+  const { t, lang } = useLanguage()
+  const bt = t.admin.userDetail.billing
   const { subscription } = detail
-  const planId = subscription?.planId ?? 'free'
+  const planId = (subscription?.planId ?? 'free') as keyof typeof t.plans
   const plan = PLANS[planId as keyof typeof PLANS] ?? PLANS.free
+  const translatedPlan = t.plans[planId]
+  const translatedPlanName = translatedPlan?.name ?? t.plans.free.name
+  const translatedFeatures = translatedPlan?.features ?? t.plans.free.features
 
   const statusStyles: Record<string, string> = {
     active:     'bg-sage-50 text-sage-700 border-sage-200',
@@ -409,8 +414,11 @@ function BillingTab({ detail, onRefresh }: { detail: AdminUserDetail; onRefresh:
   }
 
   const subStatus = subscription?.status ?? 'free'
+  const statusLabel = subStatus === 'free'
+    ? bt.freeLabel
+    : (t.settings.billing.statuses[subStatus as keyof typeof t.settings.billing.statuses] ?? subStatus)
   const periodEnd = subscription?.currentPeriodEnd
-    ? new Date(subscription.currentPeriodEnd).toLocaleDateString('en-CA', { year: 'numeric', month: 'long', day: 'numeric' })
+    ? new Date(subscription.currentPeriodEnd).toLocaleDateString(lang === 'fr' ? 'fr-CA' : 'en-CA', { year: 'numeric', month: 'long', day: 'numeric' })
     : null
 
   return (
@@ -439,39 +447,37 @@ function BillingTab({ detail, onRefresh }: { detail: AdminUserDetail; onRefresh:
           )}
         </div>
         <div className="flex-1">
-          <p className="text-body-sm font-semibold text-ink">{plan.name} plan</p>
+          <p className="text-body-sm font-semibold text-ink">{translatedPlanName} {bt.planSuffix}</p>
           <p className="text-body-xs text-ink-tertiary">
-            {plan.priceCAD === 0 ? 'Free' : `$${plan.priceCAD} CAD / month`}
+            {plan.priceCAD === 0 ? bt.freeAmount : `$${plan.priceCAD}${bt.perMonth}`}
           </p>
         </div>
-        <span className={cn('px-2.5 py-0.5 rounded-pill text-body-xs font-medium border capitalize', statusStyles[subStatus] ?? statusStyles.free)}>
-          {subStatus === 'free' ? 'Free plan' : subStatus.replace('_', ' ')}
+        <span className={cn('px-2.5 py-0.5 rounded-pill text-body-xs font-medium border', statusStyles[subStatus] ?? statusStyles.free)}>
+          {statusLabel}
         </span>
       </div>
 
-      {/* Details */}
       <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 pt-4 border-t border-border">
         <div>
-          <p className="text-body-xs text-ink-tertiary mb-0.5">Stripe customer</p>
+          <p className="text-body-xs text-ink-tertiary mb-0.5">{bt.stripeCustomer}</p>
           <p className="text-body-sm font-medium text-ink font-mono">
             {subscription?.stripeCustomerId ?? '—'}
           </p>
         </div>
         <div>
           <p className="text-body-xs text-ink-tertiary mb-0.5">
-            {subscription?.cancelAtPeriodEnd ? 'Cancels on' : 'Renews on'}
+            {subscription?.cancelAtPeriodEnd ? bt.cancelsOn : bt.renewsOn}
           </p>
           <p className="text-body-sm font-medium text-ink">{periodEnd ?? '—'}</p>
         </div>
       </div>
 
-      {/* Plan features */}
       <div className="pt-4 border-t border-border">
         <p className="text-body-xs font-medium text-ink-secondary uppercase tracking-wide mb-3">
-          Included in {plan.name}
+          {bt.includedIn} {translatedPlanName}
         </p>
         <ul className="space-y-2">
-          {plan.features.map(f => (
+          {translatedFeatures.map(f => (
             <li key={f} className="flex items-start gap-2 text-body-xs text-ink-secondary">
               <CheckCircle2 size={13} className="text-sage-500 mt-0.5 shrink-0" strokeWidth={2} />
               {f}
@@ -488,6 +494,12 @@ function BillingTab({ detail, onRefresh }: { detail: AdminUserDetail; onRefresh:
 
 export function UserDetailTabs({ detail }: { detail: AdminUserDetail }) {
   const router = useRouter()
+  const { t } = useLanguage()
+  const TABS = [
+    { id: 'overview', label: t.admin.userDetail.tabs.overview, icon: User },
+    { id: 'clients',  label: t.admin.userDetail.tabs.clients,  icon: Users },
+    { id: 'billing',  label: t.admin.userDetail.tabs.billing,  icon: CreditCard },
+  ]
   const [activeTab, setActiveTab] = useState('overview')
   const [localDetail, setLocalDetail] = useState(detail)
 

@@ -3,6 +3,7 @@
 import { useTransition, useState } from 'react'
 import { X, CheckCircle2, ArrowRight, Zap, Crown, Stethoscope, Loader2, AlertCircle } from 'lucide-react'
 import { createCheckoutSession } from '@/lib/actions/billing'
+import { useLanguage } from '@/components/shared/LanguageProvider'
 import { PLANS } from '@/lib/stripe/plans'
 import { cn } from '@/lib/utils'
 import type { PlanId } from '@/lib/types'
@@ -12,17 +13,6 @@ interface UpgradeModalProps {
   onClose: () => void
   reason: 'child_limit' | 'daily_limit'
   currentPlanId: PlanId
-}
-
-const REASON_COPY = {
-  child_limit: {
-    title: 'Add more child profiles',
-    description: 'Your current plan has reached its profile limit. Upgrade to add more profiles and unlock context-aware answers.',
-  },
-  daily_limit: {
-    title: "You've reached your daily question limit",
-    description: 'Upgrade to ask more questions and get the support you need — without waiting until tomorrow.',
-  },
 }
 
 const ICON_FOR_PLAN: Record<PlanId, React.ReactNode> = {
@@ -46,12 +36,16 @@ function getUpgradeOptions(currentPlanId: PlanId): PlanId[] {
 }
 
 export function UpgradeModal({ open, onClose, reason, currentPlanId }: UpgradeModalProps) {
+  const { t } = useLanguage()
+  const um = t.upgradeModal
   const [error, setError] = useState<string | null>(null)
   const [isLoading, startTransition] = useTransition()
 
   if (!open) return null
 
-  const copy = REASON_COPY[reason]
+  const copy = reason === 'child_limit'
+    ? { title: um.childLimitTitle, description: um.childLimitDesc }
+    : { title: um.dailyLimitTitle,  description: um.dailyLimitDesc }
   const options = getUpgradeOptions(currentPlanId)
 
   // Prefer showing at least 2 options. If user is already on Clinician, show Pro + Clinician (re-selection).
@@ -93,7 +87,7 @@ export function UpgradeModal({ open, onClose, reason, currentPlanId }: UpgradeMo
               onClick={onClose}
               className="w-8 h-8 flex items-center justify-center rounded-card text-ink-tertiary hover:text-ink hover:bg-raised focus-ring"
               style={{ transitionProperty: 'background-color, color', transitionDuration: '150ms' }}
-              aria-label="Close"
+              aria-label={t.common.close}
             >
               <X size={16} />
             </button>
@@ -129,7 +123,7 @@ export function UpgradeModal({ open, onClose, reason, currentPlanId }: UpgradeMo
                       <div className="absolute -top-3 left-4">
                         <span className="inline-flex items-center gap-1 px-2.5 py-1 bg-sage-500 text-white text-body-xs font-semibold rounded-pill">
                           <Crown size={10} strokeWidth={2.5} />
-                          Best value
+                          {um.bestValue}
                         </span>
                       </div>
                     )}
@@ -170,14 +164,14 @@ export function UpgradeModal({ open, onClose, reason, currentPlanId }: UpgradeMo
                           <Loader2 size={14} className="animate-spin" />
                         ) : (
                           <>
-                            Upgrade to {plan.name}
+                            {um.upgradeTo.replace('{plan}', plan.name)}
                             <ArrowRight size={13} strokeWidth={2.5} />
                           </>
                         )}
                       </button>
                     )}
                     {isCurrent && (
-                      <div className="text-body-xs text-center text-ink-tertiary py-1">Current plan</div>
+                      <div className="text-body-xs text-center text-ink-tertiary py-1">{um.currentPlan}</div>
                     )}
                   </div>
                 )
@@ -185,7 +179,7 @@ export function UpgradeModal({ open, onClose, reason, currentPlanId }: UpgradeMo
             </div>
 
             <p className="text-body-xs text-ink-tertiary text-center">
-              Cancel anytime · Secure payment via Stripe · Prices in CAD
+              {um.footerNote}
             </p>
           </div>
         </div>

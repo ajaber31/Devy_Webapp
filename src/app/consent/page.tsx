@@ -1,22 +1,31 @@
 import { redirect } from 'next/navigation'
 import { ShieldCheck, Leaf } from 'lucide-react'
+import type { Metadata } from 'next'
 import { createClient } from '@/lib/supabase/server'
 import { ConsentForm } from './ConsentForm'
 import { CURRENT_CONSENT_VERSION } from '@/lib/types'
+import { getLang } from '@/lib/i18n/server'
+import { getT } from '@/lib/i18n'
 
-export const metadata = {
-  title: 'Privacy & Consent — Devy',
-  robots: 'noindex',
+export async function generateMetadata(): Promise<Metadata> {
+  const lang = await getLang()
+  const t = getT(lang)
+  return {
+    title: t.meta.consent.title,
+    description: t.meta.consent.description,
+    robots: 'noindex',
+  }
 }
 
 export default async function ConsentPage() {
   const supabase = createClient()
-  const { data: { user } } = await supabase.auth.getUser()
+  const [{ data: { user } }, lang] = await Promise.all([
+    supabase.auth.getUser(),
+    getLang(),
+  ])
 
-  // Must be authenticated to reach this page
   if (!user) redirect('/login')
 
-  // Check if already consented to current version — skip gate if so
   const { data: profile } = await supabase
     .from('profiles')
     .select('consent_version, consent_accepted_at')
@@ -28,9 +37,11 @@ export default async function ConsentPage() {
     redirect('/dashboard')
   }
 
+  const t = getT(lang)
+  const c = t.auth.consent
+
   return (
     <div className="min-h-screen bg-canvas flex flex-col">
-      {/* Subtle background texture */}
       <div
         aria-hidden
         className="pointer-events-none fixed inset-0 opacity-[0.025]"
@@ -39,38 +50,33 @@ export default async function ConsentPage() {
         }}
       />
 
-      {/* Top strip */}
       <div className="flex-shrink-0 h-1 bg-gradient-to-r from-sage-400 via-sage-500 to-dblue-500" />
 
-      {/* Header */}
       <header className="flex-shrink-0 flex items-center justify-between px-6 py-5 border-b border-border/60">
         <div className="flex items-center gap-2.5">
           <div className="w-8 h-8 rounded-lg bg-sage-500 flex items-center justify-center shadow-sm">
             <Leaf size={16} className="text-white" strokeWidth={2} />
           </div>
-          <span className="font-display font-bold text-ink text-lg">Devy</span>
+          <span className="font-display font-bold text-ink text-lg">{c.headerBrand}</span>
         </div>
         <div className="flex items-center gap-1.5 text-body-xs text-ink-tertiary">
           <ShieldCheck size={14} className="text-sage-500" strokeWidth={2} />
-          <span>Privacy protected</span>
+          <span>{c.badgePrivacy}</span>
         </div>
       </header>
 
-      {/* Main */}
       <main className="flex-1 flex flex-col items-center justify-center px-4 py-12">
         <div className="w-full max-w-xl">
-
-          {/* Title block */}
           <div className="text-center mb-10">
             <div className="inline-flex items-center gap-2 bg-sage-100 text-sage-700 rounded-full px-4 py-1.5 text-body-xs font-semibold mb-5">
               <ShieldCheck size={13} strokeWidth={2.5} />
-              Before you begin
+              {c.title}
             </div>
             <h1 className="font-display text-display-xl font-bold text-ink tracking-tight leading-tight mb-3">
-              Your privacy,<br />our responsibility.
+              {c.subtitle}
             </h1>
             <p className="text-body-md text-ink-secondary max-w-sm mx-auto leading-relaxed">
-              Devy may be used alongside sensitive information about children. We want you to clearly understand how your data is handled before you proceed.
+              {c.intro}
             </p>
           </div>
 
@@ -78,15 +84,14 @@ export default async function ConsentPage() {
         </div>
       </main>
 
-      {/* Footer */}
       <footer className="flex-shrink-0 py-5 px-6 border-t border-border/60 text-center">
         <p className="text-body-xs text-ink-tertiary">
-          Devy operates under{' '}
-          <span className="font-medium text-ink-secondary">PIPEDA</span>{' '}
-          (federal) and is designed with{' '}
-          <span className="font-medium text-ink-secondary">PHIPA</span>{' '}
-          (Ontario) in mind. Data is stored in Canada.
-          {' '}Policy version: <span className="font-mono">{CURRENT_CONSENT_VERSION}</span>.
+          {c.footerOperates}{' '}
+          <span className="font-medium text-ink-secondary">{c.piplaLabel}</span>{' '}
+          {c.footerFederal}{' '}
+          <span className="font-medium text-ink-secondary">{c.phpiaLabel}</span>{' '}
+          {c.footerOntario}
+          {' '}{c.policyVersion} <span className="font-mono">{CURRENT_CONSENT_VERSION}</span>.
         </p>
       </footer>
     </div>

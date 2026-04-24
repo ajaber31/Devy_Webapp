@@ -3,16 +3,21 @@ import { cookies } from 'next/headers'
 import { inter, lora } from '@/styles/fonts'
 import { validateEnv } from '@/lib/env'
 import { LanguageProvider } from '@/components/shared/LanguageProvider'
+import { getT } from '@/lib/i18n'
 import type { Lang } from '@/lib/i18n'
 import './globals.css'
 
 // Fail fast on startup if any required environment variable is missing.
-// This surfaces misconfiguration immediately rather than at runtime.
 validateEnv()
 
-export const metadata: Metadata = {
-  title: 'Devy — AI Support for Neurodevelopment',
-  description: 'Evidence-based guidance for parents, caregivers, teachers, and clinicians supporting children with special needs.',
+export async function generateMetadata(): Promise<Metadata> {
+  const cookieStore = await cookies()
+  const lang = (cookieStore.get('devy-lang')?.value === 'fr' ? 'fr' : 'en') as Lang
+  const t = getT(lang)
+  return {
+    title: t.meta.home.title,
+    description: t.meta.home.description,
+  }
 }
 
 export default async function RootLayout({

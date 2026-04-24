@@ -1,44 +1,35 @@
 import type { UserRole } from '@/lib/types'
+import type { Lang } from '@/lib/i18n/translations'
+import { translations } from '@/lib/i18n/translations'
 
 export interface RoleTerminology {
-  nounPlural: string       // "Children" | "Clients"
-  nounSingular: string     // "Child" | "Client"
-  possessive: string       // "My Children" | "My Clients"
-  addLabel: string         // "Add Child" | "Add Client"
-  emptyTitle: string       // "No children yet" | "No clients yet"
+  nounPlural: string       // "Children" | "Enfants" | "Clients"
+  nounSingular: string     // "Child" | "Enfant" | "Client"
+  possessive: string       // "My Children" | "Mes enfants"
+  addLabel: string         // "Add Child" | "Ajouter un enfant"
+  emptyTitle: string
   emptyDescription: string
-  statLabel: string        // "Child Profiles" | "Client Profiles"
+  statLabel: string
 }
 
-const PARENT_TERMS: RoleTerminology = {
-  nounPlural: 'Children',
-  nounSingular: 'Child',
-  possessive: 'My Children',
-  addLabel: 'Add Child',
-  emptyTitle: 'No children yet',
-  emptyDescription: 'Add a child profile to start organising your conversations and getting personalised support.',
-  statLabel: 'Child Profiles',
-}
-
-const CLINICIAN_TERMS: RoleTerminology = {
-  nounPlural: 'Clients',
-  nounSingular: 'Client',
-  possessive: 'My Clients',
-  addLabel: 'Add Client',
-  emptyTitle: 'No clients yet',
-  emptyDescription: 'Add a client profile to start organising your conversations and getting personalised support.',
-  statLabel: 'Client Profiles',
-}
-
-export function getRoleTerminology(role: UserRole | string): RoleTerminology {
+/**
+ * Returns localized role-specific noun terminology.
+ * Parents/teachers get the child-oriented vocabulary; clinicians/caregivers/others
+ * get client-oriented vocabulary. Translations live in translations.ts under role.*
+ */
+export function getRoleTerminology(
+  role: UserRole | string,
+  lang: Lang = 'en',
+): RoleTerminology {
+  const t = translations[lang].role
   switch (role) {
     case 'clinician':
     case 'caregiver':
     case 'other':
-      return CLINICIAN_TERMS
+      return t.clinician
     case 'teacher':
     case 'parent':
     default:
-      return PARENT_TERMS
+      return t.parent
   }
 }

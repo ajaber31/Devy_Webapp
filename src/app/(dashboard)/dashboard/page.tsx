@@ -26,7 +26,7 @@ export default async function DashboardPage() {
 
   const t = getT(lang)
   const firstName = profile?.name.split(' ')[0] ?? 'there'
-  const terms = getRoleTerminology(profile?.role ?? 'parent')
+  const terms = getRoleTerminology(profile?.role ?? 'parent', lang)
   const isFirstRun = conversationCount === 0 && childrenCount === 0
 
   const stats = [
