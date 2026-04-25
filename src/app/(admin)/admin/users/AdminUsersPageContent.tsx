@@ -3,8 +3,8 @@
 import { useState } from 'react'
 import { UserSearchFilter } from '@/components/admin/UserSearchFilter'
 import { UserTable } from '@/components/admin/UserTable'
-import { updateUserStatus, updateUserRole } from '@/lib/actions/admin'
-import type { User, UserRole, UserStatus } from '@/lib/types'
+import { updateUserStatus, updateUserRole, grantPetitsGeniesPlan, revokeSponsoredPlan } from '@/lib/actions/admin'
+import type { User, UserRole, UserStatus, PlanId } from '@/lib/types'
 
 interface AdminUsersPageContentProps {
   initialUsers: User[]
@@ -24,7 +24,6 @@ export function AdminUsersPageContent({ initialUsers }: AdminUsersPageContentPro
   })
 
   const handleStatusChange = async (id: string, newStatus: UserStatus) => {
-    // Optimistic update
     setUsers(prev => prev.map(u => u.id === id ? { ...u, status: newStatus } : u))
     await updateUserStatus(id, newStatus)
   }
@@ -32,6 +31,16 @@ export function AdminUsersPageContent({ initialUsers }: AdminUsersPageContentPro
   const handleRoleChange = async (id: string, newRole: UserRole) => {
     setUsers(prev => prev.map(u => u.id === id ? { ...u, role: newRole } : u))
     await updateUserRole(id, newRole)
+  }
+
+  const handleGrantPetitsGenies = async (id: string) => {
+    setUsers(prev => prev.map(u => u.id === id ? { ...u, planId: 'petits_genies' as PlanId } : u))
+    await grantPetitsGeniesPlan(id)
+  }
+
+  const handleRevokeSponsoredPlan = async (id: string) => {
+    setUsers(prev => prev.map(u => u.id === id ? { ...u, planId: 'free' as PlanId } : u))
+    await revokeSponsoredPlan(id)
   }
 
   return (
@@ -48,6 +57,8 @@ export function AdminUsersPageContent({ initialUsers }: AdminUsersPageContentPro
         users={filtered}
         onStatusChange={handleStatusChange}
         onRoleChange={handleRoleChange}
+        onGrantPetitsGenies={handleGrantPetitsGenies}
+        onRevokeSponsoredPlan={handleRevokeSponsoredPlan}
       />
     </>
   )

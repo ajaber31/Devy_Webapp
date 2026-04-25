@@ -40,10 +40,15 @@ export function ChatInput({ value, onChange, onSend, disabled, limitReached, onL
   }
 
   const handleKeyDown = (e: React.KeyboardEvent<HTMLTextAreaElement>) => {
-    if (e.key === 'Enter' && (e.metaKey || e.ctrlKey) && value.trim()) {
-      e.preventDefault()
-      onSend()
+    if (e.key === 'Enter' && !e.ctrlKey && !e.metaKey && !e.shiftKey) {
+      if (value.trim()) {
+        e.preventDefault()
+        onSend()
+      } else {
+        e.preventDefault()
+      }
     }
+    // Ctrl+Enter or Cmd+Enter inserts a newline — browser default handles it
   }
 
   const handleSend = () => {

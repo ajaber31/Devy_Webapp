@@ -61,6 +61,7 @@ export interface User {
   email: string
   role: UserRole
   status: UserStatus
+  planId?: PlanId
   avatarUrl?: string
   organization?: string
   joinedAt: string

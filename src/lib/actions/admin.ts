@@ -5,7 +5,7 @@ import { revalidatePath } from 'next/cache'
 import { createClient } from '@/lib/supabase/server'
 import { updateUserRoleSchema, updateUserStatusSchema } from '@/lib/validation/schemas'
 import type { Database } from '@/lib/supabase/database.types'
-import type { User, UserRole, UserStatus } from '@/lib/types'
+import type { User, UserRole, UserStatus, PlanId } from '@/lib/types'
 
 export interface AdminAnalytics {
   // Subscription breakdown
@@ -221,13 +221,15 @@ export async function getUsers(): Promise<User[]> {
     page++
   } while ((authResult.data?.users?.length ?? 0) === 1000)
 
-  const [profilesResult] = await Promise.all([
+  const [profilesResult, subsResult] = await Promise.all([
     supabase.from('profiles').select('id, name, role, status'),
+    supabase.from('subscriptions').select('user_id, plan_id'),
   ])
 
   const authUsers = allAuthUsers
   const profiles = profilesResult.data ?? []
   const profileMap = Object.fromEntries(profiles.map(p => [p.id, p]))
+  const subMap = Object.fromEntries((subsResult.data ?? []).map(s => [s.user_id, s.plan_id]))
 
   return authUsers.map(au => {
     const p = profileMap[au.id]
@@ -237,6 +239,7 @@ export async function getUsers(): Promise<User[]> {
       email: au.email ?? '',
       role: ((p?.role ?? 'parent') as UserRole),
       status: ((p?.status ?? 'active') as UserStatus),
+      planId: ((subMap[au.id] ?? 'free') as PlanId),
       joinedAt: au.created_at,
       lastActiveAt: au.last_sign_in_at ?? au.created_at,
     }
