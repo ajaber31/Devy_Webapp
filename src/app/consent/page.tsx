@@ -1,5 +1,5 @@
 import { redirect } from 'next/navigation'
-import { ShieldCheck, Leaf } from 'lucide-react'
+import { ShieldCheck, Brain } from 'lucide-react'
 import type { Metadata } from 'next'
 import { createClient } from '@/lib/supabase/server'
 import { ConsentForm } from './ConsentForm'
@@ -55,7 +55,7 @@ export default async function ConsentPage() {
       <header className="flex-shrink-0 flex items-center justify-between px-6 py-5 border-b border-border/60">
         <div className="flex items-center gap-2.5">
           <div className="w-8 h-8 rounded-lg bg-sage-500 flex items-center justify-center shadow-sm">
-            <Leaf size={16} className="text-white" strokeWidth={2} />
+            <Brain size={16} className="text-white" strokeWidth={2} />
           </div>
           <span className="font-display font-bold text-ink text-lg">{c.headerBrand}</span>
         </div>
