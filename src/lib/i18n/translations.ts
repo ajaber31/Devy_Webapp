@@ -650,6 +650,10 @@ export const translations = {
       pubmedBadge: 'Grounded in PubMed peer-reviewed research',
       kbBadge: "Grounded in Devy's clinical Knowledge Base",
       mobileConversations: 'Conversations',
+      viewSources: 'View sources',
+      hideSources: 'Hide sources',
+      sourceCount: '{count} source',
+      sourceCountPlural: '{count} sources',
     },
     pendingPlan: {
       completeUpgrade: 'Complete your upgrade to',
@@ -1564,6 +1568,10 @@ export const translations = {
       pubmedBadge: 'Ancré dans la recherche PubMed révisée par des pairs',
       kbBadge: 'Ancré dans la base de connaissances clinique de Devy',
       mobileConversations: 'Conversations',
+      viewSources: 'Voir les sources',
+      hideSources: 'Masquer les sources',
+      sourceCount: '{count} source',
+      sourceCountPlural: '{count} sources',
     },
     pendingPlan: {
       completeUpgrade: 'Finalisez votre passage à',

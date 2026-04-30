@@ -1,8 +1,11 @@
 'use client'
 
+import { useState } from 'react'
 import ReactMarkdown from 'react-markdown'
-import { AlertCircle } from 'lucide-react'
+import { AlertCircle, ChevronDown } from 'lucide-react'
 import { ResearchBadge } from './ResearchBadge'
+import { SourceCitationCard } from './SourceCitationCard'
+import { useLanguage } from '@/components/shared/LanguageProvider'
 import type { Message } from '@/lib/types'
 
 interface MessageBubbleProps {
@@ -12,6 +15,14 @@ interface MessageBubbleProps {
 
 export function MessageBubble({ message, isStreaming = false }: MessageBubbleProps) {
   const isUser = message.role === 'user'
+  const [sourcesOpen, setSourcesOpen] = useState(false)
+  const { t } = useLanguage()
+  const tc = t.chatUi
+  const sourceCount = message.sources?.length ?? 0
+  const countLabel = (sourceCount === 1 ? tc.sourceCount : tc.sourceCountPlural).replace(
+    '{count}',
+    String(sourceCount)
+  )
 
   if (isUser) {
     return (
@@ -88,6 +99,35 @@ export function MessageBubble({ message, isStreaming = false }: MessageBubblePro
           <ResearchBadge
             hasPubMed={message.sources.some(s => s.id.startsWith('pubmed-'))}
           />
+        )}
+
+        {/* Sources / citations dropdown */}
+        {message.sources && message.sources.length > 0 && (
+          <div className="space-y-2">
+            <button
+              type="button"
+              onClick={() => setSourcesOpen(o => !o)}
+              aria-expanded={sourcesOpen}
+              className="inline-flex items-center gap-1.5 text-body-xs font-medium text-ink-secondary hover:text-ink focus-ring rounded-pill px-2.5 py-1 -ml-2.5 hover:bg-raised"
+              style={{ transitionProperty: 'background-color, color', transitionDuration: '150ms' }}
+            >
+              <ChevronDown
+                size={13}
+                strokeWidth={2.5}
+                className="transition-transform duration-200 ease-smooth"
+                style={{ transform: sourcesOpen ? 'rotate(180deg)' : 'rotate(0deg)' }}
+              />
+              <span>{sourcesOpen ? tc.hideSources : tc.viewSources}</span>
+              <span className="text-ink-tertiary">· {countLabel}</span>
+            </button>
+            {sourcesOpen && (
+              <div className="space-y-1.5 animate-fade-up">
+                {message.sources.map(source => (
+                  <SourceCitationCard key={source.id} source={source} />
+                ))}
+              </div>
+            )}
+          </div>
         )}
 
         {/* Not found note */}
