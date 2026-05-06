@@ -11,4 +11,4 @@ export function getResend(): Resend | null {
   return _resend
 }
 
-export const FROM_EMAIL = 'Devy <noreply@devy.ca>'
+export const FROM_EMAIL = 'Devy <noreply@devyai.ca>'
