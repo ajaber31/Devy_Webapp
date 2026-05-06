@@ -39,7 +39,7 @@ export function AdminUsersPageContent({ initialUsers }: AdminUsersPageContentPro
   }
 
   const handleRevokeSponsoredPlan = async (id: string) => {
-    setUsers(prev => prev.map(u => u.id === id ? { ...u, planId: 'free' as PlanId } : u))
+    setUsers(prev => prev.map(u => u.id === id ? { ...u, planId: 'starter' as PlanId } : u))
     await revokeSponsoredPlan(id)
   }
 

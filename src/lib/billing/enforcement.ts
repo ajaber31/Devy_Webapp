@@ -35,7 +35,7 @@ export async function checkChildProfileLimit(userId: string): Promise<LimitCheck
       .eq('user_id', userId),
   ])
 
-  const planId = subResult.data?.plan_id ?? 'free'
+  const planId = subResult.data?.plan_id ?? 'starter'
   const limits = getPlanLimits(planId)
   const current = countResult.count ?? 0
 
@@ -70,7 +70,7 @@ export async function checkDailyQuestionLimit(userId: string): Promise<LimitChec
     .eq('user_id', userId)
     .single()
 
-  const planId = subData?.plan_id ?? 'free'
+  const planId = subData?.plan_id ?? 'starter'
   const limits = getPlanLimits(planId)
 
   // Unlimited plan — skip the usage query

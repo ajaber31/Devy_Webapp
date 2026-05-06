@@ -2,7 +2,7 @@ export type UserRole = 'parent' | 'caregiver' | 'clinician' | 'teacher' | 'other
 
 // ─── Billing types ────────────────────────────────────────────────────────────
 
-export type PlanId = 'free' | 'starter' | 'pro' | 'clinician' | 'petits_genies'
+export type PlanId = 'starter' | 'professional' | 'petits_genies'
 
 export type SubscriptionStatus =
   | 'active'
@@ -20,6 +20,8 @@ export interface BillingStatus {
   stripeSubscriptionId: string | null
   /** ISO timestamp of when the current billing period ends. */
   currentPeriodEnd: string | null
+  /** ISO timestamp of when the free trial ends (null once converted or for non-trialing users). */
+  trialEndsAt: string | null
   cancelAtPeriodEnd: boolean
   /** Number of questions asked today (UTC day). */
   questionsToday: number

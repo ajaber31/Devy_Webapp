@@ -1,16 +1,21 @@
 'use client'
 
 import { useEffect, useState, useTransition } from 'react'
-import { Zap, Crown, Stethoscope, ArrowRight, X, Loader2 } from 'lucide-react'
+import { Zap, Crown, ArrowRight, X, Loader2 } from 'lucide-react'
 import { createCheckoutSession } from '@/lib/actions/billing'
 import { PLANS } from '@/lib/stripe/plans'
 import { useLanguage } from '@/components/shared/LanguageProvider'
 import type { PlanId } from '@/lib/types'
 
 const PLAN_ICONS: Record<string, React.ReactNode> = {
-  starter:   <Zap size={15} className="text-dblue-500" strokeWidth={2} />,
-  pro:       <Crown size={15} className="text-sage-600" strokeWidth={2} />,
-  clinician: <Stethoscope size={15} className="text-sand-600" strokeWidth={2} />,
+  starter:      <Zap size={15} className="text-dblue-500" strokeWidth={2} />,
+  professional: <Crown size={15} className="text-sage-600" strokeWidth={2} />,
+}
+
+const PLAN_RANK: Record<PlanId, number> = {
+  petits_genies: 0,
+  starter: 1,
+  professional: 2,
 }
 
 /**
@@ -29,23 +34,13 @@ export function PendingPlanBanner({ currentPlanId }: { currentPlanId: PlanId }) 
   useEffect(() => {
     try {
       const stored = localStorage.getItem('devy_pending_plan') as PlanId | null
-      // Only show if the pending plan is higher than their current plan.
-      // petits_genies is hidden/admin-granted and never stored as a pending plan.
-      const hierarchy: Record<PlanId, number> = {
-        free: 0,
-        petits_genies: 0,
-        starter: 1,
-        pro: 2,
-        clinician: 3,
-      }
       if (
         stored &&
         stored in PLANS &&
-        (hierarchy[stored] ?? 0) > (hierarchy[currentPlanId] ?? 0)
+        (PLAN_RANK[stored] ?? 0) > (PLAN_RANK[currentPlanId] ?? 0)
       ) {
         setPendingPlan(stored)
       } else if (stored) {
-        // Already on this plan or higher — clear it
         localStorage.removeItem('devy_pending_plan')
       }
     } catch { /* ignore */ }

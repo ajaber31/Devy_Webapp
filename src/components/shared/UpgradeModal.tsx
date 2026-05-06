@@ -1,7 +1,7 @@
 'use client'
 
 import { useTransition, useState } from 'react'
-import { X, CheckCircle2, ArrowRight, Zap, Crown, Stethoscope, Loader2, AlertCircle } from 'lucide-react'
+import { X, CheckCircle2, ArrowRight, Zap, Crown, Loader2, AlertCircle } from 'lucide-react'
 import { createCheckoutSession } from '@/lib/actions/billing'
 import { useLanguage } from '@/components/shared/LanguageProvider'
 import { PLANS } from '@/lib/stripe/plans'
@@ -16,23 +16,19 @@ interface UpgradeModalProps {
 }
 
 const ICON_FOR_PLAN: Record<PlanId, React.ReactNode> = {
-  free:          null,
   starter:       <Zap size={14} className="text-dblue-500" strokeWidth={2} />,
-  pro:           <Crown size={14} className="text-sage-600" strokeWidth={2} />,
-  clinician:     <Stethoscope size={14} className="text-sand-600" strokeWidth={2} />,
+  professional:  <Crown size={14} className="text-sage-600" strokeWidth={2} />,
   petits_genies: null,
 }
 
 /**
- * Returns the next 2 plans above the user's current plan, skipping hidden/sponsored ones.
- * Used to decide which plans to show as upgrade options in the modal.
+ * Returns the upgrade options shown in the modal.
+ * - Users on Starter (or sponsored) → see Professional as upgrade.
+ * - Users on Professional → already at the top; show both for context.
  */
 function getUpgradeOptions(currentPlanId: PlanId): PlanId[] {
-  const order: PlanId[] = ['free', 'starter', 'pro', 'clinician']
-  const currentIndex = order.indexOf(currentPlanId)
-  // petits_genies users see Pro + Clinician as upgrade options (treat as below Starter)
-  const effectiveIndex = currentIndex >= 0 ? currentIndex : 0
-  return order.slice(effectiveIndex + 1, effectiveIndex + 3)
+  if (currentPlanId === 'professional') return ['starter', 'professional']
+  return ['starter', 'professional']
 }
 
 export function UpgradeModal({ open, onClose, reason, currentPlanId }: UpgradeModalProps) {
@@ -46,14 +42,8 @@ export function UpgradeModal({ open, onClose, reason, currentPlanId }: UpgradeMo
   const copy = reason === 'child_limit'
     ? { title: um.childLimitTitle, description: um.childLimitDesc }
     : { title: um.dailyLimitTitle,  description: um.dailyLimitDesc }
-  const options = getUpgradeOptions(currentPlanId)
 
-  // Prefer showing at least 2 options. If user is already on Clinician, show Pro + Clinician (re-selection).
-  const plansToShow: PlanId[] = options.length >= 2
-    ? options
-    : options.length === 1
-      ? options
-      : (['pro', 'clinician'] as PlanId[])
+  const plansToShow = getUpgradeOptions(currentPlanId)
 
   function handleUpgrade(planId: PlanId) {
     setError(null)

@@ -9,7 +9,7 @@ import type { User, UserRole, UserStatus, PlanId } from '@/lib/types'
 
 export interface AdminAnalytics {
   // Subscription breakdown
-  planCounts: { free: number; starter: number; pro: number; clinician: number; petits_genies: number }
+  planCounts: { starter: number; professional: number; petits_genies: number }
   mrr: number // Monthly recurring revenue in CAD
   // Engagement
   totalConversations: number
@@ -83,18 +83,18 @@ export async function getAnalytics(): Promise<AdminAnalytics | null> {
     supabase.from('documents').select('status, file_type, chunk_count'),
   ])
 
-  const plans = { free: 0, starter: 0, pro: 0, clinician: 0, petits_genies: 0 }
+  const plans = { starter: 0, professional: 0, petits_genies: 0 }
   for (const row of subRows.data ?? []) {
     const p = row.plan_id as keyof typeof plans
     if (p in plans) plans[p]++
   }
 
   // MRR uses plan price tables — petits_genies is $0 (sponsored), so it doesn't contribute.
+  // Trialing users contribute too: their card has been authorized and Stripe will collect.
   const { PLANS } = await import('@/lib/stripe/plans')
   const mrr =
-    plans.starter   * PLANS.starter.priceCAD +
-    plans.pro       * PLANS.pro.priceCAD +
-    plans.clinician * PLANS.clinician.priceCAD
+    plans.starter      * PLANS.starter.priceCAD +
+    plans.professional * PLANS.professional.priceCAD
 
   const questionsToday = (usageTodayResult.data ?? []).reduce(
     (sum, r) => sum + (r.question_count ?? 0), 0
@@ -239,7 +239,7 @@ export async function getUsers(): Promise<User[]> {
       email: au.email ?? '',
       role: ((p?.role ?? 'parent') as UserRole),
       status: ((p?.status ?? 'active') as UserStatus),
-      planId: ((subMap[au.id] ?? 'free') as PlanId),
+      planId: ((subMap[au.id] ?? 'starter') as PlanId),
       joinedAt: au.created_at,
       lastActiveAt: au.last_sign_in_at ?? au.created_at,
     }
@@ -332,8 +332,9 @@ export async function grantPetitsGeniesPlan(
 }
 
 /**
- * Revoke a sponsored plan (e.g. Petits Génies) and revert the user to Free.
- * Does not affect Stripe subscriptions.
+ * Revoke a sponsored plan (e.g. Petits Génies). The user's subscription is set
+ * to canceled status so they no longer have access; plan_id is set to starter
+ * (the catalog default) but status='canceled' gates them out until they re-subscribe.
  */
 export async function revokeSponsoredPlan(
   targetUserId: string,
@@ -356,7 +357,7 @@ export async function revokeSponsoredPlan(
   const { error } = await svc
     .from('subscriptions')
     .update({
-      plan_id: 'free',
+      plan_id: 'starter',
       status: 'canceled',
       plan_granted_by: null,
       plan_granted_at: null,
@@ -371,13 +372,24 @@ export async function revokeSponsoredPlan(
   return {}
 }
 
-/** Change a user's role. Admin-only. */
+/**
+ * Change a user's role. Admin-only.
+ *
+ * The 'admin' role is intentionally not assignable from the app — promoting a
+ * user to admin must be done by writing directly to the profiles table in
+ * Supabase. This server action rejects any attempt to set role='admin' even
+ * if a request bypasses the UI.
+ */
 export async function updateUserRole(
   id: string,
   role: UserRole,
 ): Promise<{ error?: string }> {
   const authErr = await requireAdmin()
   if (authErr) return authErr
+
+  if (role === 'admin') {
+    return { error: 'The admin role can only be granted via direct database access.' }
+  }
 
   const parsed = updateUserRoleSchema.safeParse({ id, role })
   if (!parsed.success) return { error: 'Invalid input' }

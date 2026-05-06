@@ -135,7 +135,10 @@ export const updateDocumentTagsSchema = z.object({
 
 // ─── Admin ────────────────────────────────────────────────────────────────────
 
-export const VALID_ROLES = ['parent', 'caregiver', 'clinician', 'teacher', 'admin'] as const
+// Note: 'admin' is intentionally excluded — admin role must be granted via
+// direct DB access, never via the app UI or API. See updateUserRole() in
+// src/lib/actions/admin.ts.
+export const VALID_ROLES = ['parent', 'caregiver', 'clinician', 'teacher', 'other'] as const
 export const VALID_STATUSES = ['active', 'suspended'] as const
 
 export const updateUserRoleSchema = z.object({

@@ -22,7 +22,7 @@ export async function getBillingStatus(): Promise<BillingStatus | null> {
   const [subResult, usageResult, childCountResult] = await Promise.all([
     supabase
       .from('subscriptions')
-      .select('plan_id, status, stripe_customer_id, stripe_subscription_id, current_period_end, cancel_at_period_end')
+      .select('plan_id, status, stripe_customer_id, stripe_subscription_id, current_period_end, trial_ends_at, cancel_at_period_end')
       .eq('user_id', user.id)
       .single(),
     supabase.rpc('get_daily_usage', { p_user_id: user.id }),
@@ -33,15 +33,16 @@ export async function getBillingStatus(): Promise<BillingStatus | null> {
   ])
 
   const sub = subResult.data
-  const planId = (sub?.plan_id ?? 'free') as PlanId
+  const planId = (sub?.plan_id ?? 'starter') as PlanId
   const limits = getPlanLimits(planId)
 
   return {
     planId,
-    status: (sub?.status ?? 'active') as SubscriptionStatus,
+    status: (sub?.status ?? 'trialing') as SubscriptionStatus,
     stripeCustomerId: sub?.stripe_customer_id ?? null,
     stripeSubscriptionId: sub?.stripe_subscription_id ?? null,
     currentPeriodEnd: sub?.current_period_end ?? null,
+    trialEndsAt: sub?.trial_ends_at ?? null,
     cancelAtPeriodEnd: sub?.cancel_at_period_end ?? false,
     questionsToday: (usageResult.data as number | null) ?? 0,
     questionLimit: limits.questionsPerDay === Infinity ? -1 : limits.questionsPerDay,

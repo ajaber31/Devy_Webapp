@@ -1,7 +1,7 @@
 'use client'
 
 import {
-  Users, MessageCircle, DollarSign, Zap, Crown, Stethoscope, Sparkles,
+  Users, MessageCircle, DollarSign, Zap, Crown, Sparkles,
   Layers, HelpCircle, TrendingUp,
 } from 'lucide-react'
 import { cn, formatNumber } from '@/lib/utils'
@@ -80,12 +80,10 @@ export function AnalyticsDashboard({ data }: { data: AdminAnalytics }) {
   const { t, lang } = useLanguage()
   const a = t.admin.analytics
   const totalSubs =
-    data.planCounts.free +
     data.planCounts.starter +
-    data.planCounts.pro +
-    data.planCounts.clinician +
+    data.planCounts.professional +
     data.planCounts.petits_genies
-  const paidUsers = data.planCounts.starter + data.planCounts.pro + data.planCounts.clinician
+  const paidUsers = data.planCounts.starter + data.planCounts.professional
 
   return (
     <div className="space-y-8 mt-6">
@@ -133,10 +131,8 @@ export function AnalyticsDashboard({ data }: { data: AdminAnalytics }) {
           </div>
 
           <div className="space-y-4">
-            <PlanBar label={t.plans.free.name} count={data.planCounts.free} total={totalSubs} color="bg-ink-tertiary/30" />
             <PlanBar label={`${t.plans.starter.name} — $${PLANS.starter.priceCAD}/mo`} count={data.planCounts.starter} total={totalSubs} color="bg-dblue-400" />
-            <PlanBar label={`${t.plans.pro.name} — $${PLANS.pro.priceCAD}/mo`} count={data.planCounts.pro} total={totalSubs} color="bg-sage-500" />
-            <PlanBar label={`${t.plans.clinician.name} — $${PLANS.clinician.priceCAD}/mo`} count={data.planCounts.clinician} total={totalSubs} color="bg-sand-500" />
+            <PlanBar label={`${t.plans.professional.name} — $${PLANS.professional.priceCAD}/mo`} count={data.planCounts.professional} total={totalSubs} color="bg-sage-500" />
             {data.planCounts.petits_genies > 0 && (
               <PlanBar label={`${t.plans.petits_genies.name} — ${a.sponsored}`} count={data.planCounts.petits_genies} total={totalSubs} color="bg-dblue-300" />
             )}
@@ -153,13 +149,7 @@ export function AnalyticsDashboard({ data }: { data: AdminAnalytics }) {
               <div className="w-5 h-5 rounded-full bg-sage-100 flex items-center justify-center">
                 <Crown size={11} className="text-sage-600" strokeWidth={2} />
               </div>
-              <span className="font-medium">{data.planCounts.pro}</span> {t.plans.pro.name}
-            </div>
-            <div className="flex items-center gap-1.5 text-body-xs text-ink-secondary">
-              <div className="w-5 h-5 rounded-full bg-sand-100 flex items-center justify-center">
-                <Stethoscope size={11} className="text-sand-600" strokeWidth={2} />
-              </div>
-              <span className="font-medium">{data.planCounts.clinician}</span> {t.plans.clinician.name}
+              <span className="font-medium">{data.planCounts.professional}</span> {t.plans.professional.name}
             </div>
             {data.planCounts.petits_genies > 0 && (
               <div className="flex items-center gap-1.5 text-body-xs text-ink-secondary">

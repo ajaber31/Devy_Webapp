@@ -18,7 +18,7 @@ export function AddChildButton({
   label = 'Add Child',
   modalTitle,
   planLimitReached = false,
-  currentPlanId = 'free',
+  currentPlanId = 'starter',
 }: AddChildButtonProps) {
   const [openAdd, setOpenAdd] = useState(false)
   const [openUpgrade, setOpenUpgrade] = useState(false)

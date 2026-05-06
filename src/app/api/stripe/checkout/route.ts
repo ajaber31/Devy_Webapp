@@ -92,10 +92,13 @@ export async function POST(request: NextRequest) {
     success_url: `${siteUrl}/settings?tab=billing&checkout=success`,
     cancel_url: `${siteUrl}/pricing`,
     allow_promotion_codes: true,
-    // userId is stored in subscription metadata so the webhook can resolve it
+    // 14-day free trial — Stripe charges $0 today, then auto-converts to the
+    // selected plan once the trial ends. Card is required up front.
     subscription_data: {
+      trial_period_days: 14,
       metadata: { userId: user.id },
     },
+    payment_method_collection: 'always',
     metadata: { userId: user.id },
   })
 

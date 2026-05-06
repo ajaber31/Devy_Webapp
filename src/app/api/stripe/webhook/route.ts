@@ -81,6 +81,9 @@ async function upsertSubscription(
   const supabase = getSupabaseAdmin()
   const priceId = subscription.items.data[0]?.price.id ?? ''
   const { periodStart, periodEnd } = getSubscriptionPeriod(subscription)
+  const trialEndsAt = subscription.trial_end
+    ? new Date(subscription.trial_end * 1000).toISOString()
+    : null
 
   await supabase
     .from('subscriptions')
@@ -94,6 +97,7 @@ async function upsertSubscription(
         status: subscription.status,
         current_period_start: periodStart,
         current_period_end: periodEnd,
+        trial_ends_at: trialEndsAt,
         cancel_at_period_end: subscription.cancel_at_period_end,
         canceled_at: subscription.canceled_at
           ? new Date(subscription.canceled_at * 1000).toISOString()
@@ -143,18 +147,19 @@ async function handleSubscriptionDeleted(subscription: Stripe.Subscription) {
   const planId = getPlanIdFromPriceId(priceId)
   const planName = PLANS[planId]?.name ?? 'paid'
 
-  // Revert to free plan; keep the row so we retain the stripe_customer_id
+  // Mark canceled but keep the plan_id (gating is by status, not by plan).
+  // Status 'canceled' means the user no longer has access until they re-subscribe.
   await supabase
     .from('subscriptions')
     .upsert(
       {
         user_id: userId,
-        plan_id: 'free',
         status: 'canceled',
         stripe_subscription_id: null,
         stripe_price_id: null,
         current_period_start: null,
         current_period_end: null,
+        trial_ends_at: null,
         cancel_at_period_end: false,
         canceled_at: new Date().toISOString(),
         updated_at: new Date().toISOString(),

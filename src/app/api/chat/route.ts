@@ -196,7 +196,7 @@ export async function POST(request: NextRequest) {
       .eq('user_id', user.id)
       .single()
 
-    const planLimits = getPlanLimits(subData?.plan_id ?? 'free')
+    const planLimits = getPlanLimits(subData?.plan_id ?? 'starter')
 
     if (planLimits.questionsPerDay !== Infinity) {
       const { data: usageCount } = await supabase.rpc('get_daily_usage', { p_user_id: user.id })
@@ -214,7 +214,7 @@ export async function POST(request: NextRequest) {
             code: 'DAILY_LIMIT_REACHED',
             limit: planLimits.questionsPerDay,
             current: todayCount,
-            planId: subData?.plan_id ?? 'free',
+            planId: subData?.plan_id ?? 'starter',
           },
           {
             status: 429,

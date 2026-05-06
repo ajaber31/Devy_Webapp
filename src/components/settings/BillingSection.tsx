@@ -3,8 +3,8 @@
 import { useState, useTransition, useEffect } from 'react'
 import { useRouter, useSearchParams } from 'next/navigation'
 import {
-  CreditCard, Zap, Users, CheckCircle2, AlertCircle,
-  Clock, ArrowRight, ExternalLink, Loader2, Crown, Stethoscope, Sparkles,
+  Zap, CheckCircle2, AlertCircle,
+  Clock, ArrowRight, ExternalLink, Loader2, Crown, Sparkles,
 } from 'lucide-react'
 import { createCheckoutSession, createPortalSession } from '@/lib/actions/billing'
 import { useLanguage } from '@/components/shared/LanguageProvider'
@@ -18,27 +18,15 @@ interface BillingSectionProps {
 }
 
 const PLAN_RANK: Record<PlanId, number> = {
-  free: 0,
   petits_genies: 0,
   starter: 1,
-  pro: 2,
-  clinician: 3,
+  professional: 2,
 }
 
 const PLAN_ICON: Record<PlanId, React.ReactNode> = {
-  free:          <CreditCard size={18} className="text-ink-tertiary" />,
   starter:       <Zap size={18} className="text-dblue-500" />,
-  pro:           <Crown size={18} className="text-sage-600" />,
-  clinician:     <Stethoscope size={18} className="text-sand-600" />,
+  professional:  <Crown size={18} className="text-sage-600" />,
   petits_genies: <Sparkles size={18} className="text-dblue-600" />,
-}
-
-const PLAN_TRANSLATION_KEY: Record<PlanId, keyof typeof PLANS> = {
-  free: 'free',
-  starter: 'starter',
-  pro: 'pro',
-  clinician: 'clinician',
-  petits_genies: 'petits_genies',
 }
 
 export function BillingSection({ billingStatus }: BillingSectionProps) {
@@ -81,12 +69,15 @@ export function BillingSection({ billingStatus }: BillingSectionProps) {
     })
   }
 
-  const currentPlanKey = PLAN_TRANSLATION_KEY[billingStatus.planId]
-  const currentPlanName = t.plans[currentPlanKey].name
+  const currentPlanName = t.plans[billingStatus.planId].name
   const currentPlanPriceCAD = PLANS[billingStatus.planId].priceCAD
   const isSponsored = billingStatus.planId === 'petits_genies'
+  const isTrialing = billingStatus.status === 'trialing'
   const periodEndDate = billingStatus.currentPeriodEnd
     ? formatDateFull(billingStatus.currentPeriodEnd, lang)
+    : null
+  const trialEndDate = billingStatus.trialEndsAt
+    ? formatDateFull(billingStatus.trialEndsAt, lang)
     : null
 
   return (
@@ -111,7 +102,7 @@ export function BillingSection({ billingStatus }: BillingSectionProps) {
             <span className={cn(
               'inline-flex items-center px-2.5 py-0.5 rounded-pill text-body-xs font-medium border',
               billingStatus.status === 'active' ? 'bg-sage-100 text-sage-700 border-sage-200'
-              : billingStatus.status === 'trialing' ? 'bg-dblue-100 text-dblue-700 border-dblue-200'
+              : isTrialing ? 'bg-dblue-100 text-dblue-700 border-dblue-200'
               : billingStatus.status === 'past_due' ? 'bg-sand-100 text-sand-700 border-sand-200'
               : 'bg-raised text-ink-tertiary border-border',
             )}>
@@ -129,12 +120,19 @@ export function BillingSection({ billingStatus }: BillingSectionProps) {
             <p className="text-body-xs text-ink-tertiary">
               {isSponsored
                 ? b.providedByClinic
-                : currentPlanPriceCAD === 0
-                  ? b.freeForever
-                  : `$${currentPlanPriceCAD} ${t.landing.pricing.perMonth}`}
+                : `$${currentPlanPriceCAD} ${t.landing.pricing.perMonth}`}
             </p>
           </div>
-          {periodEndDate && !isSponsored && (
+          {isTrialing && trialEndDate && !isSponsored && (
+            <div className="text-right shrink-0">
+              <p className="text-body-xs text-dblue-700 flex items-center gap-1 justify-end">
+                <Clock size={11} />
+                {b.trialEnds}
+              </p>
+              <p className="text-body-xs font-medium text-ink mt-0.5">{trialEndDate}</p>
+            </div>
+          )}
+          {!isTrialing && periodEndDate && !isSponsored && (
             <div className="text-right shrink-0">
               <p className="text-body-xs text-ink-tertiary flex items-center gap-1 justify-end">
                 <Clock size={11} />
@@ -144,6 +142,15 @@ export function BillingSection({ billingStatus }: BillingSectionProps) {
             </div>
           )}
         </div>
+
+        {isTrialing && trialEndDate && !isSponsored && (
+          <div className="flex items-start gap-3 p-4 bg-dblue-50 border border-dblue-200 rounded-card mb-6">
+            <Sparkles size={16} className="text-dblue-600 mt-0.5 shrink-0" />
+            <p className="text-body-xs text-dblue-800">
+              {b.trialBanner.replace('{date}', trialEndDate).replace('{plan}', currentPlanName)}
+            </p>
+          </div>
+        )}
 
         {billingStatus.status === 'past_due' && !isSponsored && (
           <div className="flex items-start gap-3 p-4 bg-sand-50 border border-sand-200 rounded-card mb-6">
@@ -189,13 +196,6 @@ export function BillingSection({ billingStatus }: BillingSectionProps) {
                 {b.manageBilling}
               </button>
             )}
-
-            {billingStatus.planId === 'free' && (
-              <div className="flex items-center gap-1.5 text-body-xs text-ink-tertiary">
-                <Users size={13} />
-                {b.addProfilesHint}
-              </div>
-            )}
           </div>
         )}
 
@@ -228,30 +228,29 @@ export function BillingSection({ billingStatus }: BillingSectionProps) {
             </div>
           )}
 
-          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 mt-2">
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mt-2">
             {PUBLIC_PLAN_IDS.map((id) => (
               <PlanCard
                 key={id}
                 planId={id}
                 currentPlanId={billingStatus.planId}
+                isTrialing={isTrialing}
                 onUpgrade={handleUpgrade}
                 loading={isCheckoutLoading}
               />
             ))}
           </div>
 
-          {billingStatus.planId !== 'free' && (
-            <p className="mt-5 text-body-xs text-ink-tertiary text-center">
-              {b.downgradeHint}{' '}
-              <button
-                onClick={handlePortal}
-                className="underline hover:text-ink focus-ring rounded"
-              >
-                {b.billingPortalLink}
-              </button>
-              .
-            </p>
-          )}
+          <p className="mt-5 text-body-xs text-ink-tertiary text-center">
+            {b.downgradeHint}{' '}
+            <button
+              onClick={handlePortal}
+              className="underline hover:text-ink focus-ring rounded"
+            >
+              {b.billingPortalLink}
+            </button>
+            .
+          </p>
         </div>
       )}
 
@@ -308,18 +307,20 @@ function UsageBar({ current, limit, label, unlimitedLabel }: { current: number; 
 function PlanCard({
   planId,
   currentPlanId,
+  isTrialing,
   onUpgrade,
   loading,
 }: {
   planId: PlanId
   currentPlanId: PlanId
+  isTrialing: boolean
   onUpgrade: (planId: PlanId) => void
   loading: boolean
 }) {
   const { t } = useLanguage()
   const b = t.settings.billing
   const plan = PLANS[planId]
-  const translated = t.plans[PLAN_TRANSLATION_KEY[planId]]
+  const translated = t.plans[planId]
   const isCurrent = planId === currentPlanId
   const isPlanHigher = PLAN_RANK[planId] > PLAN_RANK[currentPlanId]
 
@@ -352,14 +353,8 @@ function PlanCard({
           <h4 className="font-display font-semibold text-ink text-body-base">{translated.name}</h4>
         </div>
         <div className="flex items-baseline gap-1 mt-1">
-          {plan.priceCAD === 0 ? (
-            <span className="text-display-sm font-bold text-ink">{t.plans.free.name}</span>
-          ) : (
-            <>
-              <span className="text-display-sm font-bold text-ink">${plan.priceCAD}</span>
-              <span className="text-body-xs text-ink-tertiary">{t.landing.pricing.perMonth}</span>
-            </>
-          )}
+          <span className="text-display-sm font-bold text-ink">${plan.priceCAD}</span>
+          <span className="text-body-xs text-ink-tertiary">{t.landing.pricing.perMonth}</span>
         </div>
       </div>
 
@@ -372,7 +367,7 @@ function PlanCard({
         ))}
       </ul>
 
-      {!isCurrent && plan.priceCAD > 0 && (
+      {!isCurrent && (
         <button
           onClick={() => onUpgrade(planId)}
           disabled={loading}
@@ -395,8 +390,8 @@ function PlanCard({
         </button>
       )}
 
-      {isCurrent && plan.priceCAD === 0 && (
-        <div className="text-body-xs text-ink-tertiary text-center py-1">{b.currentBadge}</div>
+      {isCurrent && isTrialing && (
+        <div className="text-body-xs text-center text-dblue-700 py-1 font-medium">{b.activeTrial}</div>
       )}
     </div>
   )

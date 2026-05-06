@@ -1,18 +1,23 @@
 // ─── Plan definitions ─────────────────────────────────────────────────────────
-// Single source of truth for all plan IDs, limits, pricing, and features.
-// Stripe price IDs are resolved from env vars at call-time (never at module load)
-// so this file is safe to import in both server and edge contexts.
+// Single source of truth for plan IDs, limits, pricing, and features.
+// Stripe price IDs are resolved from env vars at call-time so this file is
+// safe to import from server, edge, and client contexts.
 //
-// PUBLIC plans (visible on /pricing, sign-up, upgrade UI): free, starter, pro, clinician
+// PUBLIC plans (visible on /pricing, sign-up, upgrade UI): starter, professional
 // HIDDEN plans (admin-granted only, never appear in marketing): petits_genies
+//
+// New users always start on a 14-day Starter trial; there is no free tier.
 
-export type PlanId = 'free' | 'starter' | 'pro' | 'clinician' | 'petits_genies'
+export type PlanId = 'starter' | 'professional' | 'petits_genies'
 
 /** Plans shown publicly on /pricing and in upgrade flows. */
-export const PUBLIC_PLAN_IDS: PlanId[] = ['free', 'starter', 'pro', 'clinician']
+export const PUBLIC_PLAN_IDS: PlanId[] = ['starter', 'professional']
 
 /** Plans that are never purchasable — granted by an admin only. */
 export const HIDDEN_PLAN_IDS: PlanId[] = ['petits_genies']
+
+/** Length of the auto-trial granted to every new signup. */
+export const TRIAL_PERIOD_DAYS = 14
 
 export interface PlanLimits {
   /** Maximum child profiles allowed. Infinity = unlimited. */
@@ -24,7 +29,7 @@ export interface PlanLimits {
 export interface PlanDefinition {
   id: PlanId
   name: string
-  /** Monthly price in CAD. 0 for free / hidden grant plans. */
+  /** Monthly price in CAD. 0 for hidden grant plans. */
   priceCAD: number
   /** Stripe recurring price ID. Empty string = plan is not purchasable via Stripe. */
   stripePriceId: string
@@ -40,73 +45,33 @@ export interface PlanDefinition {
 }
 
 export const PLANS: Record<PlanId, PlanDefinition> = {
-  free: {
-    id: 'free',
-    name: 'Free',
-    priceCAD: 0,
-    stripePriceId: '',
-    limits: {
-      childProfiles: 0,
-      questionsPerDay: 3,
-    },
-    features: [
-      '3 questions per day',
-      'Evidence-based AI answers',
-      'Access to knowledge base',
-      'Child profiles available on paid plans',
-    ],
-    tagline: 'Try Devy, no credit card',
-  },
-
   starter: {
     id: 'starter',
     name: 'Starter',
-    priceCAD: 14,
+    priceCAD: 29.99,
     get stripePriceId() {
       return process.env.STRIPE_PRICE_ID_STARTER ?? ''
     },
     limits: {
       childProfiles: 3,
-      questionsPerDay: 10,
+      questionsPerDay: 15,
     },
     features: [
-      '10 questions per day',
+      '15 questions per day',
       'Up to 3 child profiles',
       'PubMed-grounded answers',
       'Full conversation history',
-      'Everything in Free',
+      '14-day free trial',
     ],
     tagline: 'For parents & caregivers',
   },
 
-  pro: {
-    id: 'pro',
-    name: 'Pro',
-    priceCAD: 24,
+  professional: {
+    id: 'professional',
+    name: 'Professional',
+    priceCAD: 99.99,
     get stripePriceId() {
-      return process.env.STRIPE_PRICE_ID_PRO ?? ''
-    },
-    limits: {
-      childProfiles: Infinity,
-      questionsPerDay: 50,
-    },
-    features: [
-      '50 questions per day',
-      'Unlimited child profiles',
-      'Priority response speed',
-      'Export conversations (PDF)',
-      'Everything in Starter',
-    ],
-    highlighted: true,
-    tagline: 'Most popular',
-  },
-
-  clinician: {
-    id: 'clinician',
-    name: 'Clinician',
-    priceCAD: 39,
-    get stripePriceId() {
-      return process.env.STRIPE_PRICE_ID_CLINICIAN ?? ''
+      return process.env.STRIPE_PRICE_ID_PROFESSIONAL ?? ''
     },
     limits: {
       childProfiles: Infinity,
@@ -118,8 +83,9 @@ export const PLANS: Record<PlanId, PlanDefinition> = {
       'Client-oriented terminology',
       'Export conversations (PDF)',
       'Priority support',
-      'Everything in Pro',
+      '14-day free trial',
     ],
+    highlighted: true,
     tagline: 'For clinicians & teachers',
   },
 
@@ -130,7 +96,7 @@ export const PLANS: Record<PlanId, PlanDefinition> = {
     id: 'petits_genies',
     name: 'Petits Génies Family Plan',
     priceCAD: 0,
-    stripePriceId: '', // intentionally not a Stripe plan
+    stripePriceId: '',
     limits: {
       childProfiles: 3,
       questionsPerDay: 5,
@@ -147,14 +113,14 @@ export const PLANS: Record<PlanId, PlanDefinition> = {
   },
 }
 
-/** Returns the limits for a given plan ID. Falls back to free limits if unknown. */
+/** Returns the limits for a given plan ID. Falls back to starter limits if unknown. */
 export function getPlanLimits(planId: string): PlanLimits {
-  return PLANS[planId as PlanId]?.limits ?? PLANS.free.limits
+  return PLANS[planId as PlanId]?.limits ?? PLANS.starter.limits
 }
 
-/** Returns the full plan definition. Falls back to free plan if unknown. */
+/** Returns the full plan definition. Falls back to starter plan if unknown. */
 export function getPlanById(planId: string): PlanDefinition {
-  return PLANS[planId as PlanId] ?? PLANS.free
+  return PLANS[planId as PlanId] ?? PLANS.starter
 }
 
 /**
@@ -162,17 +128,15 @@ export function getPlanById(planId: string): PlanDefinition {
  * Called in the webhook handler to determine which plan a subscription belongs to.
  */
 export function getPlanIdFromPriceId(priceId: string): PlanId {
-  if (priceId && priceId === process.env.STRIPE_PRICE_ID_STARTER)   return 'starter'
-  if (priceId && priceId === process.env.STRIPE_PRICE_ID_PRO)       return 'pro'
-  if (priceId && priceId === process.env.STRIPE_PRICE_ID_CLINICIAN) return 'clinician'
-  return 'free'
+  if (priceId && priceId === process.env.STRIPE_PRICE_ID_STARTER)      return 'starter'
+  if (priceId && priceId === process.env.STRIPE_PRICE_ID_PROFESSIONAL) return 'professional'
+  return 'starter'
 }
 
 /** The set of valid Stripe price IDs (for validating checkout requests). */
 export function getValidPriceIds(): string[] {
   return [
     process.env.STRIPE_PRICE_ID_STARTER ?? '',
-    process.env.STRIPE_PRICE_ID_PRO ?? '',
-    process.env.STRIPE_PRICE_ID_CLINICIAN ?? '',
+    process.env.STRIPE_PRICE_ID_PROFESSIONAL ?? '',
   ].filter(Boolean)
 }

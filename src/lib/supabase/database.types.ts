@@ -293,10 +293,11 @@ export interface Database {
           stripe_customer_id: string | null
           stripe_subscription_id: string | null
           stripe_price_id: string | null
-          plan_id: 'free' | 'starter' | 'pro' | 'clinician' | 'petits_genies'
+          plan_id: 'starter' | 'professional' | 'petits_genies'
           status: 'active' | 'trialing' | 'past_due' | 'canceled' | 'incomplete' | 'paused'
           current_period_start: string | null
           current_period_end: string | null
+          trial_ends_at: string | null
           cancel_at_period_end: boolean
           canceled_at: string | null
           plan_granted_by: string | null
@@ -310,10 +311,11 @@ export interface Database {
           stripe_customer_id?: string | null
           stripe_subscription_id?: string | null
           stripe_price_id?: string | null
-          plan_id?: 'free' | 'starter' | 'pro' | 'clinician' | 'petits_genies'
+          plan_id?: 'starter' | 'professional' | 'petits_genies'
           status?: 'active' | 'trialing' | 'past_due' | 'canceled' | 'incomplete' | 'paused'
           current_period_start?: string | null
           current_period_end?: string | null
+          trial_ends_at?: string | null
           cancel_at_period_end?: boolean
           canceled_at?: string | null
           plan_granted_by?: string | null
@@ -325,10 +327,11 @@ export interface Database {
           stripe_customer_id?: string | null
           stripe_subscription_id?: string | null
           stripe_price_id?: string | null
-          plan_id?: 'free' | 'starter' | 'pro' | 'clinician' | 'petits_genies'
+          plan_id?: 'starter' | 'professional' | 'petits_genies'
           status?: 'active' | 'trialing' | 'past_due' | 'canceled' | 'incomplete' | 'paused'
           current_period_start?: string | null
           current_period_end?: string | null
+          trial_ends_at?: string | null
           cancel_at_period_end?: boolean
           canceled_at?: string | null
           plan_granted_by?: string | null

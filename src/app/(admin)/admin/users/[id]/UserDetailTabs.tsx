@@ -3,7 +3,7 @@
 import {
   User, Users, CreditCard, MessageCircle,
   Calendar, Clock, ShieldCheck, ShieldOff,
-  Zap, Crown, Stethoscope, Sparkles, CheckCircle2,
+  Zap, Crown, Sparkles, CheckCircle2,
   Gift, Trash2, Loader2,
 } from 'lucide-react'
 import { cn, initials, formatDate } from '@/lib/utils'
@@ -397,11 +397,11 @@ function BillingTab({ detail, onRefresh }: { detail: AdminUserDetail; onRefresh:
   const { t, lang } = useLanguage()
   const bt = t.admin.userDetail.billing
   const { subscription } = detail
-  const planId = (subscription?.planId ?? 'free') as keyof typeof t.plans
-  const plan = PLANS[planId as keyof typeof PLANS] ?? PLANS.free
+  const planId = (subscription?.planId ?? 'starter') as keyof typeof t.plans
+  const plan = PLANS[planId as keyof typeof PLANS] ?? PLANS.starter
   const translatedPlan = t.plans[planId]
-  const translatedPlanName = translatedPlan?.name ?? t.plans.free.name
-  const translatedFeatures = translatedPlan?.features ?? t.plans.free.features
+  const translatedPlanName = translatedPlan?.name ?? t.plans.starter.name
+  const translatedFeatures = translatedPlan?.features ?? t.plans.starter.features
 
   const statusStyles: Record<string, string> = {
     active:     'bg-sage-50 text-sage-700 border-sage-200',
@@ -410,12 +410,12 @@ function BillingTab({ detail, onRefresh }: { detail: AdminUserDetail; onRefresh:
     canceled:   'bg-raised text-ink-tertiary border-border',
     incomplete: 'bg-sand-50 text-sand-600 border-sand-200',
     paused:     'bg-raised text-ink-tertiary border-border',
-    free:       'bg-raised text-ink-tertiary border-border',
+    none:       'bg-raised text-ink-tertiary border-border',
   }
 
-  const subStatus = subscription?.status ?? 'free'
-  const statusLabel = subStatus === 'free'
-    ? bt.freeLabel
+  const subStatus = subscription?.status ?? 'none'
+  const statusLabel = subStatus === 'none'
+    ? bt.noPlanLabel
     : (t.settings.billing.statuses[subStatus as keyof typeof t.settings.billing.statuses] ?? subStatus)
   const periodEnd = subscription?.currentPeriodEnd
     ? new Date(subscription.currentPeriodEnd).toLocaleDateString(lang === 'fr' ? 'fr-CA' : 'en-CA', { year: 'numeric', month: 'long', day: 'numeric' })
@@ -434,9 +434,7 @@ function BillingTab({ detail, onRefresh }: { detail: AdminUserDetail; onRefresh:
       {/* Plan */}
       <div className="flex items-center gap-4">
         <div className="w-10 h-10 rounded-card bg-sage-100 flex items-center justify-center shrink-0">
-          {planId === 'clinician' ? (
-            <Stethoscope size={18} className="text-sand-600" strokeWidth={1.75} />
-          ) : planId === 'pro' ? (
+          {planId === 'professional' ? (
             <Crown size={18} className="text-sage-600" strokeWidth={1.75} />
           ) : planId === 'starter' ? (
             <Zap size={18} className="text-dblue-500" strokeWidth={1.75} />
@@ -449,10 +447,10 @@ function BillingTab({ detail, onRefresh }: { detail: AdminUserDetail; onRefresh:
         <div className="flex-1">
           <p className="text-body-sm font-semibold text-ink">{translatedPlanName} {bt.planSuffix}</p>
           <p className="text-body-xs text-ink-tertiary">
-            {plan.priceCAD === 0 ? bt.freeAmount : `$${plan.priceCAD}${bt.perMonth}`}
+            {plan.priceCAD === 0 ? bt.noAmount : `$${plan.priceCAD}${bt.perMonth}`}
           </p>
         </div>
-        <span className={cn('px-2.5 py-0.5 rounded-pill text-body-xs font-medium border', statusStyles[subStatus] ?? statusStyles.free)}>
+        <span className={cn('px-2.5 py-0.5 rounded-pill text-body-xs font-medium border', statusStyles[subStatus] ?? statusStyles.none)}>
           {statusLabel}
         </span>
       </div>

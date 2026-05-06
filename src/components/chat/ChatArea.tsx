@@ -135,7 +135,7 @@ export function ChatArea({
 
           setDailyLimit({
             limit: err.limit ?? 5,
-            planId: err.planId ?? 'free',
+            planId: err.planId ?? 'starter',
             resetTimeText,
           })
           setShowLimitModal(true)

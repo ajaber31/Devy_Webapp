@@ -27,7 +27,7 @@ export default async function ChildrenPage() {
     billingStatus.childLimit !== -1 &&
     billingStatus.childCount >= billingStatus.childLimit
   )
-  const currentPlanId = billingStatus?.planId ?? 'free'
+  const currentPlanId = billingStatus?.planId ?? 'starter'
 
   return (
     <div className="p-6 max-w-6xl mx-auto">

@@ -26,18 +26,14 @@ const roleLabelMap: Record<string, string> = {
 }
 
 const planLabelMap: Record<PlanId, string> = {
-  free:           'Free',
   starter:        'Starter',
-  pro:            'Pro',
-  clinician:      'Clinician',
+  professional:   'Professional',
   petits_genies:  'Petits Génies',
 }
 
 const planColorMap: Record<PlanId, string> = {
-  free:           'bg-raised text-ink-tertiary',
   starter:        'bg-dblue-50 text-dblue-600',
-  pro:            'bg-dblue-100 text-dblue-700',
-  clinician:      'bg-sage-100 text-sage-700',
+  professional:   'bg-sage-100 text-sage-700',
   petits_genies:  'bg-sage-200 text-sage-800 ring-1 ring-sage-400/40',
 }
 
@@ -81,7 +77,7 @@ export function UserTable({ users, onStatusChange, onRoleChange, onGrantPetitsGe
           </thead>
           <tbody>
             {users.map((user) => {
-              const planId = (user.planId ?? 'free') as PlanId
+              const planId = (user.planId ?? 'starter') as PlanId
               const isPetitsGenies = planId === 'petits_genies'
 
               return (
