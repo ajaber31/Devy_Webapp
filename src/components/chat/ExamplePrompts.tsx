@@ -2,7 +2,6 @@
 
 import { useState } from 'react'
 import { Sparkles } from 'lucide-react'
-import { EXAMPLE_PROMPTS, CHILD_EXAMPLE_PROMPTS } from '@/lib/constants'
 import { useLanguage } from '@/components/shared/LanguageProvider'
 
 interface ExamplePromptsProps {
@@ -18,7 +17,9 @@ export function ExamplePrompts({ onSelect, childName }: ExamplePromptsProps) {
   const tc = t.chatUi
 
   const [prompts] = useState(() => {
-    const pool = childName ? CHILD_EXAMPLE_PROMPTS(childName) : EXAMPLE_PROMPTS
+    const pool: string[] = childName
+      ? tc.childExamplePrompts.map((p: string) => p.replace(/\{name\}/g, childName))
+      : [...tc.examplePrompts]
     return pickRandom(pool, 4)
   })
 
