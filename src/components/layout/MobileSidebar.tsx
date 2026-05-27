@@ -23,9 +23,20 @@ export function MobileSidebar({ profile }: MobileSidebarProps) {
   const { t, lang } = useLanguage()
   const rawNavItems = profile.role === 'admin' ? ADMIN_NAV_ITEMS : DASHBOARD_NAV_ITEMS
   const terms = getRoleTerminology(profile.role, lang)
-  const navItems = rawNavItems.map(item =>
-    item.href === '/children' ? { ...item, label: terms.nounPlural } : item
-  )
+  const navLabels: Record<string, string> = {
+    '/dashboard': profile.role === 'admin' ? t.nav.adminDashboard : t.nav.dashboard,
+    '/children': terms.nounPlural,
+    '/chat': t.nav.conversations,
+    '/settings': profile.role === 'admin' ? t.nav.platformSettings : t.nav.settings,
+    '/admin/documents': t.nav.globalKnowledgeBase,
+    '/admin/users': t.nav.platformUsers,
+    '/admin/analytics': t.nav.analytics,
+    '/admin/incidents': t.nav.incidentLog,
+  }
+  const navItems = rawNavItems.map(item => ({
+    ...item,
+    label: navLabels[item.href] ?? item.label,
+  }))
 
   return (
     <>
