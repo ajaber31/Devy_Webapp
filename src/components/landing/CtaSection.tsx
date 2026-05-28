@@ -7,6 +7,7 @@ import { useRef } from 'react'
 import { useLanguage } from '@/components/shared/LanguageProvider'
 import type { Lang } from '@/lib/i18n'
 
+// eslint-disable-next-line @typescript-eslint/no-unused-vars
 export function CtaSection({ lang: _lang }: { lang?: Lang }) {
   const { t } = useLanguage()
   const copy = t.landing.cta

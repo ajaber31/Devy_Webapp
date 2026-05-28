@@ -86,6 +86,7 @@ const EXCHANGES_FR: Exchange[] = [
   },
 ]
 
+// eslint-disable-next-line @typescript-eslint/no-unused-vars
 export function HeroSection({ lang: _lang }: { lang?: Lang }) {
   const { t, lang } = useLanguage()
   const copy = t.landing.hero

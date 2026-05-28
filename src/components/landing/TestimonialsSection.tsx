@@ -28,6 +28,7 @@ const ACCENT: Record<Accent, { tint: string; bar: string; ring: string; mark: st
   },
 }
 
+// eslint-disable-next-line @typescript-eslint/no-unused-vars
 export function TestimonialsSection({ lang: _lang }: { lang?: Lang }) {
   const { t } = useLanguage()
   const copy = (t.landing as unknown as { testimonials: {

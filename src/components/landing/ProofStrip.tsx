@@ -59,6 +59,7 @@ function StatItem({ value, label, inView, delay }: { value: string; label: strin
   )
 }
 
+// eslint-disable-next-line @typescript-eslint/no-unused-vars
 export function ProofStrip({ lang: _lang }: { lang?: Lang }) {
   const { t } = useLanguage()
   const copy = (t.landing as unknown as { proof: {
