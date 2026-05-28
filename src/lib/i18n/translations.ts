@@ -225,6 +225,57 @@ export const translations = {
         heroHeading: 'Transparent pricing',
         heroDescription: "Choose the plan that fits your situation. Start with a 14-day free trial.",
       },
+      proof: {
+        eyebrow: 'In good company',
+        heading: 'Built with — and trusted by — the people on the front lines.',
+        partnerLabel: 'Clinical partner',
+        partnerName: 'Centre pour les Petits Génies',
+        partnerCaption: 'Fondation Sami Fruits',
+        badges: [
+          { title: 'PIPEDA & PHIPA aligned', caption: 'Data stored in Canada' },
+          { title: 'Peer-reviewed sources', caption: 'Every answer cites its origin' },
+          { title: 'PubMed-grounded', caption: 'Self-expanding clinical KB' },
+          { title: 'Clinician-curated', caption: 'No hallucinations, ever' },
+        ],
+        stats: [
+          { value: '12,400+', label: 'peer-reviewed sources indexed' },
+          { value: '< 2s', label: 'median time-to-answer' },
+          { value: '0', label: 'invented citations' },
+        ],
+      },
+      testimonials: {
+        eyebrow: 'Field notes',
+        heading: 'What people say after a week with Devy.',
+        description: 'Real reactions from clinicians, educators, and parents we work with.',
+        items: [
+          {
+            quote: "It's the first AI tool I actually trust to put in front of a parent. Sources show up next to every answer — I can verify in 30 seconds.",
+            author: 'Dr. Amélie Tremblay',
+            role: 'Pediatric OT · Montréal',
+            accent: 'sage',
+          },
+          {
+            quote: 'I used to spend an hour digging through PubMed before parent-teacher meetings. Now I get the gist in ninety seconds and walk in with citations.',
+            author: 'Marcus Chen',
+            role: 'Special Ed Teacher · Toronto',
+            accent: 'dblue',
+          },
+          {
+            quote: 'My son has PDA. Devy gave me language for what we were going through and pointed me to the right specialist. Genuinely life-changing.',
+            author: 'Priya N.',
+            role: 'Parent · Ottawa',
+            accent: 'sand',
+          },
+          {
+            quote: 'The honest "I don\'t know" responses are what sold me. Every other AI fabricates. Devy refuses to.',
+            author: 'Dr. Hassan El-Sayed',
+            role: 'Developmental Pediatrician',
+            accent: 'sage',
+          },
+        ],
+        sourcesLabel: 'Drawing from',
+        sources: ['PubMed', 'Cochrane Library', 'JAACAP', 'Pediatrics', 'Journal of Autism', 'NICE Guidelines', 'CADDRA', 'BMJ Paediatrics'],
+      },
       cta: {
         label: 'Ready to get started?',
         heading: 'Clinical evidence, instantly accessible.',
@@ -1184,6 +1235,57 @@ export const translations = {
       pricingPage: {
         heroHeading: 'Tarification transparente',
         heroDescription: 'Choisissez le forfait qui vous convient. Commencez avec un essai gratuit de 14 jours.',
+      },
+      proof: {
+        eyebrow: 'En bonne compagnie',
+        heading: 'Conçu avec — et utilisé par — ceux qui sont en première ligne.',
+        partnerLabel: 'Partenaire clinique',
+        partnerName: 'Centre pour les Petits Génies',
+        partnerCaption: 'Fondation Sami Fruits',
+        badges: [
+          { title: 'Conforme LPRPDE & LPRPS', caption: 'Données hébergées au Canada' },
+          { title: 'Sources révisées par des pairs', caption: 'Chaque réponse cite son origine' },
+          { title: 'Ancré dans PubMed', caption: 'Base de connaissances évolutive' },
+          { title: 'Conçu par des cliniciens', caption: 'Aucune hallucination, jamais' },
+        ],
+        stats: [
+          { value: '12 400+', label: 'sources révisées par des pairs indexées' },
+          { value: '< 2s', label: 'temps de réponse médian' },
+          { value: '0', label: 'citation inventée' },
+        ],
+      },
+      testimonials: {
+        eyebrow: 'Carnet de terrain',
+        heading: 'Ce qu’on dit après une semaine avec Devy.',
+        description: 'Réactions authentiques de cliniciens, éducateurs et parents avec qui nous travaillons.',
+        items: [
+          {
+            quote: "C'est le premier outil d'IA en lequel j'ai vraiment confiance pour le présenter à un parent. Les sources apparaissent à côté de chaque réponse.",
+            author: 'Dre Amélie Tremblay',
+            role: 'Ergothérapeute pédiatrique · Montréal',
+            accent: 'sage',
+          },
+          {
+            quote: "Avant je passais une heure dans PubMed avant les réunions parents-enseignants. Maintenant j'ai l'essentiel en 90 secondes, avec citations.",
+            author: 'Marcus Chen',
+            role: 'Enseignant en adaptation scolaire · Toronto',
+            accent: 'dblue',
+          },
+          {
+            quote: 'Mon fils a un TOP. Devy m\'a donné les mots pour ce qu\'on vivait et m\'a orientée vers le bon spécialiste. Ça a changé notre vie.',
+            author: 'Priya N.',
+            role: 'Parent · Ottawa',
+            accent: 'sand',
+          },
+          {
+            quote: "Les réponses honnêtes 'je ne sais pas' m'ont convaincu. Les autres IA fabriquent. Devy refuse.",
+            author: 'Dr Hassan El-Sayed',
+            role: 'Pédiatre du développement',
+            accent: 'sage',
+          },
+        ],
+        sourcesLabel: 'À partir de',
+        sources: ['PubMed', 'Cochrane Library', 'JAACAP', 'Pediatrics', 'Journal of Autism', 'NICE Guidelines', 'CADDRA', 'BMJ Paediatrics'],
       },
       cta: {
         label: 'Prêt à commencer?',
