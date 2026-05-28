@@ -9,20 +9,22 @@ import type { Lang } from '@/lib/i18n'
 const BADGE_ICONS = [ShieldCheck, BookOpenCheck, FlaskConical, Stethoscope]
 
 function useCountUp(target: string, inView: boolean) {
-  // Only animate if target is numeric; otherwise return as-is.
-  const numericMatch = target.match(/^([\d\s,]+)([^\d]*)$/)
   const [display, setDisplay] = useState(target)
 
   useEffect(() => {
-    if (!inView || !numericMatch) {
+    const match = target.match(/^([\d\s, ]+)([^\d]*)$/)
+    if (!inView || !match) {
       setDisplay(target)
       return
     }
-    const raw = numericMatch[1].replace(/[\s,]/g, '')
+    const raw = match[1].replace(/[\s, ]/g, '')
     const num = parseInt(raw, 10)
-    const suffix = numericMatch[2]
-    if (Number.isNaN(num)) return
-    const duration = 1200
+    const suffix = match[2]
+    if (Number.isNaN(num)) {
+      setDisplay(target)
+      return
+    }
+    const duration = 1400
     const start = performance.now()
     let frame = 0
     const tick = (now: number) => {
@@ -35,7 +37,7 @@ function useCountUp(target: string, inView: boolean) {
     }
     frame = requestAnimationFrame(tick)
     return () => cancelAnimationFrame(frame)
-  }, [inView, target, numericMatch])
+  }, [inView, target])
 
   return display
 }
@@ -159,9 +161,9 @@ export function ProofStrip({ lang: _lang }: { lang?: Lang }) {
                 <div className="w-9 h-9 rounded-lg bg-sage-50 border border-sage-100 flex items-center justify-center flex-shrink-0 group-hover:bg-sage-100 transition-colors">
                   <Icon size={15} className="text-sage-700" strokeWidth={2} />
                 </div>
-                <div className="min-w-0">
-                  <p className="text-body-sm font-semibold text-ink leading-tight truncate">{b.title}</p>
-                  <p className="text-body-xs text-ink-tertiary font-display italic mt-0.5 truncate">{b.caption}</p>
+                <div className="min-w-0 flex-1">
+                  <p className="text-body-sm font-semibold text-ink leading-snug">{b.title}</p>
+                  <p className="text-body-xs text-ink-tertiary font-display italic mt-0.5 leading-snug">{b.caption}</p>
                 </div>
               </motion.div>
             )
