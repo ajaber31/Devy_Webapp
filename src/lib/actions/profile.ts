@@ -6,7 +6,7 @@ import { updateProfileSchema } from '@/lib/validation/schemas'
 import type { Profile } from '@/lib/types'
 
 export async function getProfile(): Promise<Profile | null> {
-  const supabase = createClient()
+  const supabase = await createClient()
   const { data: { user } } = await supabase.auth.getUser()
   if (!user) return null
 
@@ -81,7 +81,7 @@ export async function updateProfile(updates: { name?: string }) {
     return { error: parsed.error.issues[0]?.message ?? 'Invalid input' }
   }
 
-  const supabase = createClient()
+  const supabase = await createClient()
   const { data: { user } } = await supabase.auth.getUser()
   if (!user) return { error: 'Not authenticated' }
 

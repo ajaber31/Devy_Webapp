@@ -14,7 +14,7 @@ import type { BillingStatus, PlanId, SubscriptionStatus } from '@/lib/types'
  * Returns null if the user is not authenticated.
  */
 export async function getBillingStatus(): Promise<BillingStatus | null> {
-  const supabase = createClient()
+  const supabase = await createClient()
   const { data: { user } } = await supabase.auth.getUser()
   if (!user) return null
 
@@ -61,7 +61,7 @@ export async function getBillingStatus(): Promise<BillingStatus | null> {
 export async function createCheckoutSession(
   planId: PlanId,
 ): Promise<{ url?: string; error?: string }> {
-  const supabase = createClient()
+  const supabase = await createClient()
   const { data: { user } } = await supabase.auth.getUser()
   if (!user) return { error: 'Not authenticated' }
 
@@ -152,7 +152,7 @@ export async function createCheckoutSession(
  * Returns the portal URL. The client does window.location.href = url.
  */
 export async function createPortalSession(): Promise<{ url?: string; error?: string }> {
-  const supabase = createClient()
+  const supabase = await createClient()
   const { data: { user } } = await supabase.auth.getUser()
   if (!user) return { error: 'Not authenticated' }
 

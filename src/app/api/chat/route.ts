@@ -188,6 +188,24 @@ export async function POST(request: NextRequest) {
     )
   }
 
+  // ── Parse + validate body ──────────────────────────────────────────────────
+  // Validate BEFORE the daily-limit check so malformed requests don't consume
+  // a question from the user's daily quota.
+  let rawBody: unknown
+  try {
+    rawBody = await request.json()
+  } catch {
+    return NextResponse.json({ error: 'Invalid request body' }, { status: 400 })
+  }
+
+  const parsed = chatRequestSchema.safeParse(rawBody)
+  if (!parsed.success) {
+    const first = parsed.error.issues[0]
+    return NextResponse.json({ error: first?.message ?? 'Invalid input' }, { status: 400 })
+  }
+
+  const { message, conversationId, childId, childName } = parsed.data
+
   // ── Daily question limit ───────────────────────────────────────────────────
   {
     const { data: subData } = await supabase
@@ -227,22 +245,6 @@ export async function POST(request: NextRequest) {
       await supabase.rpc('increment_daily_usage', { p_user_id: user.id })
     }
   }
-
-  // ── Parse + validate body ──────────────────────────────────────────────────
-  let rawBody: unknown
-  try {
-    rawBody = await request.json()
-  } catch {
-    return NextResponse.json({ error: 'Invalid request body' }, { status: 400 })
-  }
-
-  const parsed = chatRequestSchema.safeParse(rawBody)
-  if (!parsed.success) {
-    const first = parsed.error.issues[0]
-    return NextResponse.json({ error: first?.message ?? 'Invalid input' }, { status: 400 })
-  }
-
-  const { message, conversationId, childId, childName } = parsed.data
 
   // ── Read language preference ───────────────────────────────────────────────
   const lang = cookieStore.get('devy-lang')?.value === 'fr' ? 'fr' : 'en'

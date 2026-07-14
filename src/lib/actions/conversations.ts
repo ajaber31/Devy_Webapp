@@ -15,7 +15,7 @@ function extractChildName(children: unknown): string | undefined {
 }
 
 export async function getConversations(): Promise<Conversation[]> {
-  const supabase = createClient()
+  const supabase = await createClient()
   const { data: { user } } = await supabase.auth.getUser()
   if (!user) return []
 
@@ -41,7 +41,7 @@ export async function getConversations(): Promise<Conversation[]> {
 }
 
 export async function getConversationsForChild(childId: string): Promise<Conversation[]> {
-  const supabase = createClient()
+  const supabase = await createClient()
   const { data: { user } } = await supabase.auth.getUser()
   if (!user) return []
 
@@ -68,7 +68,7 @@ export async function getConversationsForChild(childId: string): Promise<Convers
 }
 
 export async function getUserMessageCount(): Promise<number> {
-  const supabase = createClient()
+  const supabase = await createClient()
   const { data: { user } } = await supabase.auth.getUser()
   if (!user) return 0
 
@@ -82,7 +82,7 @@ export async function getUserMessageCount(): Promise<number> {
 }
 
 export async function getConversationCount(): Promise<number> {
-  const supabase = createClient()
+  const supabase = await createClient()
   const { data: { user } } = await supabase.auth.getUser()
   if (!user) return 0
 
@@ -99,7 +99,7 @@ export async function createConversation(input: {
   childId?: string
   childName?: string
 }): Promise<{ data?: Conversation; error?: string }> {
-  const supabase = createClient()
+  const supabase = await createClient()
   const { data: { user } } = await supabase.auth.getUser()
   if (!user) return { error: 'Not authenticated' }
 
@@ -134,7 +134,7 @@ export async function createConversation(input: {
 }
 
 export async function getMessages(conversationId: string): Promise<Message[]> {
-  const supabase = createClient()
+  const supabase = await createClient()
 
   const { data } = await supabase
     .from('messages')
@@ -162,7 +162,7 @@ export async function insertMessage(input: {
   sources?: Source[]
   notFoundNote?: string
 }): Promise<{ data?: Message; error?: string }> {
-  const supabase = createClient()
+  const supabase = await createClient()
 
   const { data, error } = await supabase
     .from('messages')
@@ -199,7 +199,7 @@ export async function insertMessage(input: {
 }
 
 export async function renameConversation(id: string, title: string): Promise<{ error?: string }> {
-  const supabase = createClient()
+  const supabase = await createClient()
   const { data: { user } } = await supabase.auth.getUser()
   if (!user) return { error: 'Not authenticated' }
 
@@ -216,7 +216,7 @@ export async function renameConversation(id: string, title: string): Promise<{ e
 }
 
 export async function pinConversation(id: string, isPinned: boolean): Promise<{ error?: string }> {
-  const supabase = createClient()
+  const supabase = await createClient()
   const { data: { user } } = await supabase.auth.getUser()
   if (!user) return { error: 'Not authenticated' }
 
@@ -230,7 +230,7 @@ export async function pinConversation(id: string, isPinned: boolean): Promise<{ 
 }
 
 export async function deleteConversation(id: string): Promise<{ error?: string }> {
-  const supabase = createClient()
+  const supabase = await createClient()
   const { data: { user } } = await supabase.auth.getUser()
   if (!user) return { error: 'Not authenticated' }
 

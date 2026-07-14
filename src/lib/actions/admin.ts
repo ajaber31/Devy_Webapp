@@ -30,7 +30,7 @@ export interface AdminAnalytics {
  * Returns an error string if not authorized, null if OK.
  */
 async function requireAdmin(): Promise<{ error: string } | null> {
-  const supabase = createClient()
+  const supabase = await createClient()
   const { data: { user } } = await supabase.auth.getUser()
   if (!user) return { error: 'Not authenticated' }
 
@@ -283,7 +283,7 @@ export async function grantPetitsGeniesPlan(
   const authErr = await requireAdmin()
   if (authErr) return authErr
 
-  const supabase = createClient()
+  const supabase = await createClient()
   const { data: { user: adminUser } } = await supabase.auth.getUser()
   if (!adminUser) return { error: 'Not authenticated' }
 

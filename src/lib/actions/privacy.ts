@@ -33,7 +33,7 @@ async function writeAuditLog(
 export async function getPrivacyAuditLog(): Promise<
   Array<{ id: string; event_type: string; event_data: Record<string, unknown>; created_at: string }>
 > {
-  const supabase = createClient()
+  const supabase = await createClient()
   const { data: { user } } = await supabase.auth.getUser()
   if (!user) return []
 
@@ -58,7 +58,7 @@ export async function getPrivacyAuditLog(): Promise<
  * Full message content is included — this is the user's own data.
  */
 export async function requestDataExport(): Promise<{ data?: string; error?: string }> {
-  const supabase = createClient()
+  const supabase = await createClient()
   const { data: { user } } = await supabase.auth.getUser()
   if (!user) return { error: 'Not authenticated' }
 
@@ -111,7 +111,7 @@ export async function requestDataExport(): Promise<{ data?: string; error?: stri
  * This action is irreversible.
  */
 export async function deleteAccount(): Promise<{ error?: string }> {
-  const supabase = createClient()
+  const supabase = await createClient()
   const { data: { user } } = await supabase.auth.getUser()
   if (!user) return { error: 'Not authenticated' }
 
@@ -149,7 +149,7 @@ export async function deleteAccount(): Promise<{ error?: string }> {
  * rather than self-serve deletion). Does NOT delete data immediately.
  */
 export async function requestDataDeletion(): Promise<{ error?: string }> {
-  const supabase = createClient()
+  const supabase = await createClient()
   const { data: { user } } = await supabase.auth.getUser()
   if (!user) return { error: 'Not authenticated' }
 
