@@ -18,7 +18,7 @@ function serviceClient() {
  * Writes both the profiles row and an immutable privacy_audit_log entry.
  */
 export async function recordConsent(): Promise<{ error?: string }> {
-  const supabase = createServerClient()
+  const supabase = await createServerClient()
   const { data: { user } } = await supabase.auth.getUser()
   if (!user) return { error: 'Not authenticated' }
 
@@ -54,7 +54,7 @@ export async function recordConsent(): Promise<{ error?: string }> {
  * Used by the dashboard layout to decide whether to redirect to /consent.
  */
 export async function hasValidConsent(): Promise<boolean> {
-  const supabase = createServerClient()
+  const supabase = await createServerClient()
   const { data: { user } } = await supabase.auth.getUser()
   if (!user) return false
 

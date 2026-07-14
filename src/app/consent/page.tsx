@@ -18,7 +18,7 @@ export async function generateMetadata(): Promise<Metadata> {
 }
 
 export default async function ConsentPage() {
-  const supabase = createClient()
+  const supabase = await createClient()
   const [{ data: { user } }, lang] = await Promise.all([
     supabase.auth.getUser(),
     getLang(),

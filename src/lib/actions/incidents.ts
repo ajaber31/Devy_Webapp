@@ -15,7 +15,7 @@ function serviceClient() {
 }
 
 async function requireAdmin(): Promise<{ error: string } | null> {
-  const supabase = createClient()
+  const supabase = await createClient()
   const { data: { user } } = await supabase.auth.getUser()
   if (!user) return { error: 'Not authenticated' }
   const { data } = await supabase.from('profiles').select('role').eq('id', user.id).single()
@@ -78,7 +78,7 @@ export async function createIncident(
   const parsed = createIncidentSchema.safeParse(input)
   if (!parsed.success) return { error: parsed.error.issues[0]?.message ?? 'Invalid input' }
 
-  const supabase = createClient()
+  const supabase = await createClient()
   const { data: { user } } = await supabase.auth.getUser()
 
   const db = serviceClient()

@@ -5,11 +5,12 @@ import { getUserDetail } from '@/lib/actions/admin'
 import { UserDetailTabs } from './UserDetailTabs'
 
 interface Props {
-  params: { id: string }
+  params: Promise<{ id: string }>
 }
 
 export default async function UserDetailPage({ params }: Props) {
-  const detail = await getUserDetail(params.id)
+  const { id } = await params
+  const detail = await getUserDetail(id)
   if (!detail) notFound()
 
   return (

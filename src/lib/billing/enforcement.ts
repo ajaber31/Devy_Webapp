@@ -21,7 +21,7 @@ export interface LimitCheckResult {
  * Runs two parallel queries: one for the subscription plan, one for the child count.
  */
 export async function checkChildProfileLimit(userId: string): Promise<LimitCheckResult> {
-  const supabase = createClient()
+  const supabase = await createClient()
 
   const [subResult, countResult] = await Promise.all([
     supabase
@@ -62,7 +62,7 @@ export async function checkChildProfileLimit(userId: string): Promise<LimitCheck
  * Reads the subscription plan and calls the get_daily_usage Postgres function.
  */
 export async function checkDailyQuestionLimit(userId: string): Promise<LimitCheckResult> {
-  const supabase = createClient()
+  const supabase = await createClient()
 
   const { data: subData } = await supabase
     .from('subscriptions')

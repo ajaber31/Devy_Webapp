@@ -25,7 +25,7 @@ function toChild(row: Record<string, unknown>): Child {
 }
 
 export async function getChildrenCount(): Promise<number> {
-  const supabase = createClient()
+  const supabase = await createClient()
   const { data: { user } } = await supabase.auth.getUser()
   if (!user) return 0
 
@@ -38,7 +38,7 @@ export async function getChildrenCount(): Promise<number> {
 }
 
 export async function getChildren(): Promise<Child[]> {
-  const supabase = createClient()
+  const supabase = await createClient()
   const { data: { user } } = await supabase.auth.getUser()
   if (!user) return []
 
@@ -52,7 +52,7 @@ export async function getChildren(): Promise<Child[]> {
 }
 
 export async function getChild(id: string): Promise<Child | null> {
-  const supabase = createClient()
+  const supabase = await createClient()
   const { data: { user } } = await supabase.auth.getUser()
   if (!user) return null
 
@@ -83,7 +83,7 @@ export async function createChild(input: {
     return { error: parsed.error.issues[0]?.message ?? 'Invalid input' }
   }
 
-  const supabase = createClient()
+  const supabase = await createClient()
   const { data: { user } } = await supabase.auth.getUser()
   if (!user) return { error: 'Not authenticated' }
 
@@ -144,7 +144,7 @@ export async function updateChild(
     return { error: parsed.error.issues[0]?.message ?? 'Invalid input' }
   }
 
-  const supabase = createClient()
+  const supabase = await createClient()
   const { data: { user } } = await supabase.auth.getUser()
   if (!user) return { error: 'Not authenticated' }
 
@@ -177,7 +177,7 @@ export async function updateChild(
 }
 
 export async function deleteChild(id: string): Promise<{ error?: string }> {
-  const supabase = createClient()
+  const supabase = await createClient()
   const { data: { user } } = await supabase.auth.getUser()
   if (!user) return { error: 'Not authenticated' }
 

@@ -42,7 +42,7 @@ export async function signIn(formData: { email: string; password: string }) {
     return { error: 'Too many sign-in attempts. Please wait a minute and try again.' }
   }
 
-  const supabase = createClient()
+  const supabase = await createClient()
   const { error } = await supabase.auth.signInWithPassword({
     email: parsed.data.email,
     password: parsed.data.password,
@@ -74,7 +74,7 @@ export async function signUp(formData: {
     return { error: 'Too many requests. Please wait a minute and try again.' }
   }
 
-  const supabase = createClient()
+  const supabase = await createClient()
   const role = mapAccountTypeToRole(parsed.data.accountType)
 
   const { error } = await supabase.auth.signUp({
@@ -98,7 +98,7 @@ export async function signUp(formData: {
 }
 
 export async function signOut() {
-  const supabase = createClient()
+  const supabase = await createClient()
   await supabase.auth.signOut()
   redirect('/login')
 }
@@ -118,7 +118,7 @@ export async function forgotPassword(email: string): Promise<{ error?: string }>
     return {}
   }
 
-  const supabase = createClient()
+  const supabase = await createClient()
   // Always return success to prevent email enumeration.
   await supabase.auth.resetPasswordForEmail(parsed.data.email, {
     redirectTo: `${process.env.NEXT_PUBLIC_SITE_URL}/auth/callback?next=/reset-password`,
@@ -132,7 +132,7 @@ export async function updatePassword(newPassword: string): Promise<{ error?: str
     return { error: parsed.error.issues[0]?.message ?? 'Invalid password' }
   }
 
-  const supabase = createClient()
+  const supabase = await createClient()
   const { error } = await supabase.auth.updateUser({ password: parsed.data })
   return error ? { error: 'Failed to update password' } : {}
 }

@@ -9,8 +9,9 @@ import { ChatPageClient } from './ChatPageClient'
 export default async function ChatPage({
   searchParams,
 }: {
-  searchParams: { childId?: string; childName?: string; conversationId?: string }
+  searchParams: Promise<{ childId?: string; childName?: string; conversationId?: string }>
 }) {
+  const sp = await searchParams
   const [conversations, children, profile, lang] = await Promise.all([
     getConversations(),
     getChildren(),
@@ -21,12 +22,12 @@ export default async function ChatPage({
   const terms = getRoleTerminology(profile?.role ?? 'parent', lang)
 
   // Show selector only when no URL params AND no existing conversations
-  const hasUrlContext = !!(searchParams.childId || searchParams.conversationId)
+  const hasUrlContext = !!(sp.childId || sp.conversationId)
   const showSelector = !hasUrlContext && conversations.length === 0
 
   // Active conversation: explicit URL param > most recent existing > null (new)
-  const activeId = searchParams.conversationId
-    ?? ((!searchParams.childId && conversations.length > 0) ? conversations[0].id : null)
+  const activeId = sp.conversationId
+    ?? ((!sp.childId && conversations.length > 0) ? conversations[0].id : null)
 
   const initialMessages = activeId ? await getMessages(activeId) : []
 
@@ -34,8 +35,8 @@ export default async function ChatPage({
   // This ensures the banner and sidebar tag appear correctly when navigating back
   // to /chat without URL params (e.g. from dashboard → chat).
   const activeConvo = activeId ? conversations.find(c => c.id === activeId) : undefined
-  const resolvedChildId   = searchParams.childId   ?? activeConvo?.childId
-  let resolvedChildName = searchParams.childName  ?? activeConvo?.childName
+  const resolvedChildId   = sp.childId   ?? activeConvo?.childId
+  let resolvedChildName = sp.childName  ?? activeConvo?.childName
 
   // Fallback: if we have a childId but still no name (JOIN didn't return it),
   // do a targeted DB lookup so the banner always shows the right name.

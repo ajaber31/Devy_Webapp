@@ -7,13 +7,14 @@ import { getRoleTerminology } from '@/lib/role-terminology'
 import { getLang } from '@/lib/i18n/server'
 
 interface PageProps {
-  params: { id: string }
+  params: Promise<{ id: string }>
 }
 
 export default async function ChildProfilePage({ params }: PageProps) {
+  const { id } = await params
   const [child, childConversations, profile, lang] = await Promise.all([
-    getChild(params.id),
-    getConversationsForChild(params.id),
+    getChild(id),
+    getConversationsForChild(id),
     getProfile(),
     getLang(),
   ])

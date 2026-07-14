@@ -12,7 +12,7 @@ import type { Document, DocumentStatus } from '@/lib/types'
  * All document write/delete actions must call this — defence-in-depth beyond RLS.
  */
 async function requireAdmin(): Promise<{ error: string } | null> {
-  const supabase = createClient()
+  const supabase = await createClient()
   const { data: { user } } = await supabase.auth.getUser()
   if (!user) return { error: 'Not authenticated' }
   const { data: profile } = await supabase
